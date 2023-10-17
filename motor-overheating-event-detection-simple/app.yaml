@@ -1,0 +1,29 @@
+info:
+  description: Monitors if a motor is overheating. If so, it will send a Control Change to reduce the Motor Speed.
+  name: motor-overheating-event-detection-simple
+  title: Motor Overheating Event Detection (Simple)
+  version: 1.0.0
+
+spec_version: 4.11.0
+
+app:
+  type: kelvin
+  kelvin:
+    
+    inputs:
+    - data_type: number
+      name: motor_temperature
+
+    outputs:
+    - data_type: number
+      name: motor_speed_set_point
+
+    language:
+      python:
+        entry_point: kelvin_python_sdk
+      type: python
+
+system:
+  environment_vars:
+  - name: KELVIN_GW_MODE
+    value: SOCKETS

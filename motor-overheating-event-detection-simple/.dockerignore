@@ -1,0 +1,33 @@
+# general
+.DS_Store
+.git/
+.travis.yml
+Dockerfile
+Jenkinsfile
+build/
+*.swp
+*.swo
+
+# python
+**/*.pyc
+**/.benchmarks/
+**/.coverage
+**/.ipynb_checkpoints/
+**/.mypy_cache/
+**/.pytest_cache/
+**/__pycache__/
+*.egg-info/
+.eggs/
+.idea/
+.direnv/
+dist/
+docs/_build/
+htmlcov/
+pip-wheel-metadata/
+venv/
+*.whl
+
+# retain ignore files
+!.*ignore
+!build/datatype/
+!build/app.yaml
