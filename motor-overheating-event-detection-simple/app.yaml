@@ -17,6 +17,7 @@ app:
     outputs:
     - data_type: number
       name: motor_speed_set_point
+      control_change: true
 
     language:
       python:
