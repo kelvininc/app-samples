@@ -1,7 +1,7 @@
 info:
   description: Monitors if a motor is overheating. If so, it will send a Control Change/Recommendation to reduce the Motor Speed.
-  name: motor-overheating-event-detection-complex
-  title: Motor Overheating Event Detection (Complex)
+  name: event-detection-complex
+  title: Event Detection (Complex)
   version: 1.0.0
 
 spec_version: 4.11.0

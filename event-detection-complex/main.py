@@ -8,7 +8,13 @@ from kelvin.message.krn import KRNAssetDataStream, KRNAsset
 
 
 async def process_motor_temperature_change(app: KelvinApp, asset, value):
-    if value > app.asset_parameters[asset]["temperature_max_threshold"] + app.app_parameters["temperature_threshold_tolerance"]:
+    # Get App Parameter
+    temperature_threshold_tolerance = app.app_parameters["temperature_threshold_tolerance"]
+
+    # Get Asset Parameter
+    temperature_max_threshold = app.asset_parameters[asset]["temperature_max_threshold"]
+
+    if value > temperature_max_threshold + temperature_threshold_tolerance:
         speed_decrease_set_point_value = app.asset_parameters[asset]["speed_decrease_set_point"]
 
         # Build Control Change
@@ -41,6 +47,9 @@ async def convert_temperature_to_fahrenheit(app: KelvinApp, asset, value):
 async def main() -> None:
     app = KelvinApp()
     await app.connect()
+
+    print("app: ", app.app_parameters)
+    print("assets: ", app.asset_parameters)
 
     # Create a Filtered Queue with Temperature (Number) Input Messages
     motor_temperature_msg_queue: Queue[Number] = app.filter(filters.input_equals("motor_temperature"))
