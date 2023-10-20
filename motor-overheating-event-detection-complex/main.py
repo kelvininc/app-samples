@@ -8,7 +8,7 @@ from kelvin.message.krn import KRNAssetDataStream, KRNAsset
 
 
 async def process_motor_temperature_change(app: KelvinApp, asset, value):
-    if value > app.asset_parameters[asset]["temperature_max_treshold"]:
+    if value > app.asset_parameters[asset]["temperature_max_threshold"] + app.app_parameters["temperature_threshold_tolerance"]:
         speed_decrease_set_point_value = app.asset_parameters[asset]["speed_decrease_set_point"]
 
         # Build Control Change
@@ -18,7 +18,7 @@ async def process_motor_temperature_change(app: KelvinApp, asset, value):
             expiration_date=timedelta(minutes=5)
         )
 
-        if app.asset_parameters[asset]["kelvin_closed_loop"]:
+        if app.asset_parameters[asset]["closed_loop"]:
             # Publish Control Change
             await app.publish(control_change)
         else:
@@ -26,7 +26,7 @@ async def process_motor_temperature_change(app: KelvinApp, asset, value):
             await app.publish(
                 Recommendation(
                     resource=KRNAsset(asset),
-                    type="speed_decrease",
+                    type="decrease_speed",
                     control_changes=[control_change]
                 )
             )

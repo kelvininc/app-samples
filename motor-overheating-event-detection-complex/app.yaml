@@ -16,11 +16,15 @@ app:
     outputs:
     - name: motor_speed_set_point
       data_type: number
+      control_change: true
     - name: motor_temperature_fahrenheit
       data_type: number
-       
+    
+    configuration:
+      temperature_threshold_tolerance: 5
+
     parameters:
-    - name: kelvin_closed_loop
+    - name: closed_loop
       data_type: boolean
       default:
         value: false
@@ -34,7 +38,7 @@ app:
         title: "Speed Decrease SetPoint"
         minimum: 1000
         maximum: 3000
-    - name: temperature_max_treshold
+    - name: temperature_max_threshold
       data_type: number
       default:
         value: 75
@@ -42,6 +46,7 @@ app:
         title: "Temperature Max Threshold"
         minimum: 50
         maximum: 100
+    
 
     language:
       python:
