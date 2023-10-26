@@ -28,7 +28,7 @@ async def process_motor_temperature_change(app: KelvinApp, asset, value):
             # Publish Control Change
             await app.publish(control_change)
         else:
-            # Build and Publish Control Change
+            # Build and Publish Recommendation
             await app.publish(
                 Recommendation(
                     resource=KRNAsset(asset),
