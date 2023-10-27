@@ -21,7 +21,7 @@ app:
       data_type: number
     
     configuration:
-      temperature_threshold_tolerance: 5
+      temperature_threshold_tolerance: 0
 
     parameters:
     - name: closed_loop
