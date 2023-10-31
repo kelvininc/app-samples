@@ -11,6 +11,8 @@ async def process_motor_temperature_change(app: KelvinApp, motor_temperature_msg
     if motor_temperature_msg.payload > 75:
         motor_speed_value = 1000
 
+        print("Publishing Control Change for Motor Speed Set Point: ", motor_speed_value)
+
         # Build & Publish Control Change
         await app.publish(
                 ControlChange(
@@ -31,7 +33,7 @@ async def main() -> None:
         # Wait & Read new Temperature Inputs
         motor_temperature_msg = await motor_temperature_msg_queue.get()
 
-        print("Receive Motor Temperature: ", motor_temperature_msg)
+        print("Received Motor Temperature: ", motor_temperature_msg)
 
         # Process the Temperature change
         await process_motor_temperature_change(app, motor_temperature_msg)

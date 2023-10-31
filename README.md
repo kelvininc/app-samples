@@ -8,7 +8,7 @@ We recommend that you start first by reading the official Kelvin Documentation o
 
 | Application | Type | Level | Description |
 | ----------- | ---- | ----- | ----------- |
-| [Event Detection (Simple)](event-detection-simple/) | Event Detection | Beginner | This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data. |
+| [Event Detection](event-detection/) | Event Detection | Beginner | This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data. |
 | [Event Detection (Complex)](event-detection-complex/) | Event Detection | Intermediate | This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data. This example leverages Asset Parameters and App Parameters to make the application more dynamic. |
 
 # Requirements
