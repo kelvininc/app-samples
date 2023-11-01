@@ -2,8 +2,8 @@ import asyncio
 from asyncio import Queue
 from datetime import timedelta
 
-from kelvin.app import KelvinApp, ControlChange, Recommendation, filters
-from kelvin.message import Number
+from kelvin.application import KelvinApp, filters
+from kelvin.message import Number, ControlChange, Recommendation
 from kelvin.message.krn import KRNAssetDataStream, KRNAsset
 
 
