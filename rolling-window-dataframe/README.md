@@ -1,3 +1,5 @@
+![Info](assets/info.png)
+
 # Rolling Window DataFrame
 This application demonstrates the usage of the Kelvin SDK to implement a rolling window of data points using Pandas.
 
