@@ -1,25 +1,18 @@
+![Kelvin Logo](logo.png)
 
 # Welcome to Kelvin SDK - App Samples
 This repository contains sample applications that demonstrate how to use the **Kelvin SDK**. 
 
-We recommend that you start first by reading the official Kelvin Documentation on https://docs.kelvininc.com.
+We recommend that you start first by reading the official Kelvin Documentation on https://docs.kelvin.ai.
 
 # Applications
 
 | Application | Type | Level | Description |
 | ----------- | ---- | ----- | ----------- |
-| [Event Detection](event-detection/) | Event Detection | Beginner | This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data. |
-| [Event Detection (Complex)](event-detection-complex/) | Event Detection | Intermediate | This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data. This example leverages Asset Parameters and App Parameters to make the application more dynamic. |
+| [Event Detection](event-detection/) | Event Detection | Beginner | This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data and emit a Control Change output. |
+| [Event Detection (Complex)](event-detection-complex/) | Event Detection | Intermediate | This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data and emit a Control Change or Recommendation. This example also leverages Asset Parameters and App Configuration to make the application more dynamic. |
+| [Rolling Window DataFrame](rolling-window-dataframe/) | Rolling Window | Beginner | This application demonstrates the usage of the Kelvin SDK to implement a rolling window of data points using Pandas. |
 
-# Requirements
-1. Python 3.8 or higher
-2. Install Kelvin SDK: `pip install kelvin-sdk`
-3. Install project dependencies: `pip install -r requirements.txt`
-4. Docker (optional) for upload the application to a Kelvin Instance.
-
-# Usage
-1. Run the application: `python main.py`
-2. Open a new terminal and test with synthetic data: `kelvin app test simulator`
 
 # Contributing
 1. Fork the project.

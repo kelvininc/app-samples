@@ -1,0 +1,26 @@
+app:
+  kelvin:
+    inputs:
+      - name: motor_temperature
+        data_type: number
+      - name: tubing_pressure
+        data_type: number
+      - name: gas_flow_rate
+        data_type: number
+      - name: water_flow_rate
+        data_type: number
+    language:
+      python:
+        entry_point: kelvin_python_sdk
+      type: python
+  type: kelvin
+info:
+  description: This application demonstrates the usage of the Kelvin SDK to implement a rolling window of data points using Pandas.
+  name: rolling-window-dataframe
+  title: Rolling Window DataFrame
+  version: 1.0.0
+spec_version: 4.11.0
+system:
+  environment_vars:
+    - name: KELVIN_GW_MODE
+      value: SOCKETS
