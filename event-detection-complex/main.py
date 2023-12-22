@@ -21,7 +21,7 @@ async def process_motor_temperature_change(app: KelvinApp, asset, value):
         control_change = ControlChange(
             resource=KRNAssetDataStream(asset, "motor_speed_set_point"),
             payload=speed_decrease_set_point_value,
-            expiration_date=timedelta(minutes=5)
+            expiration_date=timedelta(minutes=10)
         )
 
         if app.assets[asset].parameters["closed_loop"]:
