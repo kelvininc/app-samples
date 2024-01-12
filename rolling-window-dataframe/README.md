@@ -30,10 +30,7 @@ rolling_window = RollingWindow(
 2. Run the application: `python3 main.py`
 3. Open a new terminal and test with the provided CSV file: `kelvin app test csv --csv csv/data.csv --asset-count 1 --publish-rate 1`
 
-
-<video controls>
-  <source src="assets/usage.mp4" type="video/mp4">
-</video>
+https://github.com/kelvininc/app-samples/assets/5788338/6e9cefb0-5ef2-458f-9362-8a48f291758d
 
 # Python Unit Tests
 Run the unit tests: `python3 -m unittest discover -s tests/`
