@@ -11,8 +11,8 @@ We recommend that you start first by reading the official Kelvin Documentation o
 | ----------- | ---- | ----- | ----------- |
 | [Event Detection](event-detection/) | Event Detection | Beginner | This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data and emit a Control Change output. |
 | [Event Detection (Complex)](event-detection-complex/) | Event Detection | Intermediate | This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data and emit a Control Change or Recommendation. This example also leverages Asset Parameters and App Configuration to make the application more dynamic. |
-| [Rolling Window DataFrame](rolling-window-dataframe/) | Rolling Window | Beginner | This application demonstrates the usage of the Kelvin SDK to implement a rolling window of data points using Pandas. |
 | [Multi-Objective Optimization ML](multi-objective-optimization-ml/) | Machine Learning | Intermediate | This application demonstrates the usage of the Kelvin SDK to implement a multi-objective optimization problem using machine learning. |
+| [Rolling Window DataFrame](rolling-window-dataframe/) | Rolling Window | Beginner | This application demonstrates the usage of the Kelvin SDK to implement a rolling window of data points using Pandas. |
 
 
 # Contributing
