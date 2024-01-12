@@ -35,30 +35,30 @@ class RollingWindow:
     A class to manage rolling windows of data for multiple assets.
 
     Attributes:
-        max_size (Optional[int]): The maximum number of entries to keep in each DataFrame.
-        max_duration (Optional[float]): The maximum duration (in seconds) of the window for each DataFrame.
-        round_to (Optional[timedelta]): The rounding interval for timestamps.
-        dataframes (Dict[str, pd.DataFrame]): A dictionary mapping assets to their corresponding DataFrames.
+        max_data_points (Optional[int]): The maximum number of entries to keep in each Asset DataFrame.
+        max_window_duration (Optional[float]): The maximum duration (in seconds) of the window for each Asset DataFrame.
+        timestamp_rounding_interval (Optional[timedelta]): The rounding interval for timestamps since data can arrive misaligned in time.
+        asset_dataframes (Dict[str, pd.DataFrame]): A dictionary mapping assets to their corresponding DataFrames.
     """
 
     def __init__(
         self,
-        max_size: Optional[int] = None,
-        max_duration: Optional[float] = None,
-        round_to: Optional[timedelta] = None,
+        max_data_points: Optional[int] = None,
+        max_window_duration: Optional[float] = None,
+        timestamp_rounding_interval: Optional[timedelta] = None,
     ):
         """
         Constructs all the necessary attributes for the RollingWindow object.
 
         Parameters:
-            max_size (Optional[int]): The maximum number of rows allowed in each DataFrame.
-            max_duration (Optional[float]): The maximum time duration for data in each DataFrame.
-            round_to (Optional[timedelta]): The interval to which timestamp should be rounded.
+            max_data_points (Optional[int]): The maximum number of rows allowed in each Asset DataFrame.
+            max_window_duration (Optional[float]): The maximum time duration for data in each Asset DataFrame.
+            timestamp_rounding_interval (Optional[timedelta]): The interval to which timestamp should be rounded since data can arrive misaligned in time.
         """
-        self.max_size = max_size
-        self.max_duration = max_duration
-        self.round_to = round_to
-        self.dataframes: Dict[str, pd.DataFrame] = {}
+        self.max_data_points = max_data_points
+        self.max_window_duration = max_window_duration
+        self.timestamp_rounding_interval = timestamp_rounding_interval
+        self.asset_dataframes: Dict[str, pd.DataFrame] = {}
 
     def add_message(self, message: Message):
         """
@@ -73,42 +73,44 @@ class RollingWindow:
         value = message.payload
         timestamp = message.timestamp
 
-        # Round the timestamp if a round_to interval was specified
-        if self.round_to is not None:
-            timestamp = round_timestamp(timestamp, self.round_to)
+        # Round the timestamp if a timestamp_rounding_interval interval was specified
+        if self.timestamp_rounding_interval is not None:
+            timestamp = round_timestamp(timestamp, self.timestamp_rounding_interval)
 
         # Check if asset DataFrame exists, if not, create it with timestamp as index
-        if asset not in self.dataframes:
-            self.dataframes[asset] = pd.DataFrame(columns=[datastream])
-            self.dataframes[asset].index.name = "timestamp"
+        if asset not in self.asset_dataframes:
+            self.asset_dataframes[asset] = pd.DataFrame(columns=[datastream])
+            self.asset_dataframes[asset].index.name = "timestamp"
 
         # If the timestamp already exists, update the value, otherwise append a new row
-        self.dataframes[asset].loc[timestamp, datastream] = value
+        self.asset_dataframes[asset].loc[timestamp, datastream] = value
 
         # Ensure the DataFrame is sorted by timestamp
-        self.dataframes[asset] = self.dataframes[asset].sort_index()
+        self.asset_dataframes[asset] = self.asset_dataframes[asset].sort_index()
 
         # Enforce window size constraint
         if (
-            self.max_size is not None
-            and self.max_size > 0
-            and len(self.dataframes[asset]) > self.max_size
+            self.max_data_points is not None
+            and self.max_data_points > 0
+            and len(self.asset_dataframes[asset]) > self.max_data_points
         ):
             # Remove the oldest entry to maintain the size constraint
-            self.dataframes[asset].drop(self.dataframes[asset].index[0], inplace=True)
+            self.asset_dataframes[asset].drop(
+                self.asset_dataframes[asset].index[0], inplace=True
+            )
 
         # Enforce time window constraint
-        if self.max_duration is not None and self.max_duration > 0:
+        if self.max_window_duration is not None and self.max_window_duration > 0:
             # Calculate the cutoff time
-            cutoff_time = self.dataframes[asset].index[-1] - timedelta(
-                seconds=self.max_duration
+            cutoff_time = self.asset_dataframes[asset].index[-1] - timedelta(
+                seconds=self.max_window_duration
             )
             # Keep rows that are within the time window
-            self.dataframes[asset] = self.dataframes[asset][
-                self.dataframes[asset].index >= cutoff_time
+            self.asset_dataframes[asset] = self.asset_dataframes[asset][
+                self.asset_dataframes[asset].index >= cutoff_time
             ]
 
-    def get_dataframe(self, asset: str) -> pd.DataFrame:
+    def get_asset_dataframe(self, asset: str) -> pd.DataFrame:
         """
         Retrieve the DataFrame for a given asset.
 
@@ -118,13 +120,13 @@ class RollingWindow:
         Returns:
             pd.DataFrame: The DataFrame associated with the given asset.
         """
-        return self.dataframes.get(asset, pd.DataFrame())
+        return self.asset_dataframes.get(asset, pd.DataFrame())
 
-    def get_dataframes(self) -> Dict[str, pd.DataFrame]:
+    def get_all_asset_dataframes(self) -> Dict[str, pd.DataFrame]:
         """
         Retrieve all stored DataFrames.
 
         Returns:
             Dict[str, pd.DataFrame]: A dictionary containing all the DataFrames.
         """
-        return self.dataframes
+        return self.asset_dataframes

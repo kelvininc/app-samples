@@ -6,12 +6,10 @@ from kelvin.application import KelvinApp, filters
 from kelvin.message import Number
 from rolling_window import RollingWindow
 
-WINDOW_TIME = 5 * 60  # 5 minutes
-
 
 async def run_calculations(asset: str, df: pd.DataFrame) -> None:
     # Print data frame
-    print(f"# Asset: {asset}")
+    print(f"\n### Asset: {asset}")
     print(df)
 
 
@@ -27,7 +25,9 @@ async def main() -> None:
 
     # Create a rolling window
     rolling_window = RollingWindow(
-        max_duration=WINDOW_TIME, round_to=timedelta(seconds=1)
+        max_window_duration=300,  # max of 5 minutes of data
+        max_data_points=10,  # max of 10 data points
+        timestamp_rounding_interval=timedelta(seconds=1),  # round to the nearest second
     )
 
     while True:
@@ -38,7 +38,7 @@ async def main() -> None:
         rolling_window.add_message(message)
 
         # Retrieve all the dataframes from the rolling window
-        dataframes = rolling_window.get_dataframes()
+        dataframes = rolling_window.get_all_asset_dataframes()
         for asset, df in dataframes.items():
             # Run the calculations for each asset DataFrame
             await run_calculations(asset, df)
