@@ -9,22 +9,22 @@ from kelvin.message.krn import KRNAssetDataStream, KRNAsset
 
 async def process_motor_temperature_change(app: KelvinApp, asset, value):
     # Get App Parameter
-    temperature_threshold_tolerance = app.app_parameters["temperature_threshold_tolerance"]
+    temperature_threshold_tolerance = app.app_configuration["temperature_threshold_tolerance"]
 
     # Get Asset Parameter
-    temperature_max_threshold = app.asset_parameters[asset]["temperature_max_threshold"]
+    temperature_max_threshold = app.assets[asset].parameters["temperature_max_threshold"]
     
     if value > temperature_max_threshold + temperature_threshold_tolerance:
-        speed_decrease_set_point_value = app.asset_parameters[asset]["speed_decrease_set_point"]
+        speed_decrease_set_point_value = app.assets[asset].parameters["speed_decrease_set_point"]
 
         # Build Control Change
         control_change = ControlChange(
             resource=KRNAssetDataStream(asset, "motor_speed_set_point"),
             payload=speed_decrease_set_point_value,
-            expiration_date=timedelta(minutes=5)
+            expiration_date=timedelta(minutes=10)
         )
 
-        if app.asset_parameters[asset]["closed_loop"]:
+        if app.assets[asset].parameters["closed_loop"]:
             # Publish Control Change
             await app.publish(control_change)
 
@@ -52,8 +52,8 @@ async def main() -> None:
     app = KelvinApp()
     await app.connect()
 
-    print("Application Parameters: ", app.app_parameters)
-    print("Asset Parameters: ", app.asset_parameters)
+    print("Application Parameters: ", app.app_configuration)
+    print("Assets: ", app.assets)
 
     # Create a Filtered Queue with Temperature (Number) Input Messages
     motor_temperature_msg_queue: Queue[Number] = app.filter(filters.input_equals("motor_temperature"))
