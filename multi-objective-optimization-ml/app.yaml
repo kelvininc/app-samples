@@ -1,0 +1,55 @@
+app:
+  kelvin:
+    configuration: {}
+    inputs:
+      - name: wire_part_vacuum_foil_level_set_point
+        data_type: number
+      - name: exhaust_fan_3_burner_temperature_set_point
+        data_type: number
+      - name: paper_machine_speed_set_point
+        data_type: number
+      - name: primary_screen_reject_flow_rate_set_point
+        data_type: number
+      - name: turbo_3_vacuum_control_output_set_point
+        data_type: number
+      - name: shoe_press_hydration_tank_level
+        data_type: number
+      - name: low_pressure_steam_flow_rate_set_point
+        data_type: number
+      - name: air_dryer_temperature_set_point
+        data_type: number
+      - name: jw_ratio_volume_flow
+        data_type: number
+      - name: 3p_load_top_side_set_point
+        data_type: number
+      - name: mix_pipe_flow_set_point
+        data_type: number
+      - name: top_dryers_steam_pressure_set_point
+        data_type: number
+      - name: spray_starch_standby_pump_rate_set_point
+        data_type: number
+      - name: paper_substance_weight
+        data_type: number
+      - name: paper_brightness_top_side
+        data_type: number
+      - name: luminance_value_top_side
+        data_type: number
+      - name: luminance_value_bottom_side
+        data_type: number
+    language:
+      python:
+        entry_point: kelvin_python_sdk
+      type: python
+    outputs: []
+    parameters: []
+  type: kelvin
+info:
+  description: multi-objective-optimization-ml
+  name: multi-objective-optimization-ml
+  title: Multi-Objective Optimization ML
+  version: 1.0.0
+spec_version: 4.11.0
+system:
+  environment_vars:
+    - name: KELVIN_GW_MODE
+      value: SOCKETS
