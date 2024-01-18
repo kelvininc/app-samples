@@ -9,9 +9,9 @@ This application ingests Data from a CSV file and publishes it to the Kelvin pla
 
 # Usage
 1. Build/Replace the CSV file:
-   1. File path & name must be `csv/data.csv`
-   2. `timestamp` column is optional
-   3. Each column relates to a Datastream
+   - File path & name must be `csv/data.csv`
+   - `timestamp` column is optional
+   - Each column relates to a Datastream
 
     Example:
     ```
