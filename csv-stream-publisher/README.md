@@ -14,7 +14,7 @@ This application ingests Data from a CSV file and publishes it to the Kelvin pla
    3. Each column relates to a Datastream
 
     Example:
-    ```xls
+    ```
     motor_torque,motor_temperature,motor_speed_set_point,tubing_pressure,gas_flow_rate
     214.5436355,95.02338108,2000,20851.36638,0.7944452821
     358.4114549,86.97313917,2000,22102.36742,0.2205483025
@@ -28,15 +28,15 @@ This application ingests Data from a CSV file and publishes it to the Kelvin pla
       type: kelvin
       kelvin:
         outputs:
-        - data_type: number
+          - data_type: number
             name: motor_torque
-        - data_type: number
+          - data_type: number
             name: motor_temperature
-        - data_type: number
+          - data_type: number
             name: motor_speed_set_point
-        - data_type: number
+          - data_type: number
             name: tubing_pressure
-        - data_type: number
+          - data_type: number
             name: gas_flow_rate
     ...
     ```
