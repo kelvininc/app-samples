@@ -14,12 +14,11 @@ The following diagram illustrates the architecture of the solution:
 
 ![Architecture](./assets/architecture-diagram.jpg)
 
-## Additional Resources
+# Additional Resources
 
 - **Dataset:** The dataset employed for training the model is hosted on Kaggle and can be accessed [here](https://www.kaggle.com/datasets/ravirajsinh45/real-life-industrial-dataset-of-casting-product/data).
 
 - **Pre-trained Model:** The Tensorflow machine learning model used for defect detection is also available on Kaggle. It can be found [here](https://www.kaggle.com/code/ravirajsinh45/simple-model-for-casting-product-classification/notebook).
-
 
 # Requirements
 1. Python 3.8 or higher
