@@ -46,7 +46,4 @@ A Jupyter notebook `jupyter/notebook.ipynb` is provided to demonstrate the usage
 1. Run the application: `python3 main.py`
 2. Open a new terminal and test with the provided CSV file: `kelvin app test csv --csv csv/data.csv --asset-count 1 --publish-rate 0 --offset-timestamps`
 
-
-<video controls>
-  <source src="assets/usage.mp4" type="video/mp4">
-</video>
+https://github.com/kelvininc/app-samples/assets/5788338/eb8b6a6d-1f45-4d98-a0a7-70fac7934931

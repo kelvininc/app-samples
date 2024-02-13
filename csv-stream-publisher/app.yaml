@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://apps.kelvininc.com/schemas/kelvin/4.12.0/app/app.json
+
+spec_version: 4.12.0
+
+info:
+  name: csv-stream-publisher
+  title: CSV Stream Publisher
+  version: 1.0.0
+  description: Ingests and Publishes CSV Data
+
+app:
+  type: kelvin
+  kelvin:
+    language:
+      type: python
+      python:
+        entry_point: kelvin_python_sdk
+
+    inputs: []
+
+    outputs:
+      - data_type: number
+        name: motor_torque
+      - data_type: number
+        name: motor_temperature
+      - data_type: number
+        name: motor_speed_set_point
+      - data_type: number
+        name: tubing_pressure
+      - data_type: number
+        name: gas_flow_rate
+        
+    configuration:
+      publish_rate: 30
+      replay: True
+
+    parameters: []
+system:
+  environment_vars:
+  - name: KELVIN_GW_MODE
+    value: SOCKETS
