@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://apps.kelvininc.com/schemas/kelvin/4.12.0/app/app.json
+spec_version: 4.12.0
+info:
+  name: casting-defect-detection
+  title: Casting Defect Detection
+  version: 1.0.1
+  description: Detects defects in casting products using a Computer Vision model
+app:
+  type: kelvin
+  kelvin:
+    language:
+      type: python
+      python:
+        entry_point: kelvin_python_sdk
+    inputs:
+      - name: camera-feed
+        data_type: string
+    outputs: []
+    configuration: {}
+    parameters: []
+system:
+  environment_vars:
+    - name: KELVIN_GW_MODE
+      value: SOCKETS

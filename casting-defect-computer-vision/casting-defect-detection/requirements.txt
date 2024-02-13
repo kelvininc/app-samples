@@ -1,0 +1,5 @@
+kelvin-python-sdk
+numpy
+tensorflow
+opencv-python
+pillow
