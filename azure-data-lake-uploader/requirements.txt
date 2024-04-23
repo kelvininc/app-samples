@@ -1,0 +1,5 @@
+kelvin-python-sdk
+azure-storage-file-datalake
+aiofiles
+aiohttp
+duckdb

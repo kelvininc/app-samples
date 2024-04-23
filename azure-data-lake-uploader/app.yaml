@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://apps.kelvininc.com/schemas/kelvin/4.12.0/app/app.json
+spec_version: 4.12.0
+info:
+  name: azure-data-lake-uploader
+  title: Azure Data Lake Uploader
+  version: 1.0.0
+  description: Uploads timeseries data to Azure Data Lake Gen2
+app:
+  type: kelvin
+  kelvin:
+    language:
+      type: python
+      python:
+        entry_point: kelvin_python_sdk
+    inputs:
+      - data_type: number
+        name: casing_pressure
+      - data_type: number
+        name: tubing_pressure
+      - data_type: number
+        name: gas_flow_rate
+      - data_type: number
+        name: water_flow_rate
+      - data_type: number
+        name: speed
+    outputs: []
+    configuration:
+      upload_interval: 60
+    parameters: []
+system:
+  environment_vars:
+    - name: KELVIN_GW_MODE
+      value: SOCKETS
+    - name: AZURE_ACCOUNT_NAME
+      value: <% secrets.azure-account-name %>
+    - name: AZURE_ACCOUNT_KEY
+      value: <% secrets.azure-account-key %>
+    - name: AZURE_STORAGE_CONTAINER
+      value: <% secrets.azure-storage-container %>
+  volumes:
+    - name: data
+      target: data.db
+      type: persistent

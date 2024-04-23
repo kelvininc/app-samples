@@ -9,6 +9,7 @@ We recommend that you start first by reading the official Kelvin Documentation o
 
 | Application | Type | Level | Description |
 | ----------- | ---- | ----- | ----------- |
+| [Azure Data Lake Gen2 Uploader](azure-data-lake-uploader/) | Data Uploader | Intermediate | This application demonstrates the use of the Kelvin SDK for uploading streaming data to Azure Data Lake Storage Gen2. |
 | [Casting Defect Detection using Computer Vision](casting-defect-computer-vision/) | Computer Vision | Intermediate | This application demonstrates the usage of the Kelvin SDK to implement a solution to detect manufacturing defects using computer vision and a Tensorflow machine learning model. |
 | [CSV Stream Publisher](csv-stream-publisher/) | CSV Stream Publisher | Beginner | This application ingests Data from a CSV file and publishes it to the Kelvin platform. |
 | [Event Detection](event-detection/) | Event Detection | Beginner | This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data and emit a Control Change output. |
