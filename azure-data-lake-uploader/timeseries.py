@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Union
+from typing import Union
 
 import duckdb
 
@@ -39,7 +39,7 @@ class TimeseriesDataStore:
                 (timestamp, asset, datastream, payload),
             )
 
-    def trim(self, cutoff: Optional[datetime]):
+    def trim(self, cutoff: datetime):
         print(f"triming database up to: '{cutoff.isoformat()}'")
 
         with duckdb.connect(self.db_path) as con:
