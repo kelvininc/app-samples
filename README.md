@@ -9,13 +9,15 @@ We recommend that you start first by reading the official Kelvin Documentation o
 
 | Application | Type | Level | Description |
 | ----------- | ---- | ----- | ----------- |
-| [Azure Data Lake Gen2 Uploader](azure-data-lake-uploader/) | Data Uploader | Intermediate | This application demonstrates the use of the Kelvin SDK for uploading streaming data to Azure Data Lake Storage Gen2. |
-| [Casting Defect Detection using Computer Vision](casting-defect-computer-vision/) | Computer Vision | Intermediate | This application demonstrates the usage of the Kelvin SDK to implement a solution to detect manufacturing defects using computer vision and a Tensorflow machine learning model. |
-| [CSV Stream Publisher](csv-stream-publisher/) | CSV Stream Publisher | Beginner | This application ingests Data from a CSV file and publishes it to the Kelvin platform. |
-| [Event Detection](event-detection/) | Event Detection | Beginner | This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data and emit a Control Change output. |
-| [Event Detection (Complex)](event-detection-complex/) | Event Detection | Intermediate | This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data and emit a Control Change or Recommendation. This example also leverages Asset Parameters and App Configuration to make the application more dynamic. |
-| [Multi-Objective Optimization ML](multi-objective-optimization-ml/) | Machine Learning | Intermediate | This application demonstrates the usage of the Kelvin SDK to implement a multi-objective optimization problem using machine learning. |
-| [Rolling Window DataFrame](rolling-window-dataframe/) | Rolling Window | Beginner | This application demonstrates the usage of the Kelvin SDK to implement a rolling window of data points using Pandas. |
+| [Azure Data Lake Gen2 Uploader](azure-data-lake-uploader/) | Data Uploader | Intermediate | Uploads streaming data to Azure Data Lake Storage Gen2. |
+| [Casting Defect Detection using Computer Vision](casting-defect-computer-vision/) | Computer Vision | Intermediate | Leverages computer vision and a Tensorflow-based model to identify and analyze manufacturing defects in casting processes. |
+| [CSV Stream Publisher](csv-stream-publisher/) | CSV Stream Publisher | Beginner | Ingests Data from a CSV file and publishes it to the Kelvin platform. |
+| [Databricks Delta Table](databricks-delta-table/) | Connector | Intermediate | Establishes a connection with a DataBricks Delta Table and generates Kelvin Recommendations at regular intervals. |
+| [Event Detection](event-detection/) | Event Detection | Beginner | Monitors streaming data to detect and respond to events exceeding pre-set thresholds by emitting a Control Change output. |
+| [Event Detection (Complex)](event-detection-complex/) | Event Detection | Intermediate | Monitors streaming data to detect and respond to events exceeding pre-set thresholds by emitting a Control Change or Recommendation output. This example also leverages Asset Parameters and App Configuration to make the application more dynamic. |
+| [Multi-Objective Optimization ML](multi-objective-optimization-ml/) | Machine Learning | Intermediate | Implements a multi-objective optimization problem using machine learning techniques. |
+| [Rolling Window DataFrame](rolling-window-dataframe/) | Rolling Window | Beginner | Demonstrates the creation of a rolling window using Pandas to manage and analyze time-series data effectively. |
+
 
 
 # Contributing
