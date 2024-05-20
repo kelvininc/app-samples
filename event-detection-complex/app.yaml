@@ -41,7 +41,7 @@ app:
     - name: temperature_max_threshold
       data_type: number
       default:
-        value: 75
+        value: 59
       schema:
         title: "Temperature Max Threshold"
         minimum: 50

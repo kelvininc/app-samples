@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from kelvin.application import KelvinApp, filters
 from kelvin.message import Number, ControlChange, Recommendation
-from kelvin.message.krn import KRNAssetDataStream, KRNAsset
+from kelvin.krn import KRNAssetDataStream, KRNAsset
 
 
 async def process_motor_temperature_change(app: KelvinApp, asset, value):

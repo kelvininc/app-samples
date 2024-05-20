@@ -5,7 +5,7 @@ from datetime import timedelta
 import pandas as pd
 from kelvin.application import KelvinApp, filters
 from kelvin.message import ControlChange, Number, Recommendation
-from kelvin.message.krn import KRNAsset, KRNAssetDataStream
+from kelvin.krn import KRNAsset, KRNAssetDataStream
 from multi_objective_optimization import run_model
 from rolling_window import RollingWindow
 

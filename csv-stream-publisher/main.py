@@ -8,7 +8,8 @@ from pydantic import BaseModel
 
 from kelvin.application import KelvinApp
 from kelvin.logs import logger
-from kelvin.message import Boolean, KRNAssetDataStream, Message, Number, String
+from kelvin.message import Boolean, Message, Number, String
+from kelvin.krn import KRNAssetDataStream
 from kelvin.publisher.publisher import AppConfig, CSVPublisher, MessageData
 
 CONFIG_FILE_PATH = "app.yaml"
