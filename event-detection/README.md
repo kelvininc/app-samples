@@ -1,5 +1,5 @@
 # Event Detection
-This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data and emit a Control Change output.
+This application demonstrates how to use the Kelvin SDK to detect events above a pre-defined threshold in streaming data and emit a Control Change or Recommendation. This example also leverages Dynamic/Runtime Asset Parameters.
 
 # Requirements
 1. Python 3.8 or higher
