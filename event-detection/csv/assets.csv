@@ -1,0 +1,31 @@
+Display Name,Name ID,Asset Type Name ID,Field,Manufacturer
+Motor #01,motor_01,motor,Eagle Ford,Siemens
+Motor #02,motor_02,motor,Permian,ABB
+Motor #03,motor_03,motor,Williston,Schneider
+Motor #04,motor_04,motor,Williston,Siemens
+Motor #05,motor_05,motor,Williston,ABB
+Motor #06,motor_06,motor,Eagle Ford,Schneider
+Motor #07,motor_07,motor,Permian,Siemens
+Motor #08,motor_08,motor,Williston,ABB
+Motor #09,motor_09,motor,Eagle Ford,Schneider
+Motor #10,motor_10,motor,Permian,Siemens
+Motor #11,motor_11,motor,Eagle Ford,ABB
+Motor #12,motor_12,motor,Williston,Schneider
+Motor #13,motor_13,motor,Williston,Siemens
+Motor #14,motor_14,motor,Williston,ABB
+Motor #15,motor_15,motor,Eagle Ford,Schneider
+Motor #16,motor_16,motor,Eagle Ford,Siemens
+Motor #17,motor_17,motor,Permian,ABB
+Motor #18,motor_18,motor,Williston,Schneider
+Motor #19,motor_19,motor,Eagle Ford,Siemens
+Motor #20,motor_20,motor,Eagle Ford,ABB
+Motor #21,motor_21,motor,Williston,Schneider
+Motor #22,motor_22,motor,Eagle Ford,Siemens
+Motor #23,motor_23,motor,Williston,ABB
+Motor #24,motor_24,motor,Williston,Schneider1
+Motor #25,motor_25,motor,Eagle Ford,Siemens
+Motor #26,motor_26,motor,Williston,ABB
+Motor #27,motor_27,motor,Permian,Schneider
+Motor #28,motor_28,motor,Williston,Siemens
+Motor #29,motor_29,motor,Eagle Ford,ABB
+Motor #30,motor_30,motor,Eagle Ford,Schneider

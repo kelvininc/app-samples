@@ -1,0 +1,3 @@
+Display Name,Name ID,Type,Data Type ID,Unit Name ID,Semantic Type ID
+Motor Speed SP,motor_speed_set_point,measurement,number,revolution_per_minute,angular_velocity
+Motor Temperature,motor_temperature,measurement,number,degree_celsius,temperature
