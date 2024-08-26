@@ -5,6 +5,8 @@ import pandas as pd
 from databricks import sql
 from databricks.sdk.core import Config, oauth_service_principal
 
+USER_AGENT = "Kelvin.ai"
+
 
 class DatabricksDeltaTableUploader:
     """
@@ -54,11 +56,13 @@ class DatabricksDeltaTableUploader:
         """
         if self.access_token:
             print("Connecting using access token...")
-            return sql.connect(server_hostname=self.server_hostname, http_path=self.http_path, access_token=self.access_token)
+            return sql.connect(server_hostname=self.server_hostname, http_path=self.http_path, access_token=self.access_token, _user_agent_entry=USER_AGENT)
 
         if self.client_id and self.client_secret:
             print("Connecting using OAuth credentials...")
-            return sql.connect(server_hostname=self.server_hostname, http_path=self.http_path, credentials_provider=self._credential_provider)
+            return sql.connect(
+                server_hostname=self.server_hostname, http_path=self.http_path, credentials_provider=self._credential_provider, _user_agent_entry=USER_AGENT
+            )
 
         raise ValueError("No valid credentials provided for Databricks connection")
 
