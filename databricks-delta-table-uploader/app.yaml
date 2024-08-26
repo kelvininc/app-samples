@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://apps.kelvininc.com/schemas/kelvin/4.12.0/app/app.json
+spec_version: 4.12.0
+info:
+  name: databricks-delta-table-uploader
+  title: databricks-delta-table-uploader
+  version: 1.0.0
+  description: databricks-delta-table-uploader
+app:
+  type: kelvin
+  kelvin:
+    language:
+      type: python
+      python:
+        entry_point: kelvin_python_sdk
+    inputs:
+      - data_type: number
+        name: casing_pressure
+      - data_type: number
+        name: tubing_pressure
+      - data_type: number
+        name: gas_flow_rate
+      - data_type: number
+        name: water_flow_rate
+      - data_type: number
+        name: speed
+    outputs: []
+    configuration:
+      upload_interval: 60
+      batch_size: 1000
+    parameters: []
+system:
+  environment_vars:
+    - name: KELVIN_GW_MODE
+      value: SOCKETS
+    - name: DATABRICKS_SERVER_HOSTNAME
+      value: <% secrets.databricks-server-hostname %>
+    - name: DATABRICKS_HTTP_PATH
+      value: <% secrets.databricks-http-path %>
+    - name: DATABRICKS_TABLE_NAME
+      value: kelvin.edge.data
+    - name: DATABRICKS_ACCESS_TOKEN
+      value: <% secrets.databricks-access-token %>
+    # - name: DATABRICKS_CLIENT_ID
+    #   value: <% secrets.databricks-client-id %>
+    # - name: DATABRICKS_CLIENT_SECRET
+    #   value: <% secrets.databricks-client-secret %>
+
+  volumes:
+    - name: data
+      target: data.db
+      type: persistent

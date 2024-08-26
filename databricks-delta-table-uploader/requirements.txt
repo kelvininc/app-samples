@@ -1,0 +1,6 @@
+kelvin-python-sdk
+databricks-sdk
+databricks-sql-connector
+aiofiles
+aiohttp
+duckdb
