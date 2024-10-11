@@ -1,22 +1,33 @@
 import asyncio
+from datetime import datetime
 
+import aiofiles
+import aiofiles.os
 from kelvin.application import KelvinApp, filters
-
 from timeseries import TimeseriesDataStore
-from uploader import DatabricksDeltaTableUploader
+from uploader import DatabricksUCVolumeUploader
 
 
-async def upload(app: KelvinApp, data_store: TimeseriesDataStore, uploader: DatabricksDeltaTableUploader):
+async def upload(app: KelvinApp, data_store: TimeseriesDataStore, uploader: DatabricksUCVolumeUploader):
+
+    # Create export dir
+    await aiofiles.os.makedirs("export/", exist_ok=True)
 
     while True:
         batch_size = app.app_configuration.get("batch_size", 1000)
         upload_interval = app.app_configuration.get("upload_interval", 30)
 
-        try:
-            df, chunk_size = await data_store.export_df(limit=batch_size)
+        export_file = f"export/{datetime.now().isoformat()}.parquet"
 
-            if df is not None and not df.empty:
-                await uploader.upload(df)
+        try:
+            # Export to parquet file
+            _, chunk_size = await data_store.export_parquet(file_path=export_file, limit=batch_size)
+
+            # Upload file if exists
+            if await aiofiles.os.path.exists(export_file):
+                await uploader.upload(file_path=export_file)
+
+                # We should only trim data store if upload was successfully
                 await data_store.trim(limit=batch_size)
 
                 # Skip sleep if batch_size was full
@@ -32,12 +43,17 @@ async def upload(app: KelvinApp, data_store: TimeseriesDataStore, uploader: Data
         except Exception as e:
             print(f"Error occurred during upload: {e}")
             await asyncio.sleep(upload_interval)
+        finally:
+            # Remove file if exists
+            if await aiofiles.os.path.exists(export_file):
+                await aiofiles.os.remove(export_file)
 
 
 async def main() -> None:
 
     # Configure the Databricks Delta Table Uploader
-    uploader = DatabricksDeltaTableUploader()
+    uploader = DatabricksUCVolumeUploader()
+    await uploader.setup()
 
     # Configure the Timeseries Database
     data_store = TimeseriesDataStore(db_path="data.db")

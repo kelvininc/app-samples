@@ -13,6 +13,7 @@ We recommend that you start first by reading the official Kelvin Documentation o
 | [Casting Defect Detection using Computer Vision](casting-defect-computer-vision/) | Computer Vision | Intermediate | Leverages computer vision and a Tensorflow-based model to identify and analyze manufacturing defects in casting processes. |
 | [CSV Stream Publisher](csv-stream-publisher/) | CSV Stream Publisher | Beginner | Ingests Data from a CSV file and publishes it to the Kelvin platform. |
 | [Databricks Delta Table Uploader](databricks-delta-table-uploader/) | Data Uploader | Intermediate |  Uploads streaming data to Databricks Delta Table. |
+| [Databricks Volume Uploader](databricks-volume-uploader/) | Data Uploader | Intermediate |  Uploads streaming data to Databricks Volume. |
 | [Event Detection](event-detection/) | Event Detection | Beginner | Monitors streaming data to detect and respond to events exceeding pre-set thresholds by emitting a Control Change output. |
 | [Event Detection (Complex)](event-detection-complex/) | Event Detection | Intermediate | Monitors streaming data to detect and respond to events exceeding pre-set thresholds by emitting a Control Change or Recommendation output. This example also leverages Asset Parameters and App Configuration to make the application more dynamic. |
 | [Multi-Objective Optimization ML](multi-objective-optimization-ml/) | Machine Learning | Intermediate | Implements a multi-objective optimization problem using machine learning techniques. |

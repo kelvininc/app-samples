@@ -5,7 +5,7 @@ import pandas as pd
 from databricks import sql
 from databricks.sdk.core import Config, oauth_service_principal
 
-USER_AGENT = "Kelvin.ai"
+USER_AGENT = "kelvin.ai"
 
 
 class DatabricksDeltaTableUploader:
@@ -20,7 +20,7 @@ class DatabricksDeltaTableUploader:
         access_token (Optional[str]): The access token for authentication.
         client_id (Optional[str]): The client ID for OAuth authentication.
         client_secret (Optional[str]): The client secret for OAuth authentication.
-        table_name (Optional[str]): The name of the Delta table in Databricks.
+        delta_table (Optional[str]): The name of the Delta table in Databricks.
     """
 
     def __init__(self):
@@ -32,7 +32,7 @@ class DatabricksDeltaTableUploader:
         self.access_token = os.getenv("DATABRICKS_ACCESS_TOKEN")
         self.client_id = os.getenv("DATABRICKS_CLIENT_ID")
         self.client_secret = os.getenv("DATABRICKS_CLIENT_SECRET")
-        self.table_name = os.getenv("DATABRICKS_TABLE_NAME")
+        self.delta_table = os.getenv("DATABRICKS_DELTA_TABLE")
 
     def _credential_provider(self) -> oauth_service_principal:
         """
@@ -66,31 +66,6 @@ class DatabricksDeltaTableUploader:
 
         raise ValueError("No valid credentials provided for Databricks connection")
 
-    async def setup(self) -> None:
-        """
-        Asynchronously sets up the Delta table by creating it if it does not exist.
-        """
-        await asyncio.to_thread(self._setup)
-
-    def _setup(self) -> None:
-        """
-        Synchronously sets up the Delta table by creating it if it does not exist.
-        """
-        print(f"Setting up Delta table: '{self.table_name}'")
-
-        # SQL query to create the Delta table
-        create_table_query = f"""
-        CREATE TABLE IF NOT EXISTS {self.table_name} 
-        (timestamp TIMESTAMP, asset STRING, datastream STRING, payload DOUBLE)
-        USING DELTA;
-        """
-
-        with self._connect() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(create_table_query)
-
-        print(f"Successfully created Delta table: '{self.table_name}'")
-
     async def upload(self, df: pd.DataFrame) -> None:
         """
         Asynchronously uploads a Pandas DataFrame to the Delta table.
@@ -107,7 +82,7 @@ class DatabricksDeltaTableUploader:
         Args:
             df (pd.DataFrame): The DataFrame containing the data to upload.
         """
-        print(f"Uploading DataFrame with {len(df)} records to Delta table: '{self.table_name}'")
+        print(f"Uploading DataFrame with {len(df)} records to Delta table: '{self.delta_table}'")
 
         # Convert Timestamps to strings
         df["timestamp"] = df["timestamp"].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S.%f") if isinstance(x, pd.Timestamp) else x)
@@ -115,7 +90,7 @@ class DatabricksDeltaTableUploader:
         # Generate the SQL INSERT query
         rows = [f"('{row[0]}', '{row[1]}', '{row[2]}', {row[3]})" for row in df.itertuples(index=False, name=None)]
         insert_query = f"""
-        INSERT INTO {self.table_name} (timestamp, asset, datastream, payload)
+        INSERT INTO {self.delta_table} (timestamp, asset, datastream, payload)
         VALUES {', '.join(rows)}
         """
 
@@ -123,4 +98,4 @@ class DatabricksDeltaTableUploader:
             with connection.cursor() as cursor:
                 cursor.execute(insert_query)
 
-        print(f"Successfully uploaded {len(df)} records to Delta table: '{self.table_name}'")
+        print(f"Successfully uploaded {len(df)} records to Delta table: '{self.delta_table}'")
