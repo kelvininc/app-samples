@@ -1,3 +1,4 @@
+import os
 import posixpath
 
 import aiofiles
@@ -7,9 +8,11 @@ from azure.storage.filedatalake.aio import DataLakeServiceClient
 
 class AzureDataLakeStorageUploader:
 
-    def __init__(self, account_name: str, account_key: str, container_name: str):
-        self.service_client = DataLakeServiceClient(account_url=f"https://{account_name}.dfs.core.windows.net", credential=account_key)
-        self.container_name = container_name
+    def __init__(self):
+        self.account_name = os.getenv("AZURE_ACCOUNT_NAME")
+        self.account_key = os.getenv("AZURE_ACCOUNT_KEY")
+        self.container_name = os.getenv("AZURE_STORAGE_CONTAINER")
+        self.service_client = DataLakeServiceClient(account_url=f"https://{self.account_name}.dfs.core.windows.net", credential=self.account_key)
 
     async def upload(self, file_path: str, dest_dir: str = ""):
         print(f"uploading file '{file_path}' to adls container: '{self.container_name}'")

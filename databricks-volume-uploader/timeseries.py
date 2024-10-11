@@ -105,7 +105,7 @@ class TimeseriesDataStore:
             - For 'df', the first element is a Pandas DataFrame, and the second element is the number of records.
             - For None (default dictionary export), the first element is a dictionary and the second element is the number of records.
         """
-        print(f"Exporting database values into {format} {'file: ' + file_path if file_path else ''}")
+        print(f"Exporting database values into {format} {'file' if file_path else ''}")
 
         query = f"""
             SELECT timestamp, asset, datastream, payload

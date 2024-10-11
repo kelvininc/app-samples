@@ -42,7 +42,7 @@ GRANT MODIFY ON TABLE <catalog_name>.<schema_name>.<table_name> TO `user1`;
 1. Python 3.9 or higher
 2. Install Kelvin SDK: `pip3 install kelvin-sdk`
 3. Install project dependencies: `pip3 install -r requirements.txt`
-4. Docker (optional) for upload the application to a Kelvin Instance.
+4. Docker (optional) for upload the application to Kelvin Cloud.
 
 # Local Usage
 1. Define Databricks environment variables:
