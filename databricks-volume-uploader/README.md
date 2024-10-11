@@ -20,12 +20,6 @@ To begin, create a new volume using the following command:
 CREATE VOLUME <catalog>.<schema>.<volume>;
 ```
 
-If you want to specify an external location, such as an S3 bucket, use:
-
-```sql
-CREATE VOLUME <catalog>.<schema>.<volume> LOCATION 's3://<your-bucket>/<external-location>';
-```
-
 ## 2. Create Delta Table
 
 Next, create a Delta Table with the following command:
@@ -45,18 +39,18 @@ USING DELTA;
 You need to grant the necessary permissions for the application to access the Volume and Delta Table:
 
 ```sql
-GRANT USE CATALOG ON CATALOG <catalog_name> TO `user1`;
-GRANT USE SCHEMA ON SCHEMA <catalog_name>.<schema_name> TO `user1`;
+GRANT USE CATALOG ON CATALOG <catalog_name> TO `<service principal id>`;
+GRANT USE SCHEMA ON SCHEMA <catalog_name>.<schema_name> TO `<service principal id>`;
 
-GRANT READ VOLUME ON VOLUME <catalog_name>.<schema_name>.<volume_name> TO `user1`;
-GRANT WRITE VOLUME ON VOLUME <catalog_name>.<schema_name>.<volume_name> TO `user1`;
+GRANT READ VOLUME ON VOLUME <catalog_name>.<schema_name>.<volume_name> TO `<service principal id>`;
+GRANT WRITE VOLUME ON VOLUME <catalog_name>.<schema_name>.<volume_name> TO `<service principal id>`;
 ```
 
 If you plan to use a data ingestion job, grant these additional permissions:
 
 ```sql
-GRANT SELECT ON TABLE <catalog_name>.<schema_name>.<table_name> TO `user1`;
-GRANT MODIFY ON TABLE <catalog_name>.<schema_name>.<table_name> TO `user1`;
+GRANT SELECT ON TABLE <catalog_name>.<schema_name>.<table_name> TO `<service principal id>`;
+GRANT MODIFY ON TABLE <catalog_name>.<schema_name>.<table_name> TO `<service principal id>`;
 ```
 
 ## 4. Configure Data Ingestion
