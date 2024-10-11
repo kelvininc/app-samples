@@ -122,7 +122,7 @@ This job is automatically triggered when new files are added to the volume.
 
 2. Define Databricks Job environment variables:
 
-    - If using **Auto Loader**:
+    - If using **Auto Loader** (Recommended):
         ```
         export DATABRICKS_JOB_CLUSTER_ID="..."
         ```
@@ -134,7 +134,7 @@ This job is automatically triggered when new files are added to the volume.
 
 3. Define Databricks Authentication environment variables:
 
-    - If using **OAuth machine-to-machine (M2M)**:
+    - If using **OAuth machine-to-machine (M2M)** (Recommended):
         ```
         export DATABRICKS_CLIENT_ID="..."
         export DATABRICKS_CLIENT_SECRET="..."
@@ -157,7 +157,7 @@ kelvin secret create databricks-delta-table --value "<catalog>.<schema>.<table>"
 kelvin secret create databricks-uc-volume --value "<catalog>.<schema>.<volume>"
 ```
 
-- If using **Auto Loader**:
+- If using **Auto Loader** (Recommended):
     ```
     kelvin secret create databricks-job-cluster-id --value "<cluster-id>"
     ```
@@ -167,7 +167,7 @@ kelvin secret create databricks-uc-volume --value "<catalog>.<schema>.<volume>"
     kelvin secret create databricks-job-warehouse-id --value "<warehouse-id>"
     ```
 
-- If using **OAuth machine-to-machine (M2M)**:
+- If using **OAuth machine-to-machine (M2M)** (Recommended):
     ```
     kelvin secret create databricks-client-id --value "<client-id>"
     kelvin secret create databricks-client-secret --value "<client-secret>"
