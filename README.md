@@ -9,6 +9,7 @@ We recommend that you start first by reading the official Kelvin Documentation o
 
 | Application | Type | Level | Description |
 | ----------- | ---- | ----- | ----------- |
+| [AWS S3 Uploader](aws-s3-uploader/) | Data Uploader | Intermediate | Uploads streaming data to AWS S3 Bucket. |
 | [Azure Data Lake Gen2 Uploader](azure-data-lake-uploader/) | Data Uploader | Intermediate | Uploads streaming data to Azure Data Lake Storage Gen2. |
 | [Casting Defect Detection using Computer Vision](casting-defect-computer-vision/) | Computer Vision | Intermediate | Leverages computer vision and a Tensorflow-based model to identify and analyze manufacturing defects in casting processes. |
 | [CSV Stream Publisher](csv-stream-publisher/) | CSV Stream Publisher | Beginner | Ingests Data from a CSV file and publishes it to the Kelvin platform. |

@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=https://apps.kelvininc.com/schemas/kelvin/4.12.0/app/app.json
+spec_version: 4.12.0
+info:
+  name: aws-s3-exporter
+  title: AWS S3 Exporter
+  version: 1.0.0
+  description: Uploads timeseries data to AWS S3 Bucket
+app:
+  type: kelvin
+  kelvin:
+    language:
+      type: python
+      python:
+        entry_point: kelvin_python_sdk
+    inputs:
+      - data_type: number
+        name: casing_pressure
+      - data_type: number
+        name: tubing_pressure
+      - data_type: number
+        name: gas_flow_rate
+      - data_type: number
+        name: water_flow_rate
+      - data_type: number
+        name: speed
+    outputs: []
+    configuration:
+      upload_interval: 60
+    parameters: []
+system:
+  environment_vars:
+    - name: KELVIN_GW_MODE
+      value: SOCKETS
+    - name: AWS_ACCESS_KEY_ID
+      value: <% secrets.aws-access-key-id %>
+    - name: AWS_SECRET_ACCESS_KEY
+      value: <% secrets.aws-secret-access-key %>
+    - name: AWS_REGION
+      value: us-east-1
+    - name: AWS_S3_BUCKET
+      value: timeseries
+  volumes:
+    - name: data
+      target: data.db
+      type: persistent
