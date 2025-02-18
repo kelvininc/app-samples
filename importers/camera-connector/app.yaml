@@ -1,9 +1,9 @@
 spec_version: 5.0.0
 type: importer
 
-name: camera-importer
-title: Camera Importer
-description: Publishes camera feed images to Kelvin Platform
+name: camera-connector
+title: Camera Connector
+description: Publishes camera feed images to Kelvin Platform.
 version: 1.0.2
 
 flags:

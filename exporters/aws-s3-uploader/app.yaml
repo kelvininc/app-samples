@@ -1,10 +1,10 @@
 spec_version: 5.0.0
 type: exporter
 
-name: aws-s3-exporter
-title: AWS S3 Exporter
+name: aws-s3-uploader
+title: AWS S3 Uploader
 version: 1.0.0
-description: Uploads timeseries data to AWS S3 Bucket
+description: Uploads timeseries data to an AWS S3 Bucket.
 
 flags:
   enable_runtime_update:

@@ -1,4 +1,4 @@
-# Camera Importer
+# Camera Connector
 Simulates image capture from a camera and publishes the image in base64 format to the Kelvin Platform. In production environments, it would interface directly with live camera feeds to acquire real-time images.
 
 # Requirements
