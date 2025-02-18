@@ -1,0 +1,17 @@
+spec_version: 5.0.0
+type: importer
+
+name: camera-importer
+title: Camera Importer
+description: Publishes camera feed images to Kelvin Platform
+version: 1.0.2
+
+flags:
+  enable_runtime_update:
+    io: false
+    configuration: false
+
+importer_io:
+  - name: default
+    data_types:
+      - camera-image

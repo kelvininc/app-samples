@@ -1,0 +1,18 @@
+{
+    "type": "object",
+    "properties": {
+      "upload_interval": {
+        "type": "number",
+        "default": 60,
+        "title": "Upload Interval",
+        "minimum": 0
+      },
+      "batch_size": {
+        "type": "number",
+        "default": 1000,
+        "title": "Batch Size",
+        "minimum": 0
+      }
+    },
+    "required": ["upload_interval", "batch_size"]
+}

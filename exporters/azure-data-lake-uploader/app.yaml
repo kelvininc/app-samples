@@ -1,0 +1,34 @@
+spec_version: 5.0.0
+type: exporter
+
+name: azure-data-lake-uploader
+title: Azure Data Lake Uploader
+description: Uploads timeseries data to Azure Data Lake Gen2
+version: 1.0.0
+
+flags:
+  enable_runtime_update:
+    io: false
+    configuration: false
+
+exporter_io:
+  - name: timeseries_data
+    data_types:
+      - number
+
+defaults:
+  configuration:
+      upload_interval: 60
+      
+  system:
+    environment_vars:
+      - name: AZURE_ACCOUNT_NAME
+        value: <% secrets.azure-account-name %>
+      - name: AZURE_ACCOUNT_KEY
+        value: <% secrets.azure-account-key %>
+      - name: AZURE_STORAGE_CONTAINER
+        value: <% secrets.azure-storage-container %>
+    volumes:
+      - name: data
+        target: data.db
+        type: persistent

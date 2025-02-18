@@ -1,0 +1,42 @@
+spec_version: 5.0.0
+type: exporter
+
+name: databricks-delta-table-uploader
+title: Databricks Delta Table Uploader
+description: This app uploads data to a Databricks Delta Table.
+version: 1.0.4
+
+flags:
+  enable_runtime_update:
+    io: false
+    configuration: false
+
+exporter_io:
+  - name: timeseries_data
+    data_types:
+      - number
+
+defaults:
+  configuration:
+    upload_interval: 60
+    batch_size: 1000
+    
+  system:
+    environment_vars:
+      - name: DATABRICKS_SERVER_HOSTNAME
+        value: <% secrets.databricks-server-hostname %>
+      - name: DATABRICKS_HTTP_PATH
+        value: <% secrets.databricks-http-path %>
+      - name: DATABRICKS_DELTA_TABLE
+        value: <% secrets.databricks-delta-table %>
+      - name: DATABRICKS_CLIENT_ID
+        value: <% secrets.databricks-client-id %>
+      - name: DATABRICKS_CLIENT_SECRET
+        value: <% secrets.databricks-client-secret %>
+      # - name: DATABRICKS_ACCESS_TOKEN
+      #   value: <% secrets.databricks-access-token %>
+      
+    volumes:
+      - name: data
+        target: data.db
+        type: persistent

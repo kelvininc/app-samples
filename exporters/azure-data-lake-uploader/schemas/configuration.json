@@ -1,0 +1,12 @@
+{
+    "type": "object",
+    "properties": {
+      "upload_interval": {
+        "type": "number",
+        "default": 60,
+        "title": "Upload Interval",
+        "minimum": 0
+      }
+    },
+    "required": ["upload_interval"]
+}

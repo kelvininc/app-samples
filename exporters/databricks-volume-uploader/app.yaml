@@ -1,0 +1,45 @@
+spec_version: 5.0.0
+type: exporter
+
+name: databricks-volume-uploader
+title: Databricks Volume Uploader
+description: This app uploads data to a Databricks Unity Catalog Volume.
+version: 1.0.0
+
+flags:
+  enable_runtime_update:
+    io: false
+    configuration: false
+
+exporter_io:
+  - name: timeseries_data
+    data_types:
+      - number
+
+defaults:
+  configuration:
+    upload_interval: 60
+    batch_size: 1000
+    
+  system:
+    environment_vars:
+      - name: DATABRICKS_SERVER_HOSTNAME
+        value: <% secrets.databricks-server-hostname %>
+      - name: DATABRICKS_DELTA_TABLE
+        value: <% secrets.databricks-delta-table %>
+      - name: DATABRICKS_UC_VOLUME
+        value: <% secrets.databricks-uc-volume %>
+      - name: DATABRICKS_CLIENT_ID
+        value: <% secrets.databricks-client-id %>
+      - name: DATABRICKS_CLIENT_SECRET
+        value: <% secrets.databricks-client-secret %>
+      # - name: DATABRICKS_ACCESS_TOKEN
+      #   value: <% secrets.databricks-access-token %>
+      - name: DATABRICKS_JOB_CLUSTER_ID
+        value: <% secrets.databricks-job-cluster-id %>
+      # - name: DATABRICKS_JOB_WAREHOUSE_ID
+      #   value: <% secrets.databricks-job-warehouse-id %>
+    volumes:
+      - name: data
+        target: data.db
+        type: persistent
