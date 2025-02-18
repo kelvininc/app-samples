@@ -12,9 +12,12 @@ flags:
     configuration: false
 
 exporter_io:
-  - name: timeseries_data
+  - name: default
     data_types:
       - number
+
+ui_schemas:
+  configuration: "schemas/configuration.json"
 
 defaults:
   configuration:
