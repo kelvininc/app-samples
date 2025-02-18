@@ -5,7 +5,7 @@ This application demonstrates the usage of the Kelvin SDK to implement a solutio
 
 The solution consists of two main components:
 
-1. [Camera Connector] (../../importers/camera-connector): Simulates image capture from a camera and publishes the image in base64 format to the Kelvin Platform. In production environments, it would interface directly with live camera feeds to acquire real-time images.
+1. **Camera Connector ( ../../importers/camera-connector ):** Simulates image capture from a camera and publishes the image in base64 format to the Kelvin Platform. In production environments, it would interface directly with live camera feeds to acquire real-time images.
 
 2. **Casting Defect Detection:** Processes the acquired images to identify casting defects using a pre-trained TensorFlow machine learning model. It evaluates the images for any anomalies and reports the findings back to the Kelvin Platform for further analysis.
 
