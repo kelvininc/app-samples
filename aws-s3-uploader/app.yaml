@@ -31,11 +31,13 @@ system:
   environment_vars:
     - name: KELVIN_GW_MODE
       value: SOCKETS
+    - name: AWS_S3_OUTPOST_URL # optional environment variable for AWS Outposts
+      value: https://s3-outposts.us-east-1.amazonaws.com
     - name: AWS_ACCESS_KEY_ID
       value: <% secrets.aws-access-key-id %>
     - name: AWS_SECRET_ACCESS_KEY
       value: <% secrets.aws-secret-access-key %>
-    - name: AWS_REGION
+    - name: AWS_REGION # optional environment variable for AWS Outposts
       value: us-east-1
     - name: AWS_S3_BUCKET
       value: timeseries

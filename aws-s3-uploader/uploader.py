@@ -10,17 +10,18 @@ import boto3
 class AWSS3Uploader:
     def __init__(self):
         # Read AWS credentials from environment variables (or rely on AWS's default credential chain)
+        self.outpost_url = os.getenv("AWS_S3_OUTPOST_URL", None)  # Only set
         self.aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
         self.aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
         self.region_name = os.getenv("AWS_REGION", "us-east-1")  # Default region can be changed as needed
         self.bucket_name = os.getenv("AWS_S3_BUCKET")
-
         # Create the boto3 S3 client
         self.s3_client = boto3.client(
             "s3",
             aws_access_key_id=self.aws_access_key_id,
             aws_secret_access_key=self.aws_secret_access_key,
             region_name=self.region_name,
+            endpoint_url=self.outpost_url,
         )
 
     async def upload(self, file_path: str, dest_dir: str = ""):
