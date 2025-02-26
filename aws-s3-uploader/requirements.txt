@@ -1,4 +1,4 @@
-kelvin-python-sdk
+kelvin-python-sdk==0.1.3
 boto3
 aiofiles
 duckdb
