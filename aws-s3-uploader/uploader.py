@@ -13,8 +13,9 @@ class AWSS3Uploader:
         self.outpost_url = os.getenv("AWS_S3_OUTPOST_URL", None)  # Only set
         self.aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
         self.aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-        self.region_name = os.getenv("AWS_REGION", "us-east-1")  # Default region can be changed as needed
+        self.region_name = os.getenv("AWS_REGION")
         self.bucket_name = os.getenv("AWS_S3_BUCKET")
+        self.dest_dir = os.getenv("AWS_DEST_FOLDER", "")
         # Create the boto3 S3 client
         self.s3_client = boto3.client(
             "s3",
@@ -24,8 +25,10 @@ class AWSS3Uploader:
             endpoint_url=self.outpost_url,
         )
 
-    async def upload(self, file_path: str, dest_dir: str = ""):
+    async def upload(self, file_path: str, dest_dir: str = None):
         """Asynchronously upload a file to an S3 bucket."""
+        if dest_dir is None:
+            dest_dir = self.dest_dir
 
         print(f"Uploading file '{file_path}' to S3 bucket: '{self.bucket_name}'")
 

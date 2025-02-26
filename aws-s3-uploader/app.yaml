@@ -40,7 +40,9 @@ system:
     - name: AWS_REGION # optional environment variable for AWS Outposts
       value: us-east-1
     - name: AWS_S3_BUCKET
-      value: timeseries
+      value: db-outposts
+    - name: AWS_DEST_FOLDER #optional destination folder in the bucket
+      value: kelvin/data
   volumes:
     - name: data
       target: data.db
