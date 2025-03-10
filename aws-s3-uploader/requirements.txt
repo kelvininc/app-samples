@@ -1,4 +1,0 @@
-kelvin-python-sdk
-boto3
-aiofiles
-duckdb
