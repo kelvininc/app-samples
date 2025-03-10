@@ -1,0 +1,39 @@
+spec_version: 5.0.0
+type: exporter
+
+name: aws-s3-uploader
+title: AWS S3 Uploader
+version: 1.0.0
+description: Uploads timeseries data to an AWS S3 Bucket.
+
+flags:
+  enable_runtime_update:
+    io: false
+    configuration: false
+
+exporter_io:
+  - name: default
+    data_types:
+      - number
+
+ui_schemas:
+  configuration: "schemas/configuration.json"
+
+defaults:
+  configuration:
+    upload_interval: 60
+
+  system:
+    environment_vars:
+      - name: AWS_ACCESS_KEY_ID
+        value: <% secrets.aws-access-key-id %>
+      - name: AWS_SECRET_ACCESS_KEY
+        value: <% secrets.aws-secret-access-key %>
+      - name: AWS_REGION
+        value: us-east-1
+      - name: AWS_S3_BUCKET
+        value: timeseries
+    volumes:
+      - name: data
+        target: data.db
+        type: persistent

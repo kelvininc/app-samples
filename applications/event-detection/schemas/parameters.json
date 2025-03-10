@@ -1,0 +1,29 @@
+{
+    "type": "object",
+    "properties": {
+        "closed_loop": {
+            "type": "boolean",
+            "default": false,
+            "title": "Closed Loop"
+        },
+        "speed_decrease_set_point": {
+            "type": "number",
+            "default": 1000,
+            "title": "Speed Decrease SetPoint",
+            "minimum": 1000,
+            "maximum": 3000
+        },
+        "temperature_max_threshold": {
+            "type": "number",
+            "default": 59,
+            "title": "Temperature Max Threshold",
+            "minimum": 50,
+            "maximum": 100
+        }
+    },
+    "required": [
+        "closed_loop",
+        "speed_decrease_set_point",
+        "temperature_max_threshold"
+    ]
+}

@@ -1,0 +1,42 @@
+spec_version: 5.0.0
+type: smart-app
+
+name: event-detection
+title: Event Detection
+description: Monitors if a motor is overheating. If so, it will send a Control Change/Recommendation to reduce the Motor Speed.
+version: 1.0.0
+category: smartapp
+
+flags:
+  enable_runtime_update:
+    configuration: false
+    resources: false
+    parameters: true
+    resource_properties: true
+
+data_streams:
+  inputs:
+    - data_type: number
+      name: motor_temperature
+
+control_changes:
+  outputs:
+    - name: motor_speed_set_point
+      data_type: number
+
+ui_schemas:
+  parameters: "schemas/parameters.json"
+
+parameters:
+  - name: closed_loop
+    data_type: boolean
+  - name: speed_decrease_set_point
+    data_type: number
+  - name: temperature_max_threshold
+    data_type: number
+
+defaults:
+  parameters:
+    closed_loop: false
+    speed_decrease_set_point: 1000
+    temperature_max_threshold: 59

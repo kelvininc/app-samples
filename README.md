@@ -9,18 +9,14 @@ We recommend that you start first by reading the official Kelvin Documentation o
 
 | Application | Type | Level | Description |
 | ----------- | ---- | ----- | ----------- |
-| [AWS S3 Uploader](aws-s3-uploader/) | Data Uploader | Intermediate | Uploads streaming data to AWS S3 Bucket. |
-| [Azure Data Lake Gen2 Uploader](azure-data-lake-uploader/) | Data Uploader | Intermediate | Uploads streaming data to Azure Data Lake Storage Gen2. |
-| [Casting Defect Detection using Computer Vision](casting-defect-computer-vision/) | Computer Vision | Intermediate | Leverages computer vision and a Tensorflow-based model to identify and analyze manufacturing defects in casting processes. |
-| [CSV Stream Publisher](csv-stream-publisher/) | CSV Stream Publisher | Beginner | Ingests Data from a CSV file and publishes it to the Kelvin platform. |
-| [Databricks Delta Table Uploader](databricks-delta-table-uploader/) | Data Uploader | Intermediate |  Uploads streaming data to Databricks Delta Table. |
-| [Databricks Volume Uploader](databricks-volume-uploader/) | Data Uploader | Intermediate |  Uploads streaming data to Databricks Volume. |
-| [Event Detection](event-detection/) | Event Detection | Beginner | Monitors streaming data to detect and respond to events exceeding pre-set thresholds by emitting a Control Change output. |
-| [Event Detection (Complex)](event-detection-complex/) | Event Detection | Intermediate | Monitors streaming data to detect and respond to events exceeding pre-set thresholds by emitting a Control Change or Recommendation output. This example also leverages Asset Parameters and App Configuration to make the application more dynamic. |
-| [Multi-Objective Optimization ML](multi-objective-optimization-ml/) | Machine Learning | Intermediate | Implements a multi-objective optimization problem using machine learning techniques. |
-| [Rolling Window DataFrame](rolling-window-dataframe/) | Rolling Window | Beginner | Demonstrates the creation of a rolling window using Pandas to manage and analyze time-series data effectively. |
-
-
+| [AWS S3 Uploader](exporters/aws-s3-uploader/) | Exporter | Intermediate | Uploads timeseries data to an AWS S3 Bucket. |
+| [Azure Data Lake Gen2 Uploader](exporters/azure-data-lake-uploader/) | Exporter | Intermediate | Uploads streaming data to Azure Data Lake Storage Gen2. |
+| [Databricks Delta Table Uploader](exporters/databricks-delta-table-uploader/) | Exporter | Intermediate |  Uploads streaming data to Databricks Delta Table. |
+| [Databricks Volume Uploader](exporters/databricks-volume-uploader/) | Exporter | Intermediate |  Uploads streaming data to Databricks Volume. |
+| [Camera Connector](importers/camera-connector/) | Importer | Intermediate |  Publishes camera feed images to Kelvin Platform. |
+| [Casting Defect Detection](applications/casting-defect-detection/) | Computer Vision (App) | Intermediate | Leverages computer vision and a Tensorflow-based model to identify and analyze manufacturing defects in casting processes. |
+| [Event Detection](applications/event-detection/) | Event Detection (App) | Intermediate | Monitors streaming data to detect and respond to events exceeding pre-set thresholds by emitting a Control Change or Recommendation output. This example also leverages Asset Parameters and App Configuration to make the application more dynamic. |
+| [Multi-Objective Optimization ML](applications/multi-objective-optimization-ml/) | Machine Learning (App) | Intermediate | Implements a multi-objective optimization problem using machine learning techniques. |
 
 # Contributing
 1. Fork the project.

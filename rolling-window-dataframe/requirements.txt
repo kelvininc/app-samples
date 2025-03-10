@@ -1,2 +1,0 @@
-kelvin-python-sdk
-pandas
