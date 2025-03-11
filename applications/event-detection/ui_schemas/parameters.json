@@ -20,10 +20,5 @@
             "minimum": 50,
             "maximum": 100
         }
-    },
-    "required": [
-        "closed_loop",
-        "speed_decrease_set_point",
-        "temperature_max_threshold"
-    ]
+    }
 }
