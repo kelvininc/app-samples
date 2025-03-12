@@ -25,7 +25,7 @@ control_changes:
       data_type: number
 
 ui_schemas:
-  parameters: "schemas/parameters.json"
+  parameters: "ui_schemas/parameters.json"
 
 parameters:
   - name: closed_loop
