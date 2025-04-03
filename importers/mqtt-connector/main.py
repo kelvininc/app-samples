@@ -6,7 +6,8 @@ from pydantic.v1 import BaseSettings, ValidationError
 from kelvin.application import KelvinApp, ResourceDatastream, AssetInfo
 from kelvin.krn import KRNAssetDataStream
 from kelvin.logs import logger
-from kelvin.message import KMessageTypeData, Message
+from kelvin.message import KMessageTypeData, Message, KMessageTypePrimitive
+from kelvin.message.msg_type import PrimitiveTypes
 
 
 class MQTTConfig(BaseSettings):
@@ -35,18 +36,39 @@ class MQTTImporterApplication:
         topic = message.topic.value
         logger.debug("Received message", topic=topic, payload=message.payload)
 
+        asset, datastream, msg_type = self.get_resources_from_topic(topic)
+
         if isinstance(message.payload, bytes):
             payload = message.payload.decode("utf-8")
+        else:
+            payload = message.payload
 
-        payload = json.loads(payload)
+        try:
+            if msg_type.primitive == PrimitiveTypes.object:
+                payload = json.loads(payload)
 
-        asset, datastream = self.get_resources_from_topic(topic)
+                msg = Message(
+                    resource=KRNAssetDataStream(asset, datastream),
+                    type=KMessageTypeData(primitive="object", icd=datastream),
+                    payload=payload,
+                )
+            else:
+                if msg_type.primitive == PrimitiveTypes.number:
+                    payload = float(payload)
+                if msg_type.primitive == PrimitiveTypes.string:
+                    payload = str(payload)
+                if msg_type.primitive == PrimitiveTypes.boolean:
+                    payload = bool(payload)
+                
+            msg = Message(
+                resource=KRNAssetDataStream(asset, datastream),
+                type=msg_type,
+                payload=payload,
+            )
+        except ValueError:
+            logger.exception("Invalid message type", msg_type=msg_type, payload=payload)
 
-        msg = Message(
-            resource=KRNAssetDataStream(asset, datastream),
-            type=KMessageTypeData(primitive="object", icd=datastream),
-            payload=payload,
-        )
+            return []
 
         return [msg]
 
@@ -89,7 +111,7 @@ class MQTTImporterApplication:
         if resource is None:
             return None
 
-        return resource.asset.asset, resource.datastream.name
+        return resource.asset.asset, resource.datastream.name, resource.datastream.type
     
     def setup_io_map(self, assets: list[AssetInfo]) -> dict[str, ResourceDatastream]:
         io_map = {}

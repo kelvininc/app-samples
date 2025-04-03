@@ -10,6 +10,9 @@ importer_io:
   - name: default
     data_types:
       - object
+      - number
+      - string
+      - boolean
 
 ui_schemas:
   configuration: "ui_schemas/configuration.json"
