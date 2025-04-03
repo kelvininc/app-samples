@@ -1,5 +1,5 @@
 # Kelvin MQTT Connector
-Connects to an MQTT Broker with configurable topic subscriptions, and publishes the received messages payload to the Kelvin Platform as Object Datastreams.
+Connects to an MQTT Broker with configurable topic subscriptions, and publishes the received messages payload to the Kelvin Platform as Datastreams.
 
 # Requirements
 1. Python 3.8 or higher
