@@ -1,0 +1,22 @@
+spec_version: 5.0.0
+type: importer
+
+name: mqtt-connector
+title: MQTT Connector
+description: Connects to an MQTT broker and consumes data from it.
+version: 0.0.1
+
+importer_io:
+  - name: default
+    data_types:
+      - object
+
+ui_schemas:
+  configuration: "ui_schemas/configuration.json"
+  io_configuration:
+    default: "ui_schemas/io_default.json"
+
+defaults:
+  configuration:
+    ip: test.mosquitto.org
+    port: 1883

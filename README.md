@@ -14,6 +14,7 @@ We recommend that you start first by reading the official Kelvin Documentation o
 | [Databricks Delta Table Uploader](exporters/databricks-delta-table-uploader/) | Exporter | Intermediate |  Uploads streaming data to Databricks Delta Table. |
 | [Databricks Volume Uploader](exporters/databricks-volume-uploader/) | Exporter | Intermediate |  Uploads streaming data to Databricks Volume. |
 | [Camera Connector](importers/camera-connector/) | Importer | Intermediate |  Publishes camera feed images to Kelvin Platform. |
+| [MQTT Connector](importers/mqtt-connector/) | Importer | Intermediate |  Publishes MQTT messages to Kelvin Platform. |
 | [Casting Defect Detection](applications/casting-defect-detection/) | Computer Vision (App) | Intermediate | Leverages computer vision and a Tensorflow-based model to identify and analyze manufacturing defects in casting processes. |
 | [Event Detection](applications/event-detection/) | Event Detection (App) | Intermediate | Monitors streaming data to detect and respond to events exceeding pre-set thresholds by emitting a Control Change or Recommendation output. This example also leverages Asset Parameters and App Configuration to make the application more dynamic. |
 | [Multi-Objective Optimization ML](applications/multi-objective-optimization-ml/) | Machine Learning (App) | Intermediate | Implements a multi-objective optimization problem using machine learning techniques. |

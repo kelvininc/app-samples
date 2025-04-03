@@ -1,0 +1,2 @@
+kelvin-python-sdk==0.2.1
+aiomqtt==2.3.0
