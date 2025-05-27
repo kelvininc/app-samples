@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://apps.kelvininc.com/schemas/kelvin/5.0.0/docker.json
+
+# YAML (Structure) Spec Version
+spec_version: 5.0.0
+# Type
+type: docker
+
+# Info
+name: mqtt-mosquitto
+title: MQTT Mosquitto
+description: MQTT Mosquitto Broker
+version: 1.0.0
+
+# Capabilities
+flags:
+  enable_runtime_update:
+    # Reload Application Configuration in runtime
+    configuration: false
+
+# Defaults (Runtime/Deployment)
+defaults:
+  system:
+    ports:
+      - name: mqtt-service
+        service:
+          port: 28883
+        type: service
+    volumes:
+      - name: mqtt-data
+        target: /mosquitto/data
+        type: persistent
