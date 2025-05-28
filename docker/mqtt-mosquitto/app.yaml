@@ -29,3 +29,8 @@ defaults:
       - name: mqtt-data
         target: /mosquitto/data
         type: persistent
+    environment_vars:
+      - name: MQTT_USER
+        value: <% secrets.mqtt-user %>
+      - name: MQTT_PASSWORD
+        value: <% secrets.mqtt-password %>
