@@ -1,0 +1,35 @@
+{
+  "type": "object",
+  "properties": {
+    "url": {
+      "type": "string",
+      "title": "URL",
+      "description": "The URL of the Action Consumer service"
+    },
+    "tenant": {
+      "type": "string",
+      "title": "tenant",
+      "description": "Tenant name"
+    },
+    "api_key": {
+      "type": "string",
+      "title": "API Key",
+      "description": "API key for authentication"
+    }
+  },
+  "required": [
+    "url",
+    "tenant",
+    "api_key"
+  ],
+  "x-kelvin-ui": {
+    "api_key": {
+      "ui:widget": "password"
+    },
+    "ui:order": [
+      "url",
+      "tenant",
+      "api_key"
+    ]
+  }
+}

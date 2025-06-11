@@ -1,0 +1,36 @@
+# YAML (Structure) Spec Version
+spec_version: 5.0.0
+# Type
+type: exporter
+
+# Info
+name: resnet-issue-creation
+title: Resnet Issue Creation
+description: This exporter handles custom actions that create issues in the Resnet system
+version: 1.0.12
+
+# Capabilities
+flags:
+  enable_runtime_update:
+    configuration: false # Reload Application Configuration in runtime
+
+# Custom Actions
+custom_actions:
+  inputs:
+    - type: Resnet Issue
+
+# UI JSON schemas (Optional)
+ui_schemas:
+  # Application Configuration Schema
+  configuration: "ui_schemas/configuration.json"
+
+# Defaults (Runtime/Deployment)
+defaults:
+  # Application Configuration Default Values
+  configuration:
+    url: <resnet_url>
+    tenant: <tenant_id>
+    api_key: <api_key>
+
+  # System Settings
+  system: {}
