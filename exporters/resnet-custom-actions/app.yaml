@@ -6,8 +6,8 @@ type: exporter
 # Info
 name: resnet-issue-creation
 title: Resnet Issue Creation
-description: This exporter handles custom actions that create issues in the Resnet system
-version: 1.0.12
+description: This exporter handles custom-defined actions that trigger issue creation in Resnet.
+version: 1.0.13
 
 # Capabilities
 flags:
@@ -28,8 +28,8 @@ ui_schemas:
 defaults:
   # Application Configuration Default Values
   configuration:
-    url: <resnet_url>
-    tenant: <tenant_id>
+    url: https://api.resnet.ai/v1-beta1/entities/issue
+    tenant: <tenant>
     api_key: <api_key>
 
   # System Settings

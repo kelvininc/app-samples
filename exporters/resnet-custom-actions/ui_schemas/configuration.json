@@ -4,7 +4,7 @@
     "url": {
       "type": "string",
       "title": "URL",
-      "description": "The URL of the Action Consumer service"
+      "description": "Resnet API URL"
     },
     "tenant": {
       "type": "string",
