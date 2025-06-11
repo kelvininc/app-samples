@@ -30,12 +30,14 @@ We recommend that you start first by reading the official Kelvin Documentation o
 | [Azure Data Lake Gen2 Uploader](exporters/azure-data-lake-uploader/)          | Intermediate  | Uploads streaming data to Azure Data Lake Storage Gen2. |
 | [Databricks Delta Table Uploader](exporters/databricks-delta-table-uploader/) | Intermediate  | Uploads streaming data to Databricks Delta Table.       |
 | [Databricks Volume Uploader](exporters/databricks-volume-uploader/)           | Intermediate  | Uploads streaming data to a Databricks Volume.          |
+| [Resnet Custom Actions](exporters/resnet-custom-actions/)                     | Intermediate  | Exports custom actions into Resnet API.                 |
+
 
 ## 🤖 Docker
 
 | Application                                    | Level        | Description                                                      |
 |------------------------------------------------|--------------|------------------------------------------------------------------|
-| [Mosquitto MQTT](docker/mosquitto-mqtt/)       | Intermediate | Mosquitto MQTT Broker                                            |
+| [Mosquitto MQTT](docker/mosquitto-mqtt/)       | Beginner     | Mosquitto MQTT Broker                                            |
 
 
 # Contributing
