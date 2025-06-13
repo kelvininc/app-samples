@@ -1,0 +1,3 @@
+kelvin-python-sdk[ai]
+slack_sdk
+aiohttp

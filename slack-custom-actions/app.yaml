@@ -1,0 +1,34 @@
+# YAML (Structure) Spec Version
+spec_version: 5.0.0
+# Type
+type: exporter
+
+# Info
+name: slack-message-sender
+title: Slack Message Sender
+description: This exporter handles slack custom actions and sends slack messages to a given channel
+version: 1.0.0
+
+# Capabilities
+flags:
+  enable_runtime_update:
+    configuration: false # Reload Application Configuration in runtime
+
+# Custom Actions
+custom_actions:
+  inputs:
+    - type: Slack Message
+
+# UI JSON schemas (Optional)
+ui_schemas:
+  # Application Configuration Schema
+  configuration: "ui_schemas/configuration.json"
+
+# Defaults (Runtime/Deployment)
+defaults:
+  # Application Configuration Default Values
+  configuration:
+    token: <% secrets.slack-bot-token %>
+
+  # System Settings
+  system: {}
