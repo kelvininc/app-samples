@@ -30,7 +30,7 @@ Before using this application to send messages to Slack, you need to set up a Sl
 |------------------|--------------------------------------------------------------|
 | `channels:join`  | Join public channels in a workspace                          |
 | `channels:read`  | View basic information about public channels in a workspace  |
-| `chat:write`     | Send messages as @SmartApp                                   |
+| `chat:write`     | Send messages                                                |
 | `groups:read`    | View basic information about private channels                |
 | `im:read`        | View basic information about direct messages                 |
 | `mpim:read`      | View basic information about group direct messages           |
@@ -39,7 +39,7 @@ Before using this application to send messages to Slack, you need to set up a Sl
 
 1. Still in **OAuth & Permissions**, under **OAuth Tokens**
 2. Click **"Install App to Workspace"**
-3. Copy the **Bot User OAuth Token** (xoxb-...) as it's going to be used to configure your Slack Message Sender instance
+3. Copy the **Bot User OAuth Token** (e.g. `xoxb-...`) as it's going to be used to configure your Slack Message Sender instance
 
 # Requirements
 1. Python 3.9 or higher
