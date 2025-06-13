@@ -48,7 +48,7 @@ Before using this application to send messages to Slack, you need to set up a Sl
 4. Docker (optional) for upload the application to Kelvin Cloud.
 
 # Local Usage
-1. Define the Resnet configurations in `app.yaml`:
+1. Define the **Bot User OAuth Token** configuration in the `app.yaml`:
 
 ```yaml
 defaults:
