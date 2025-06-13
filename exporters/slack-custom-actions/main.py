@@ -36,20 +36,20 @@ class ExporterApplication:
 
             result = action.result(success=False, message="Channel is not specified")
             await self.app.publish(result)
-            
+
             return
-        
+
         message = action.payload.get("message", {}).get("text")
         if not message:
             logger.error("Message is not specified in the action payload", action=action)
 
             result = action.result(success=False, message="Message is not specified")
             await self.app.publish(result)
-            
+
             return
-        
+
         # Call integration
-        integration = SlackIntegration(token=self.app.app_configuration.get("token"))
+        integration = SlackIntegration(token=self.app.app_configuration["token"])
 
         response = await integration.send_slack_message(channel_name=channel, message=message)
 

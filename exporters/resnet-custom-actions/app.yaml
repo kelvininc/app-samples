@@ -7,7 +7,7 @@ type: exporter
 name: resnet-issue-creation
 title: Resnet Issue Creation
 description: This exporter handles custom-defined actions that trigger issue creation in Resnet.
-version: 1.0.13
+version: 1.0.15
 
 # Capabilities
 flags:

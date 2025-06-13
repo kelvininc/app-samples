@@ -43,16 +43,18 @@ class ResnetIntegration:
 
                 # Parse response
                 status_code = response.status_code
-                metadata = response.json() if response.content else {}
+                response_body = response.json() if response.content else {}
+                metadata = {"response_status_code": status_code, "response_body": response_body}
 
-                logger.info("Successfully created issue in Resnet", status_code=status_code, metadata=metadata)
+                logger.info("Successfully created issue in Resnet", status_code=status_code, response_body=response_body)
 
                 return ResnetIntegrationResponse(success=True, message="Issue created successfully", metadata=metadata)
             except httpx.HTTPStatusError as e:
                 status_code = e.response.status_code
-                metadata = e.response.json() if e.response.content else {}
-                logger.error(f"Failed to create issue in Resnet: API error ({status_code})", status_code=status_code, metadata=metadata)
+                response_body = e.response.json() if response.content else {}
+                metadata = {"response_status_code": status_code, "response_body": response_body}
+                logger.error(f"Failed to create issue in Resnet: API error ({status_code})", status_code=status_code, response_body=response_body)
                 return ResnetIntegrationResponse(success=False, message=f"Failed to create issue in Resnet: API error ({status_code})", metadata=metadata)
             except httpx.RequestError as e:
                 logger.error("Failed to create issue in Resnet: Network error", error=e)
-                return ResnetIntegrationResponse(success=False, message=f"Failed to create issue in Resnet: Network error: {e}", metadata={})
+                return ResnetIntegrationResponse(success=False, message=f"Failed to create issue in Resnet: Network error: {e}", metadata={"error": str(e)})

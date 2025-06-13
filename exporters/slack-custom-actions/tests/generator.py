@@ -5,16 +5,15 @@ from typing import AsyncGenerator
 
 from kelvin.krn import KRNAsset
 from kelvin.logs import logger
-from kelvin.message import CustomAction, Message
+from kelvin.message import CustomAction
 from kelvin.publisher import DataGenerator
 
 
 class CustomActionGenerator(DataGenerator):
-
     def __init__(self) -> None:
         logger.info("Initializing CustomActionGenerator")
 
-    async def run(self) -> AsyncGenerator[Message, None]:
+    async def run(self) -> AsyncGenerator[CustomAction, None]:
         logger.info("Running MyGenerator")
 
         for i in range(10):
@@ -27,7 +26,7 @@ class CustomActionGenerator(DataGenerator):
                     "message": {
                         "text": "Test message from Kelvin Slack Message Action Generator",
                     },
-                    "channel": "sales-demo-notifications"
+                    "channel": "sales-demo-notifications",
                 },
             )
             await asyncio.sleep(10)

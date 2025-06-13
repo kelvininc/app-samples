@@ -58,3 +58,10 @@ defaults:
 ```
 2. **Run** the application: `python3 main.py`
 3. Open a new terminal and **Test** with generator: `kelvin app test generator --entrypoint tests/generator.py:CustomActionGenerator`
+
+# Kelvin Cloud Deployment
+To deploy this application to a cluster using the Kelvin Cloud you need to setup the authentication token as a Secret.
+
+```
+kelvin secret create slack-bot-token --value "<access_key>"
+```
