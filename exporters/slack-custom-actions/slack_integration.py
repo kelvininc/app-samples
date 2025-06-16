@@ -2,8 +2,15 @@ from typing import Optional
 
 from kelvin.logs import logger
 from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web.async_client import AsyncWebClient
+
+
+class SlackConfiguration(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    """Configuration for Slack integration."""
+    token: str
 
 
 class SlackIntegrationResponse(BaseModel):
@@ -12,14 +19,11 @@ class SlackIntegrationResponse(BaseModel):
 
 
 class SlackIntegration:
-    def __init__(self, token: str) -> None:
-        if token is None:
-            raise ValueError("token is not set in the app configuration")
-
-        self.token = token
+    def __init__(self, config: SlackConfiguration) -> None:
+        self.config = config
 
     async def send_slack_message(self, channel_name: str, message: str) -> SlackIntegrationResponse:
-        client = AsyncWebClient(token=self.token)
+        client = AsyncWebClient(token=self.config.token)
 
         channel = await self.get_channel_id_by_name(channel_name)
 
@@ -47,7 +51,7 @@ class SlackIntegration:
             return SlackIntegrationResponse(success=False, message=f"Failed to send the Slack message ({e.response['error']})")
 
     async def get_channel_id_by_name(self, name: str) -> Optional[str]:
-        client = AsyncWebClient(token=self.token)
+        client = AsyncWebClient(token=self.config.token)
         cursor = None
 
         try:

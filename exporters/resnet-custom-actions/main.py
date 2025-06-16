@@ -3,7 +3,8 @@ import asyncio
 from kelvin.application import KelvinApp
 from kelvin.logs import logger
 from kelvin.message import CustomAction
-from resnet import ResnetIntegration
+from pydantic import ValidationError
+from resnet import ResnetConfiguration, ResnetIntegration
 
 
 class ExporterApplication:
@@ -30,9 +31,17 @@ class ExporterApplication:
 
         logger.info("Received Resnet Action", action=action)
 
+        # Validate configuration
+        try:
+            config = ResnetConfiguration(**self.app.app_configuration)
+        except ValidationError as e:
+            logger.error("Invalid Resnet configuration", action=action, error=str(e))
+            result = action.result(success=False, message="Invalid Resnet configuration", metadata={"error": str(e)})
+            await self.app.publish(result)
+            return
+
         # Call integration
-        config = self.app.app_configuration
-        integration = ResnetIntegration(url=config["url"], tenant=config["tenant"], api_key=config["api_key"])
+        integration = ResnetIntegration(config=config)
         response = await integration.create_issue(payload=action.payload)
 
         # Publish action result

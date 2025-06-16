@@ -3,7 +3,8 @@ import asyncio
 from kelvin.application import KelvinApp
 from kelvin.logs import logger
 from kelvin.message import CustomAction
-from slack_integration import SlackIntegration
+from pydantic import ValidationError
+from slack_integration import SlackConfiguration, SlackIntegration
 
 
 class ExporterApplication:
@@ -48,8 +49,19 @@ class ExporterApplication:
 
             return
 
+        # Validate configuration
+        try:
+            config = SlackConfiguration(**self.app.app_configuration)
+        except ValidationError as e:
+            logger.error("Slack token is not configured", action=action, error=str(e))
+
+            result = action.result(success=False, message="Slack token is not configured")
+            await self.app.publish(result)
+
+            return
+
         # Call integration
-        integration = SlackIntegration(token=self.app.app_configuration["token"])
+        integration = SlackIntegration(config=config)
 
         response = await integration.send_slack_message(channel_name=channel, message=message)
 
