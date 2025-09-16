@@ -8,7 +8,7 @@ type: docker
 # Info
 name: mqtt-mosquitto
 title: MQTT Mosquitto
-description: MQTT Mosquitto Broker
+description: Run MQTT Mosquitto broker and configure it using multiple environment variables.
 version: 1.0.0
 
 # Capabilities
@@ -17,20 +17,55 @@ flags:
     # Reload Application Configuration in runtime
     configuration: false
 
+# UI JSON schemas (Optional)
+ui_schemas:
+  # Application Configuration Schema
+  configuration: "ui_schemas/configuration.json"
+
 # Defaults (Runtime/Deployment)
 defaults:
+  # Application Configuration Default Values
+  configuration: {}
+
+  # System Settings
   system:
+    volumes:
+      - name: mqtt-persistent-data
+        type: persistent
+        target: /mosquitto/data
     ports:
-      - name: mqtt-service
+      - name: cluster-mqtt-insecure
+        type: service
+        service:
+          port: 21883
+      - name: cluster-mqtt-secure
+        type: service
         service:
           port: 28883
-        type: service
-    volumes:
-      - name: mqtt-data
-        target: /mosquitto/data
-        type: persistent
+      - name: mqtt-insecure
+        type: host
+        host:
+          port: 21883
+      - name: mqtt-secure
+        type: host
+        host:
+          port: 28883
     environment_vars:
+      - name: MQTT_PORT
+        value: "21883"
       - name: MQTT_USER
-        value: <% secrets.mqtt-user %>
+        value: "<% secrets.mqttssl-user %>"
       - name: MQTT_PASSWORD
-        value: <% secrets.mqtt-password %>
+        value: "<% secrets.mqttssl-password %>"
+      - name: MQTT_SSL_PORT
+        value: "28883"
+      - name: MQTT_SSL_USER
+        value: "<% secrets.mqttssl-ssl-user %>"
+      - name: MQTT_SSL_PASSWORD
+        value: "<% secrets.mqttssl-ssl-password %>"
+      - name: MQTT_SSL_CA_CRT
+        value: "<% secrets.mqttssl-ssl-ca-crt %>"
+      - name: "MQTT_SSL_TLS_CRT"
+        value: "<% secrets.mqttssl-ssl-tls-crt %>"
+      - name: "MQTT_SSL_TLS_KEY"
+        value: "<% secrets.mqttssl-ssl-tls-key %>"

@@ -36,9 +36,9 @@ We recommend that you start first by reading the official Kelvin Documentation o
 
 ## 🤖 Docker
 
-| Application                                    | Level        | Description                                                      |
-|------------------------------------------------|--------------|------------------------------------------------------------------|
-| [Mosquitto MQTT](docker/mosquitto-mqtt/)       | Intermediate | Mosquitto MQTT Broker                                            |
+| Application                              | Level        | Description                                            |
+|------------------------------------------|--------------|--------------------------------------------------------|
+| [Mosquitto MQTT](docker/mqtt-mosquitto/) | Intermediate | Mosquitto MQTT Broker that supports SSL/TLS encryption |
 
 
 # Contributing
