@@ -80,9 +80,7 @@ def crowding_calculation(fitness_values):
     pop_size = len(fitness_values[:, 0])
     fitness_value_number = len(fitness_values[0, :])
     matrix_for_crowding = np.zeros((pop_size, fitness_value_number))
-    normalized_fitness_values = (
-        fitness_values - fitness_values.min(0)
-    ) / fitness_values.ptp(0)
+    normalized_fitness_values = (fitness_values - fitness_values.min(0)) / np.ptp(fitness_values, 0)
 
     for i in range(fitness_value_number):
         crowding_results = np.zeros(pop_size)
@@ -91,8 +89,7 @@ def crowding_calculation(fitness_values):
         sorted_normalized_fitness_values = np.sort(normalized_fitness_values[:, i])
         sorted_normalized_values_index = np.argsort(normalized_fitness_values[:, i])
         crowding_results[1 : pop_size - 1] = (
-            sorted_normalized_fitness_values[2:pop_size]
-            - sorted_normalized_fitness_values[0 : pop_size - 2]
+            sorted_normalized_fitness_values[2:pop_size] - sorted_normalized_fitness_values[0 : pop_size - 2]
         )
         re_sorting = np.argsort(sorted_normalized_values_index)
         matrix_for_crowding[:, i] = crowding_results[re_sorting]
@@ -106,9 +103,7 @@ def remove_using_crowding(fitness_values, number_solutions_needed):
     pop_index = np.arange(fitness_values.shape[0])
     crowding_distance = crowding_calculation(fitness_values)
     selected_pop_index = np.zeros(number_solutions_needed)
-    selected_fitness_values = np.zeros(
-        (number_solutions_needed, len(fitness_values[0, :]))
-    )
+    selected_fitness_values = np.zeros((number_solutions_needed, len(fitness_values[0, :])))
     for i in range(number_solutions_needed):
         pop_size = pop_index.shape[0]
         solution_1 = rn.randint(0, pop_size - 1)
@@ -136,9 +131,7 @@ def pareto_front_finding(fitness_values, pop_index):
     pareto_front = np.ones(pop_size, dtype=bool)
     for i in range(pop_size):
         for j in range(pop_size):
-            if all(fitness_values[j] <= fitness_values[i]) and any(
-                fitness_values[j] < fitness_values[i]
-            ):
+            if all(fitness_values[j] <= fitness_values[i]) and any(fitness_values[j] < fitness_values[i]):
                 pareto_front[i] = 0
                 break
 
@@ -151,16 +144,12 @@ def selection(pop, fitness_values, pop_size):
     pareto_front_index = []
 
     while len(pareto_front_index) < pop_size:
-        new_pareto_front = pareto_front_finding(
-            fitness_values[pop_index_0, :], pop_index_0
-        )
+        new_pareto_front = pareto_front_finding(fitness_values[pop_index_0, :], pop_index_0)
         total_pareto_size = len(pareto_front_index) + len(new_pareto_front)
 
         if total_pareto_size > pop_size:
             number_solutions_needed = pop_size - len(pareto_front_index)
-            selected_solutions = remove_using_crowding(
-                fitness_values[new_pareto_front], number_solutions_needed
-            )
+            selected_solutions = remove_using_crowding(fitness_values[new_pareto_front], number_solutions_needed)
             new_pareto_front = new_pareto_front[selected_solutions]
 
         pareto_front_index = np.hstack((pareto_front_index, new_pareto_front))
@@ -204,9 +193,7 @@ def run_genetic_algorithm(initial_population, target_ls, reg_ls, config):
     for k in range(config["maximum_generation"]):
         print("Running Genetic Algorithm. NSGA-II iteration: ", k)
 
-        offspring_from_crossover = crossover(
-            initial_population, config["rate_crossover"]
-        )
+        offspring_from_crossover = crossover(initial_population, config["rate_crossover"])
         offspring_from_mutation = mutation(initial_population, config["rate_mutation"])
         offspring_from_local_search = local_search(
             initial_population,
@@ -216,20 +203,12 @@ def run_genetic_algorithm(initial_population, target_ls, reg_ls, config):
             config["step_size"],
         )
 
-        initial_population = np.append(
-            initial_population, offspring_from_crossover, axis=0
-        )
-        initial_population = np.append(
-            initial_population, offspring_from_mutation, axis=0
-        )
-        initial_population = np.append(
-            initial_population, offspring_from_local_search, axis=0
-        )
+        initial_population = np.append(initial_population, offspring_from_crossover, axis=0)
+        initial_population = np.append(initial_population, offspring_from_mutation, axis=0)
+        initial_population = np.append(initial_population, offspring_from_local_search, axis=0)
 
         fitness_values = evaluation(initial_population, target_ls, reg_ls)
-        initial_population = selection(
-            initial_population, fitness_values, config["pop_size"]
-        )
+        initial_population = selection(initial_population, fitness_values, config["pop_size"])
 
     return initial_population[0, :]
 
@@ -260,22 +239,32 @@ def run_model(df: pd.DataFrame):
         reg_ls = train_random_forest_models(df, shuffle=config["shuffle"])
 
         # Run model
-        pop = random_population(
-            config["n_var"], config["pop_size"], config["lb"], config["ub"]
-        )
+        pop = random_population(config["n_var"], config["pop_size"], config["lb"], config["ub"])
 
-        selected_solution = run_genetic_algorithm(
-            pop, config["target_ls"], reg_ls, config
-        )
+        selected_solution = run_genetic_algorithm(pop, config["target_ls"], reg_ls, config)
 
-        selected_solution_output = [
-            reg.predict(selected_solution[None, :])[0] for reg in reg_ls
-        ]
+        selected_solution_output = [reg.predict(selected_solution[None, :])[0] for reg in reg_ls]
 
         # Combine selected solution and selected solution output
         combined_values = list(selected_solution) + list(selected_solution_output)
         combined_dict = {f"{col}": val for col, val in zip(df.columns, combined_values)}
 
-        print("Recommended Values", combined_dict)
+        # Filter to only include allowed control outputs
+        allowed_control_outputs = [
+            # "wire_part_vacuum_foil_level_set_point",
+            # "exhaust_fan_3_burner_temperature_set_point",
+            "paper_machine_speed_set_point",
+            # "primary_screen_reject_flow_rate_set_point",
+            # "turbo_3_vacuum_control_output_set_point",
+            # "shoe_press_hydration_tank_level",
+            "low_pressure_steam_flow_rate_set_point",
+            "air_dryer_temperature_set_point",
+            # "3p_load_top_side_set_point" "mix_pipe_flow_set_point",
+            # "top_dryers_steam_pressure_set_point",
+            # "spray_starch_standby_pump_rate_set_point",
+        ]
+        filtered_dict = {k: v for k, v in combined_dict.items() if k in allowed_control_outputs}
 
-        return combined_dict
+        print("Recommended Values", filtered_dict)
+
+        return filtered_dict
