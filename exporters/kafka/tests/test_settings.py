@@ -142,8 +142,19 @@ class TestUploadAndBuffer:
     def test_defaults(self) -> None:
         s = Settings(kafka=KAFKA)
         assert s.upload.batch_size == 1000 and s.upload.interval == 60
+        assert s.upload.order == "fifo"
         assert s.upload.retry.attempts == 3 and s.upload.retry.max_delay == 30.0
         assert s.buffer.max_backlog == 0
+
+    def test_accepts_lifo_order(self) -> None:
+        s = Settings(kafka=KAFKA, upload={"order": "lifo"})
+        assert s.upload.order == "lifo"
+
+    @pytest.mark.parametrize("bad", ["newest", "LIFO", 1])
+    def test_rejects_unknown_order(self, bad: object) -> None:
+        """order is a strict fifo|lifo literal (case-sensitive, no coercion)."""
+        with pytest.raises(ValidationError):
+            Settings(kafka=KAFKA, upload={"order": bad})
 
 
 def test_ignores_unknown_top_level_keys() -> None:

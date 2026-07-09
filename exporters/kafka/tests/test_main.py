@@ -86,6 +86,26 @@ class TestBuildTopicMap:
         assert warnings == [{"asset": "pump-1", "stream": "orphan"}]
 
 
+class TestBuildPriorityMap:
+    """Pure helper: per-stream priority extraction from IO configuration."""
+
+    def test_collects_explicit_priorities(self) -> None:
+        pm = main.build_priority_map(_assets({"pump-1": {
+            "critical": {"topic": "t", "priority": 1},
+            "normal": {"topic": "t", "priority": 2},
+        }}))
+        assert pm == {("pump-1", "critical"): 1, ("pump-1", "normal"): 2}
+
+    def test_omits_streams_without_a_priority(self) -> None:
+        """Unset priority stays out of the map: the store ranks those Normal by default."""
+        assert main.build_priority_map(_assets({"pump-1": {"temp": {"topic": "t"}}})) == {}
+
+    def test_coerces_numeric_strings(self) -> None:
+        """A priority that arrives as a JSON string still ranks as its integer value."""
+        pm = main.build_priority_map(_assets({"pump-1": {"temp": {"topic": "t", "priority": "1"}}}))
+        assert pm == {("pump-1", "temp"): 1}
+
+
 @pytest.mark.asyncio
 async def test_handlers_registered() -> None:
     """Both the stream consumer and the drain task are registered on the app."""
@@ -131,6 +151,37 @@ async def test_topic_map_built_from_io_configuration(monkeypatch: pytest.MonkeyP
             ("pump-1", "status"): "status",
             ("pump-1", "enabled"): "status",
         }
+
+
+@pytest.mark.asyncio
+async def test_high_priority_stream_drains_first(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """With batch_size=1, the High-priority stream's row fills the first batch even though the
+    Normal stream's row was buffered before it (selection order comes from the IO config)."""
+    _reset(tmp_path)
+    fake = FakeWriter()
+    monkeypatch.setattr(main, "KafkaWriter", lambda cfg, topics: fake)
+    manifest = (
+        ManifestBuilder.from_app_yaml()
+        .add_asset("pump-1")
+        .add_input("background", "number", configuration={"topic": "t"})
+        .add_input("critical", "number", configuration={"topic": "t", "priority": 1})
+        .set_configuration({
+            "kafka": {"bootstrap_servers": "b:9092"},
+            "upload": {"batch_size": 1, "interval": 1},
+        })
+        .build()
+    )
+
+    async with KelvinAppTest(main.app, manifest=manifest) as harness:
+        await harness.publish_batch([
+            Number(resource=KRNAssetDataStream("pump-1", "background"), payload=1.0),  # buffered first
+            Number(resource=KRNAssetDataStream("pump-1", "critical"), payload=2.0),
+        ])
+        await harness.run_until_idle(timeout=5.0)   # consume inputs -> buffer
+        await harness.run_until_idle(timeout=5.0)   # advance clock -> drain tick(s)
+
+    assert fake.batches, "drain task never ran"
+    assert fake.batches[0][0]["datastream"] == "critical", "High-priority row must drain first"
 
 
 @pytest.mark.asyncio

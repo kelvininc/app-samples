@@ -40,6 +40,19 @@ def build_topic_map(assets: dict[str, AssetInfo]) -> dict[tuple[str, str], str]:
     return topics
 
 
+def build_priority_map(assets: dict[str, AssetInfo]) -> dict[tuple[str, str], int]:
+    """Map each (asset, stream) with an explicit priority in its IO configuration to that
+    priority (1 = High, 2 = Normal). Streams without one are left out: the store ranks
+    them Normal, so an explicit priority always wins over an unset one."""
+    priorities: dict[tuple[str, str], int] = {}
+    for asset_name, asset_info in assets.items():
+        for stream_name, sds in asset_info.datastreams.items():
+            priority = sds.configuration.get("priority")
+            if priority is not None:
+                priorities[(asset_name, stream_name)] = int(priority)
+    return priorities
+
+
 @app.stream
 async def on_data(msg: AssetDataMessage) -> None:
     """Buffer every incoming asset data message (number/string/boolean) from a mapped stream."""
@@ -71,10 +84,12 @@ async def on_connect() -> None:
     logger.info("Exporter configured", **settings.upload.model_dump(exclude={"retry"}),
                 retry_attempts=settings.upload.retry.attempts,
                 max_backlog=settings.buffer.max_backlog)
+    store.order = settings.upload.order          # batch selection order for every read
     _topics = build_topic_map(app.assets)
     if not _topics:
         logger.warning("No streams mapped; check per-stream IO configuration (topic field)")
     await store.setup()
+    await store.set_priorities(build_priority_map(app.assets))
     if _writer is not None:                      # re-fire: drop the stale writer before rebuilding
         await _writer.teardown()
     _writer = KafkaWriter(settings.kafka, _topics)

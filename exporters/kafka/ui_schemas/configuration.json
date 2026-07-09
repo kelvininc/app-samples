@@ -85,6 +85,14 @@
       "properties": {
         "interval": { "type": "integer", "title": "Interval (s)", "minimum": 1, "default": 60 },
         "batch_size": { "type": "integer", "title": "Batch Size", "minimum": 1, "default": 1000 },
+        "order": {
+          "type": "string", "title": "Upload Order", "default": "fifo",
+          "description": "Which rows are uploaded first when the backlog exceeds one batch: oldest first (FIFO) or newest first (LIFO). LIFO trades per-stream time ordering during recovery for freshness.",
+          "oneOf": [
+            { "const": "fifo", "title": "Oldest first (FIFO)" },
+            { "const": "lifo", "title": "Newest first (LIFO)" }
+          ]
+        },
         "retry": {
           "type": "object",
           "title": "Retry",

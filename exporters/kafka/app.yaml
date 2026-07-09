@@ -4,7 +4,7 @@ type: exporter
 name: kafka-exporter
 title: Kafka Exporter
 description: This exporter publishes asset data to Kafka topics, one JSON message per record.
-version: 1.0.0
+version: 1.0.1
 
 # Runtime update is off: the exporter builds its producer, topic map and buffer at startup, so
 # IO-mapping and configuration changes are applied by redeploying the workload (the platform
@@ -24,15 +24,17 @@ exporter_io:
 ui_schemas:
   configuration: "ui_schemas/configuration.json"
   io_configuration:
-    default: "ui_schemas/io_default.json"   # per-stream: topic (required, {asset}/{stream} placeholders)
+    default:
+      "ui_schemas/io_default.json" # per-stream: topic (required, {asset}/{stream} placeholders)
+      # + priority (optional, 1 = High, 2 = Normal; unset ranks Normal)
 
 defaults:
   configuration:
     kafka:
-      bootstrap_servers: ""                 # REQUIRED: comma-separated host:port list
+      bootstrap_servers: "" # REQUIRED: comma-separated host:port list
       client_id: kelvin-kafka-exporter
       security:
-        protocol: PLAINTEXT                 # PLAINTEXT | SSL | SASL_PLAINTEXT | SASL_SSL
+        protocol: PLAINTEXT # PLAINTEXT | SSL | SASL_PLAINTEXT | SASL_SSL
         # To authenticate, set a SASL_* protocol AND the matching sasl block (the two must
         # agree), e.g. protocol: SASL_SSL with:
         #   sasl:
@@ -47,12 +49,13 @@ defaults:
     upload:
       interval: 60
       batch_size: 1000
+      order: fifo # "fifo" (oldest first) | "lifo" (newest first under backlog)
       retry:
         attempts: 3
         base_delay: 1
-        max_delay: 30           # backoff ceiling, independent of upload.interval
+        max_delay: 30 # backoff ceiling, independent of upload.interval
     buffer:
-      max_backlog: 0            # 0 = unbounded; set a cap to bound disk on prolonged outage
+      max_backlog: 0 # 0 = unbounded; set a cap to bound disk on prolonged outage
 
   system:
     # Persistent buffer: the DuckDB file must survive restarts (do NOT drop this).

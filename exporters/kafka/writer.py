@@ -94,7 +94,9 @@ class KafkaWriter:
 
     Each row's topic comes from the (asset, datastream) -> topic map main builds from the
     per-stream IO configuration; the message key is "asset/datastream" so one stream's data
-    always lands in the same partition (per-stream ordering).
+    always lands in the same partition. Every batch arrives from the store in chronological
+    order, but under upload.order=lifo (or with mixed priorities) *batches* are not oldest-
+    first, so per-partition time order across batches only holds with plain FIFO (see README).
 
     Recovery is at-least-once, not exactly-once: every record's delivery future is awaited
     (so the buffer is only trimmed once the broker acks the whole batch), but a produced-but-
@@ -159,7 +161,7 @@ class KafkaWriter:
 
     async def write_batch(self, store: Store, limit: int) -> Records:
         r = await store.read(limit)
-        if r.cursor is not None:
+        if r.seqs:
             producer = await self._ensure_producer()
             skipped = 0
             non_finite = 0

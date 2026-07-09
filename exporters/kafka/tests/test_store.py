@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 
-from store import Store
+from store import PRIORITY_HIGH, Store
 
 pytestmark = pytest.mark.asyncio
 
@@ -36,23 +36,108 @@ class TestRead:
     async def test_read_preserves_native_payload_types(self, seeded: Store) -> None:
         """read() returns each payload with its native Python type intact."""
         result = await seeded.read(10)
-        assert result.n_rows == 4 and result.cursor is not None
+        assert result.n_rows == 4 and len(result.seqs) == 4
         by_ds = {row["datastream"]: row["payload"] for row in result.rows}
         assert by_ds["temperature"] == 42.5 and isinstance(by_ds["temperature"], float)
         assert by_ds["status"] == "running"
         assert by_ds["enabled"] is True
         assert by_ds["label"] == "true" and isinstance(by_ds["label"], str)
 
-    async def test_read_empty_buffer_reports_no_cursor(self, store: Store) -> None:
-        """read() on an empty buffer returns no rows, a None cursor, and zero count."""
+    async def test_read_empty_buffer_reports_no_seqs(self, store: Store) -> None:
+        """read() on an empty buffer returns no rows, an empty seq set, and zero count."""
         result = await store.read(10)
-        assert result.rows == [] and result.cursor is None and result.n_rows == 0
+        assert result.rows == [] and result.seqs == [] and result.n_rows == 0
 
     async def test_read_respects_limit(self, seeded: Store) -> None:
-        """read(limit) returns at most `limit` rows, oldest first by seq."""
+        """read(limit) returns at most `limit` rows, oldest first by seq (fifo default)."""
         result = await seeded.read(2)
         assert result.n_rows == 2
         assert [row["datastream"] for row in result.rows] == ["temperature", "status"]
+
+
+class TestPriority:
+    """Per-stream priorities: selection order, defaults, and refresh."""
+
+    @staticmethod
+    async def _seed_normal_then_critical(store: Store) -> None:
+        """Three older 'normal' rows, then two newer 'critical' rows."""
+        base = datetime(2026, 1, 1)
+        for i in range(3):
+            await store.append(base + timedelta(seconds=i), "pump-1", "normal", float(i))
+        for i in range(2):
+            await store.append(base + timedelta(seconds=10 + i), "pump-1", "critical", float(i))
+
+    async def test_high_priority_selected_before_older_normal_rows(self, store: Store) -> None:
+        """A High stream fills the batch before any Normal row, whatever its age."""
+        await self._seed_normal_then_critical(store)
+        await store.set_priorities({("pump-1", "critical"): PRIORITY_HIGH})
+        batch = await store.read(2)
+        assert {row["datastream"] for row in batch.rows} == {"critical"}
+
+    async def test_selected_rows_are_emitted_chronologically(self, store: Store) -> None:
+        """Priority decides selection only: the batch itself comes back in seq order, so a
+        High row selected ahead of an older Normal one is still emitted after it."""
+        await self._seed_normal_then_critical(store)
+        await store.set_priorities({("pump-1", "critical"): PRIORITY_HIGH})
+        batch = await store.read(3)                     # 2 critical + oldest normal
+        assert batch.seqs == sorted(batch.seqs)
+        assert [row["datastream"] for row in batch.rows] == ["normal", "critical", "critical"]
+
+    async def test_unset_priority_ranks_normal(self, store: Store) -> None:
+        """An explicit Normal (2) doesn't outrank an unset stream: both are the same level,
+        so fifo age decides."""
+        base = datetime(2026, 1, 1)
+        await store.append(base, "pump-1", "unset", 1.0)                      # older
+        await store.append(base + timedelta(seconds=1), "pump-1", "explicit", 2.0)
+        await store.set_priorities({("pump-1", "explicit"): 2})
+        batch = await store.read(1)
+        assert batch.rows[0]["datastream"] == "unset"
+
+    async def test_set_priorities_replaces_the_previous_map(self, store: Store) -> None:
+        """A second set_priorities() fully replaces the first (redeploy semantics): the
+        previously-High stream re-ranks Normal and age takes over again."""
+        await self._seed_normal_then_critical(store)
+        await store.set_priorities({("pump-1", "critical"): PRIORITY_HIGH})
+        await store.set_priorities({})
+        batch = await store.read(2)
+        assert {row["datastream"] for row in batch.rows} == {"normal"}       # oldest again
+
+
+class TestLifo:
+    """order='lifo': newest rows are selected first, still emitted chronologically."""
+
+    @staticmethod
+    async def _seed_four(store: Store) -> None:
+        base = datetime(2026, 1, 1)
+        for i, name in enumerate(["a", "b", "c", "d"]):     # seqs 1..4, oldest to newest
+            await store.append(base + timedelta(seconds=i), "pump-1", name, float(i))
+
+    async def test_lifo_selects_newest_but_emits_chronologically(self, store: Store) -> None:
+        store.order = "lifo"
+        await self._seed_four(store)
+        batch = await store.read(2)
+        assert [row["datastream"] for row in batch.rows] == ["c", "d"]   # newest two, in time order
+        assert batch.seqs == sorted(batch.seqs)
+
+    async def test_lifo_drop_leaves_older_rows_for_the_next_batch(self, store: Store) -> None:
+        """Dropping a LIFO batch removes exactly the newest rows; the older backlog survives
+        and is picked up by the next read."""
+        store.order = "lifo"
+        await self._seed_four(store)
+        batch = await store.read(2)
+        await store.drop(batch.seqs)
+        rest = await store.read(10)
+        assert [row["datastream"] for row in rest.rows] == ["a", "b"]
+
+    async def test_high_priority_old_row_beats_normal_new_row_under_lifo(self, store: Store) -> None:
+        """Priority outranks recency: an old High row is selected before the newest Normal one."""
+        store.order = "lifo"
+        base = datetime(2026, 1, 1)
+        await store.append(base, "pump-1", "critical", 1.0)                   # oldest
+        await store.append(base + timedelta(seconds=1), "pump-1", "normal", 2.0)
+        await store.set_priorities({("pump-1", "critical"): PRIORITY_HIGH})
+        batch = await store.read(1)
+        assert batch.rows[0]["datastream"] == "critical"
 
 
 class TestReadToFile:
@@ -62,7 +147,7 @@ class TestReadToFile:
         """Parquet export writes each payload as type-preserving scalar JSON text."""
         duckdb = pytest.importorskip("duckdb")
         result = await seeded.read_to_file(str(tmp_path / "b.parquet"), "parquet", 10)
-        assert result.n_rows == 4 and result.cursor is not None
+        assert result.n_rows == 4 and len(result.seqs) == 4
         got = {r[0]: r[1] for r in duckdb.connect()
                .query(f"SELECT datastream, payload FROM read_parquet('{result.path}')").fetchall()}
         assert json.loads(got["temperature"]) == 42.5
@@ -84,10 +169,19 @@ class TestReadToFile:
         text = Path(result.path).read_text()
         assert "temperature" in text and "42.5" in text
 
-    async def test_empty_buffer_reports_no_cursor(self, store: Store, tmp_path: Path) -> None:
-        """read_to_file() on an empty buffer returns a None cursor and zero count."""
+    async def test_lifo_file_batch_selects_newest_in_time_order(self, seeded: Store, tmp_path: Path) -> None:
+        """The file path honors selection order too: a LIFO batch streams the newest rows,
+        written chronologically."""
+        seeded.order = "lifo"
+        result = await seeded.read_to_file(str(tmp_path / "b.json"), "json", 2)
+        assert len(result.seqs) == 2 and result.seqs == sorted(result.seqs)
+        rows = [json.loads(line) for line in open(result.path) if line.strip()]
+        assert [r["datastream"] for r in rows] == ["enabled", "label"]   # newest two, in time order
+
+    async def test_empty_buffer_reports_no_seqs(self, store: Store, tmp_path: Path) -> None:
+        """read_to_file() on an empty buffer returns an empty seq set and zero count."""
         result = await store.read_to_file(str(tmp_path / "e.parquet"), "parquet", 10)
-        assert result.cursor is None and result.n_rows == 0
+        assert result.seqs == [] and result.n_rows == 0
 
     async def test_rejects_unknown_format(self, seeded: Store, tmp_path: Path) -> None:
         """read_to_file() raises for a format DuckDB COPY can't emit."""
@@ -98,23 +192,45 @@ class TestReadToFile:
 class TestDrop:
     """Dropping a batch after a successful upload."""
 
-    async def test_drop_removes_only_up_to_cursor(self, seeded: Store) -> None:
-        """drop(cursor) deletes the read batch and leaves the rest."""
+    async def test_drop_removes_only_the_batch_seqs(self, seeded: Store) -> None:
+        """drop(seqs) deletes the read batch and leaves the rest."""
         batch = await seeded.read(2)
-        await seeded.drop(batch.cursor)
+        await seeded.drop(batch.seqs)
         rest = await seeded.read(10)
         assert rest.n_rows == 2 and {row["datastream"] for row in rest.rows} == {"enabled", "label"}
 
+    async def test_drop_handles_a_non_contiguous_seq_set(self, store: Store) -> None:
+        """A priority-selected batch is not a contiguous seq range; drop must delete exactly
+        the selected seqs and nothing between them."""
+        base = datetime(2026, 1, 1)
+        await store.append(base, "pump-1", "critical", 1.0)                          # oldest
+        await store.append(base + timedelta(seconds=1), "pump-1", "normal", 2.0)     # in between
+        await store.append(base + timedelta(seconds=2), "pump-1", "critical", 3.0)   # newest
+        normal_seq = next(s for s, r in zip((await store.read(10)).seqs, (await store.read(10)).rows)
+                          if r["datastream"] == "normal")
+        await store.set_priorities({("pump-1", "critical"): PRIORITY_HIGH})
+        batch = await store.read(2)                    # the two critical rows around the normal one
+        assert len(batch.seqs) == 2 and normal_seq not in batch.seqs
+        assert min(batch.seqs) < normal_seq < max(batch.seqs)   # genuinely non-contiguous
+        await store.drop(batch.seqs)
+        rest = await store.read(10)
+        assert rest.n_rows == 1 and rest.rows[0]["datastream"] == "normal"
+
     async def test_drop_never_removes_rows_appended_after_read(self, store: Store) -> None:
-        """A row appended between read and drop has a higher seq and must survive."""
+        """A row appended between read and drop has a seq outside the set and must survive."""
         base = datetime(2026, 1, 1)
         await store.append(base, "pump-1", "a", 1.0)
         await store.append(base + timedelta(seconds=1), "pump-1", "b", 2.0)
         batch = await store.read(100)
         await store.append(base + timedelta(seconds=2), "pump-1", "c", 3.0)  # late arrival
-        await store.drop(batch.cursor)
+        await store.drop(batch.seqs)
         rest = await store.read(10)
         assert rest.n_rows == 1 and rest.rows[0]["datastream"] == "c"
+
+    async def test_drop_of_empty_seq_set_is_a_noop(self, seeded: Store) -> None:
+        """drop([]) (an empty upload) must not touch the buffer."""
+        await seeded.drop([])
+        assert (await seeded.read(10)).n_rows == 4
 
 
 class TestCap:
@@ -125,6 +241,18 @@ class TestCap:
         await seeded.cap(2)
         result = await seeded.read(10)
         assert result.n_rows == 2 and {row["datastream"] for row in result.rows} == {"enabled", "label"}
+
+    async def test_cap_evicts_normal_rows_before_high_priority_ones(self, store: Store) -> None:
+        """Eviction is lowest-priority-first: newer Normal rows go before older High rows."""
+        base = datetime(2026, 1, 1)
+        for i in range(2):                                                    # High rows, oldest
+            await store.append(base + timedelta(seconds=i), "pump-1", "critical", float(i))
+        for i in range(2):                                                    # Normal rows, newest
+            await store.append(base + timedelta(seconds=10 + i), "pump-1", "normal", float(i))
+        await store.set_priorities({("pump-1", "critical"): PRIORITY_HIGH})
+        await store.cap(2)
+        result = await store.read(10)
+        assert {row["datastream"] for row in result.rows} == {"critical"}
 
     async def test_cap_zero_is_noop(self, seeded: Store) -> None:
         """cap(0) is unbounded and removes nothing."""
@@ -173,12 +301,12 @@ class TestAppend:
         assert result.n_rows == 1 and result.rows[0]["payload"] == 2.0     # same key -> upsert
 
     async def test_upsert_after_read_requeues_and_survives_drop(self, store: Store) -> None:
-        """A correction to an already-read key takes a fresh seq, so dropping the
-        in-flight cursor can't delete it: the new value survives to the next batch."""
+        """A correction to an already-read key takes a fresh seq outside the in-flight set,
+        so dropping that batch can't delete it: the new value survives to the next batch."""
         ts = datetime(2026, 1, 1)
         await store.append(ts, "pump-1", "temperature", 1.0)
-        batch = await store.read(10)                       # cursor covers the seq=1 row
+        batch = await store.read(10)                       # seq set covers the seq=1 row
         await store.append(ts, "pump-1", "temperature", 2.0)  # correction lands mid-upload
-        await store.drop(batch.cursor)                     # drop only what was sent
+        await store.drop(batch.seqs)                       # drop only what was sent
         rest = await store.read(10)
         assert rest.n_rows == 1 and rest.rows[0]["payload"] == 2.0

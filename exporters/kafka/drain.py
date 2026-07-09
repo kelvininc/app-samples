@@ -10,7 +10,7 @@ from store import FileRecords, Records, Store
 if TYPE_CHECKING:                       # shared module: needs only the attribute shapes at runtime
     from settings import Buffer, Retry, Upload
 
-Read = Union[Records, FileRecords]      # both carry .cursor, .n_rows and .backlog
+Read = Union[Records, FileRecords]      # both carry .seqs, .n_rows and .backlog
 
 
 class Writer(Protocol):
@@ -57,8 +57,8 @@ async def _tick(writer: Writer, store: Store, upload: "Upload", buffer: "Buffer"
                      attempts=upload.retry.attempts, consecutive_failures=failed_ticks + 1,
                      backlog=await store.count())
     else:
-        if r.cursor is not None:
-            await store.drop(r.cursor)           # only after a successful send
+        if r.seqs:
+            await store.drop(r.seqs)             # only after a successful send
         if failed_ticks and r.n_rows:
             logger.info("Upload recovered", failed_ticks=failed_ticks, backlog=r.backlog)
     await store.cap(buffer.max_backlog)          # disk-safety guard every tick

@@ -71,7 +71,7 @@ class _FakeStore:
 
     def __init__(self, rows: list[dict]) -> None:
         from store import Records
-        self._records = Records(rows, len(rows) if rows else None, len(rows), 0)
+        self._records = Records(rows, list(range(1, len(rows) + 1)), len(rows), 0)
 
     async def read(self, limit: int):
         return self._records

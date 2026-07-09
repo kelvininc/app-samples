@@ -6,6 +6,16 @@
       "type": "string",
       "title": "Kafka Topic",
       "description": "Topic this stream's data is produced to; supports {asset}/{stream} placeholders. A stream without a topic is not exported."
+    },
+    "priority": {
+      "type": "string",
+      "title": "Priority",
+      "description": "High-priority streams are uploaded before Normal ones whenever a backlog builds up. Streams without a priority rank as Normal.",
+      "default": "2",
+      "oneOf": [
+        { "const": "1", "title": "High" },
+        { "const": "2", "title": "Normal" }
+      ]
     }
   },
   "required": ["topic"]

@@ -7,7 +7,7 @@ It pairs with the [Kafka importer](../../importers/kafka), which consumes record
 ## How It Works
 
 1. The app subscribes to Kelvin asset data streams and buffers each message in a local DuckDB store. Only streams with a `topic` in their per-stream IO configuration are buffered; a stream without one is warned at startup and ignored.
-2. A background loop drains a batch from the buffer on a fixed interval and produces the records to their mapped topics.
+2. A background loop drains a batch from the buffer on a fixed interval and produces the records to their mapped topics. Which rows fill a batch when a backlog builds up is governed by the upload order (FIFO/LIFO) and per-stream priorities; see [Upload Order and Priority](#upload-order-and-priority).
 3. The local buffer is trimmed only after the broker acknowledges every record in the batch, so data survives restarts and transient network failures.
 
 A single long-lived producer is reused across batches. If a batch fails, the producer is stopped and recreated on the next upload.
@@ -24,6 +24,22 @@ Each stream carries its own destination topic in its IO configuration (set per s
 
 There is no global default topic: every stream that should be exported must define one.
 
+### Upload Order and Priority
+
+Both settings only matter while the buffer holds more than one batch (an outage, a slow broker, a burst); in the healthy steady state every buffered row ships on the next tick regardless.
+
+- **`upload.order`** picks which end of the backlog fills the next batch: `fifo` (default) drains oldest data first, `lifo` drains the newest first so fresh data reaches Kafka before the backlog is worked off.
+- **Priority** is set per stream in its IO configuration, next to the topic: **High** streams fill batches before **Normal** ones, whatever their age. A stream without a priority ranks as Normal, so setting one only ever promotes. Priority outranks recency: under LIFO, an old High row still ships before the newest Normal one.
+
+Selection and emission are separate: however a batch is selected, its records are always produced in chronological order, so each batch reads in time order on the consumer side.
+
+Two sharp edges to opt into deliberately:
+
+- **Starvation.** Both features are strict. Under a sustained backlog, LIFO can defer the oldest data indefinitely, and High-priority inflow can defer Normal streams indefinitely. If `buffer.max_backlog` is set, deferred rows are eventually evicted (lowest priority first, oldest within a level).
+- **Cross-batch ordering.** The `asset/datastream` message key guarantees a stream lands in one partition, and each batch is produced in time order; but with `lifo` (or mixed priorities) *batches* themselves are not oldest-first during recovery, so consumers can see event-time regressions between batches. Keep `fifo` (and one priority level) if your consumers assume per-key monotonic event time.
+
+Priorities and topics are read at startup: changing them means redeploying the workload. Already-buffered rows re-rank against the new priorities on restart.
+
 ### Message Format
 
 Each buffered row becomes one Kafka message:
@@ -35,7 +51,7 @@ Topics are not created by the exporter; create them upfront (or enable broker au
 
 ## Delivery Semantics
 
-Delivery is **at-least-once**: the producer is idempotent with `acks=all` (broker-level retries never duplicate), and the local buffer is trimmed only after every record in the batch is acknowledged. If an acknowledgement is lost (for example a network failure after the broker committed the records), the batch is re-produced on the next upload, producing duplicate messages. Consumers must tolerate or deduplicate duplicates (for example on the key + `timestamp`).
+Delivery is **at-least-once**: the producer is idempotent with `acks=all` (broker-level retries never duplicate), and the local buffer is trimmed only after every record in the batch is acknowledged. If an acknowledgement is lost (for example a network failure after the broker committed the records), the batch is re-produced on the next upload, producing duplicate messages. Consumers must tolerate or deduplicate duplicates (for example on the key + `timestamp`). With `lifo` or mixed priorities the re-produced copy can interleave with newer data instead of arriving back-to-back, so deduplicate on content, never on adjacency.
 
 ## Security
 
@@ -72,6 +88,7 @@ Configuration is read from `app.app_configuration`, the same nested structure th
     upload:
       interval: 60
       batch_size: 1000
+      order: fifo
     buffer:
       max_backlog: 0
     ```
@@ -87,6 +104,7 @@ Configuration is read from `app.app_configuration`, the same nested structure th
 | `kafka.security.protocol` | `PLAINTEXT` | `PLAINTEXT`, `SSL`, `SASL_PLAINTEXT`, or `SASL_SSL`. |
 | `upload.interval` | 60 | Seconds to wait between uploads when the buffer is empty. |
 | `upload.batch_size` | 1000 | Maximum number of records drained and produced per upload. |
+| `upload.order` | `fifo` | Backlog draining order: `fifo` (oldest first) or `lifo` (newest first). |
 | `upload.retry.attempts` | 3 | Upload attempts before giving up until the next interval. |
 | `upload.retry.base_delay` | 1 | Seconds before the first retry; doubles on each subsequent attempt. |
 | `upload.retry.max_delay` | 30 | Ceiling in seconds for the exponential backoff between retries. |
@@ -107,7 +125,7 @@ These cover store/drain/writer logic and settings validation, with the Kafka pro
     ```
     kelvin app upload
     ```
-2. **Deploy** it: On a cluster, the same `kafka` / `upload` / `buffer` configuration is set on the deployment rather than in a local `config.yaml`, and each stream's `topic` is set in its IO configuration. Credentials must be **Secrets**; the non-sensitive fields can be set directly.
+2. **Deploy** it: On a cluster, the same `kafka` / `upload` / `buffer` configuration is set on the deployment rather than in a local `config.yaml`, and each stream's `topic` (and optional `priority`) is set in its IO configuration. Credentials must be **Secrets**; the non-sensitive fields can be set directly.
 
     1. Create the credential secrets (SASL example):
 

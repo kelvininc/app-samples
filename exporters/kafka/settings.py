@@ -19,6 +19,7 @@ class Retry(BaseModel):
 class Upload(BaseModel):
     interval: int = Field(default=60, ge=1)         # ge=1: a 0s interval busy-spins the drain loop
     batch_size: int = Field(default=1000, ge=1)
+    order: Literal["fifo", "lifo"] = "fifo"         # batch selection under backlog: oldest-first or newest-first
     retry: Retry = Field(default_factory=Retry)     # default_factory: no shared mutable default
 
 
