@@ -8,9 +8,9 @@
         "account": { "type": "string", "title": "Account", "description": "Account identifier, e.g. xy12345.us-east-1." },
         "user": { "type": "string", "title": "User" },
         "warehouse": { "type": "string", "title": "Warehouse" },
-        "database": { "type": "string", "title": "Database", "pattern": "^[A-Za-z0-9_]+$" },
-        "schema": { "type": "string", "title": "Schema", "pattern": "^[A-Za-z0-9_]+$" },
-        "table": { "type": "string", "title": "Table", "pattern": "^[A-Za-z0-9_]+$" },
+        "database": { "type": "string", "title": "Database", "pattern": "^$|^[A-Za-z0-9_]+$" },
+        "schema": { "type": "string", "title": "Schema", "pattern": "^$|^[A-Za-z0-9_]+$" },
+        "table": { "type": "string", "title": "Table", "pattern": "^$|^[A-Za-z0-9_]+$" },
         "auth": {
           "type": "object",
           "title": "Authentication",
@@ -26,8 +26,7 @@
             {
               "if": { "properties": { "method": { "const": "password" } } },
               "then": {
-                "properties": { "password": { "type": "string", "title": "Password" } },
-                "required": ["password"]
+                "properties": { "password": { "type": "string", "title": "Password" } }
               }
             },
             {
@@ -36,8 +35,7 @@
                 "properties": {
                   "private_key": { "type": "string", "title": "Private Key (PEM)" },
                   "private_key_passphrase": { "type": "string", "title": "Private Key Passphrase" }
-                },
-                "required": ["private_key"]
+                }
               }
             }
           ],

@@ -5,8 +5,9 @@
       "type": "object",
       "title": "Azure Data Lake Storage",
       "properties": {
-        "account_name": { "type": "string", "title": "Storage Account Name", "minLength": 3, "maxLength": 24, "pattern": "^[a-z0-9]+$" },
-        "container": { "type": "string", "title": "Container (File System)", "minLength": 1 },
+        "account_name": { "type": "string", "title": "Storage Account Name", "pattern": "^$|^[a-z0-9]{3,24}$",
+                          "description": "3-24 lowercase letters and digits. Required to deploy." },
+        "container": { "type": "string", "title": "Container (File System)", "description": "Required to deploy." },
         "auth": {
           "type": "object",
           "title": "Authentication",

@@ -28,8 +28,7 @@
             {
               "if": { "properties": { "method": { "const": "password" } } },
               "then": {
-                "properties": { "password": { "type": "string", "title": "Password" } },
-                "required": ["password"]
+                "properties": { "password": { "type": "string", "title": "Password" } }
               }
             },
             {
@@ -38,8 +37,7 @@
                 "properties": {
                   "private_key": { "type": "string", "title": "Private Key (PEM)" },
                   "private_key_passphrase": { "type": "string", "title": "Private Key Passphrase" }
-                },
-                "required": ["private_key"]
+                }
               }
             }
           ],

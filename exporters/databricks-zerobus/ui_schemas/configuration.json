@@ -8,7 +8,7 @@
         "server_hostname": { "type": "string", "title": "Server Hostname", "description": "Workspace hostname, used for OAuth." },
         "zerobus_endpoint": { "type": "string", "title": "Zerobus Endpoint", "description": "gRPC ingestion endpoint." },
         "delta_table": { "type": "string", "title": "Delta Table", "description": "Fully-qualified name: catalog.schema.table.",
-                         "pattern": "^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$" },
+                         "pattern": "^$|^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$" },
         "auth": {
           "type": "object",
           "title": "Authentication",
@@ -17,7 +17,6 @@
             "client_id": { "type": "string", "title": "Client ID" },
             "client_secret": { "type": "string", "title": "Client Secret" }
           },
-          "required": ["client_id", "client_secret"],
           "x-kelvin-ui": {
             "client_secret": { "ui:widget": "password" },
             "ui:order": ["client_id", "client_secret"]

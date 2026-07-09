@@ -29,7 +29,7 @@ defaults:
       server_hostname: ""        # workspace hostname, used for OAuth (e.g. dbc-xxxx.cloud.databricks.com)
       zerobus_endpoint: ""       # gRPC ingestion endpoint (e.g. 123.zerobus.<region>.cloud.databricks.com)
       delta_table: ""            # catalog.schema.table
-      auth:
+      auth: {}                   # must be an object (the ui schema types it), never a bare key
         # Credentials have NO default: a baked-in <% secrets %> makes them always-truthy
         # and defeats the require-both validator. Wire each to a secret per deployment, e.g.:
         #   client_id: "<% secrets.databricks-client-id %>"
