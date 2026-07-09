@@ -62,11 +62,18 @@ folder, and `ui_schemas/`. Section 4 lists the extra files each archetype needs.
 |---------|------------|---------|
 | App folder | lowercase-with-hyphens | `event-detection` |
 | App name in `app.yaml` | lowercase-with-hyphens | `event-detection` |
+| App title in `app.yaml` | Descriptive name + archetype suffix (see below) | `Kafka Exporter` |
 | Data streams | lowercase_with_underscores | `motor_temperature` |
 | Parameters / config keys | lowercase_with_underscores | `max_temperature` |
 | Python files | lowercase_with_underscores | `main.py`, `writer.py` |
 
 Validation regex: `^[a-z0-9]([-_.a-z0-9]*[a-z0-9])?$`
+
+The `title` is what users see in the app catalog, so it must say what the app *is* on its
+own: a Kafka exporter and a Kafka importer both titled "Kafka" are indistinguishable in a
+list. Suffix by archetype: ` Exporter` (storage and action), ` Importer`, ` Broker`/` Server`
+for Docker infra images, ` Machine Simulator` for simulators. SmartApps use their function
+name with no suffix (`Event Detection`). The README's top heading matches the title.
 
 ### Level guidelines
 
@@ -84,11 +91,49 @@ Set `Level` in the README to match the sample's complexity.
 - Handle exceptions inside `@app.task` bodies; the SDK does not auto-catch them the way it does for stream and timer handlers.
 - Prefer an explicit `raise RuntimeError(...)` over `assert` for runtime guards, since `python -O` strips asserts.
 
+Write log messages for the operator reading them at 3am, not for the code:
+
+- **One INFO line per unit of work.** Exporters log one line per delivered batch, importers
+  one summary per interval (`Ingested from Kafka  rows=8123 topics=4`); never one line per
+  message. Carry the numbers that show health: `rows=`, and `backlog=` (rows still buffered)
+  so falling-behind is visible from any single line.
+- **Reserve loss words for loss.** "discarded" means data is gone (cap eviction, unmapped
+  rows); post-ack cleanup is "Cleared uploaded rows from buffer", never "dropped".
+- **Always pair `error=str(e)` with `error_type=type(e).__name__`.** `str(e)` is empty for
+  `TimeoutError`, `ConnectionError`, and some `SSLError`s; a log line reading `error=` is
+  useless.
+- **Make incidents bounded.** Repeated failures carry a `consecutive_failures=` counter, and
+  the first success after failures logs a recovery marker (`Upload recovered  failed_ticks=`).
+  Per-record warnings that can flood (unparseable input) log full detail once per interval
+  and are otherwise counted into the summary.
+- **Report carried-over state at startup, not shutdown.** `Buffer ready  pending_rows=N`;
+  shutdown logs are the ones lost to crashes and OOM kills.
+- **Never log raw config values.** Validation failures use
+  `e.errors(include_url=False, include_input=False)`; the offending input may be a credential.
+
 ### Configuration and secrets
 
 - Build settings from `app.app_configuration` with a pydantic `BaseSettings` model, and set `model_config = SettingsConfigDict(extra="ignore")` so platform-injected keys never crash a valid deployment.
 - For local runs, read a `config.yaml` next to `main.py`; the SDK passes it through as `app_configuration`.
 - Never hardcode credentials. Type them as `SecretStr`, wire them on the deployment as `<% secrets.<name> %>`, and normalize an unresolved `<% secrets... %>` literal to unset in a `mode="before"` validator so a forgotten secret fails config validation instead of leaking the placeholder downstream.
+
+### UI schemas and upload validation
+
+`kelvin app upload` validates `defaults.configuration` against the `ui_schemas` JSON schemas,
+and the defaults are intentionally incomplete scaffolding (empty strings for
+required-to-deploy fields, no credentials since those wire to secrets). A schema that is
+strict about content therefore breaks the upload. The rules:
+
+- **Content constraints must tolerate empty.** Use `"pattern": "^$|^[a-z0-9]{3,24}$"` instead
+  of `minLength`/a bare pattern on any field whose default is `""`. The real "must be set"
+  gate is the pydantic settings model, which fails the deployment at connect.
+- **No `required` on credential fields** inside method-conditional `if/then` blocks; the
+  default `method` value triggers the branch and the credentials are absent by design.
+- **Never a bare `auth:` key in yaml defaults**; it parses as `null` and fails
+  `"type": "object"`. Use `auth: {}` or omit the key.
+- **Dropdown values must be strings.** The platform's form validates select values as
+  strings, so integer `oneOf`/`const` options fail with "must be a string"; use string consts
+  (`"1"`, `"2"`) with `title` labels and coerce in the app.
 
 ### Dependencies
 
