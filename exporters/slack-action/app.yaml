@@ -2,7 +2,7 @@ spec_version: 5.0.0
 type: exporter
 
 name: slack-action-exporter
-title: Slack
+title: Slack Exporter
 description: This exporter handles custom actions and sends Slack messages to a given channel.
 version: 2.0.0
 

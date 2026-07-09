@@ -2,7 +2,7 @@ spec_version: 5.0.0
 type: exporter
 
 name: aws-s3-exporter
-title: AWS S3
+title: AWS S3 Exporter
 description: This exporter uploads data to an AWS S3 bucket.
 version: 2.0.0
 

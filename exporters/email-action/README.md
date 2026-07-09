@@ -1,4 +1,4 @@
-# Email Action
+# Email Exporter
 This application demonstrates the use of the Kelvin SDK for handling custom actions.
 
 It listens for `Email Message` custom actions and sends emails through an SMTP server.

@@ -2,7 +2,7 @@ spec_version: 5.0.0
 type: exporter
 
 name: databricks-volume-exporter
-title: Databricks Volume
+title: Databricks Volume Exporter
 description: This exporter uploads data to a Databricks Unity Catalog Volume.
 version: 2.0.0
 

@@ -1,4 +1,4 @@
-# Microsoft Teams Action
+# Microsoft Teams Exporter
 This application demonstrates the use of the Kelvin SDK for handling custom actions.
 
 It listens for `Teams Message` custom actions and posts messages to a Microsoft

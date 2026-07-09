@@ -2,7 +2,7 @@ spec_version: 5.0.0
 type: exporter
 
 name: email-action-exporter
-title: Email
+title: Email Exporter
 description: This exporter handles custom actions and sends emails via SMTP.
 version: 2.0.0
 

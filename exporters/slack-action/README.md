@@ -1,4 +1,4 @@
-# Slack Action
+# Slack Exporter
 This application demonstrates the use of the Kelvin SDK for handling custom actions.
 
 It listens for `Slack Message` custom actions and sends Slack messages to a given channel.

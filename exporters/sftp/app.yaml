@@ -2,7 +2,7 @@ spec_version: 5.0.0
 type: exporter
 
 name: sftp-exporter
-title: SFTP
+title: SFTP Exporter
 description: This exporter uploads data to an SFTP server.
 version: 2.0.0
 

@@ -2,7 +2,7 @@ spec_version: 5.0.0
 type: exporter
 
 name: databricks-zerobus-exporter
-title: Databricks Zerobus
+title: Databricks Zerobus Exporter
 description: This exporter streams data directly into a Databricks Unity Catalog Delta table using the Zerobus Ingest API.
 version: 2.0.0
 
