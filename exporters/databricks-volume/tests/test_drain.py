@@ -45,7 +45,7 @@ class TestAttempt:
             calls["n"] += 1
             if calls["n"] <= 2:
                 raise RuntimeError("boom")
-            return Records([], 7, 5)
+            return Records([], 7, 5, 0)
 
         result = await drain._attempt(op, Retry(attempts=3, base_delay=0), RecordingClock())
         assert result.cursor == 7 and calls["n"] == 3
@@ -81,6 +81,9 @@ class _FakeStore:
     async def cap(self, max_backlog: int) -> None:
         self.caps.append(max_backlog)
 
+    async def count(self) -> int:
+        return 0                                    # backlog for the give-up log; not asserted here
+
 
 class TestTick:
     """A single drain cycle."""
@@ -100,7 +103,7 @@ class TestTick:
         """A successful write drops up to the returned cursor and runs the cap."""
         class OkWriter:
             async def write_batch(self, store, limit) -> Records:
-                return Records([], 42, 100)        # count == batch_size
+                return Records([], 42, 100, 0)        # count == batch_size
             async def teardown(self) -> None: ...
 
         store = _FakeStore()
@@ -111,7 +114,7 @@ class TestTick:
         """A full batch returns early so the loop drains the backlog without sleeping."""
         class OkWriter:
             async def write_batch(self, store, limit) -> Records:
-                return Records([], 42, 100)        # == batch_size
+                return Records([], 42, 100, 0)        # == batch_size
             async def teardown(self) -> None: ...
 
         clock = RecordingClock()
@@ -122,7 +125,7 @@ class TestTick:
         """A non-full batch sleeps exactly one upload interval before the next tick."""
         class OkWriter:
             async def write_batch(self, store, limit) -> Records:
-                return Records([], 9, 10)          # 10 < batch_size 100
+                return Records([], 9, 10, 0)          # 10 < batch_size 100
             async def teardown(self) -> None: ...
 
         clock = RecordingClock()
@@ -141,7 +144,7 @@ class TestDrainLoop:
         class CountingWriter:
             async def write_batch(self, store, limit) -> Records:
                 ticks["n"] += 1
-                return Records([], None, 0)            # empty -> no drop, loop sleeps each tick
+                return Records([], None, 0, 0)            # empty -> no drop, loop sleeps each tick
             async def teardown(self) -> None:
                 teardowns["n"] += 1
 
@@ -171,7 +174,7 @@ class TestDrainLoop:
 
         class OkWriter:
             async def write_batch(self, store, limit) -> Records:
-                return Records([], 7, 1)               # non-empty -> the tick reaches drop()
+                return Records([], 7, 1, 0)               # non-empty -> the tick reaches drop()
             async def teardown(self) -> None: ...
 
         slept: list[float] = []
@@ -191,3 +194,57 @@ class TestDrainLoop:
             await task
         assert drops["n"] >= 3                          # the loop kept ticking after each failure
         assert slept and set(slept) == {5}              # each failure slept exactly one interval
+
+
+class TestRecovery:
+    """The drain loop tracks failure streaks and marks recovery."""
+
+    async def test_recovered_logged_once_after_failed_ticks(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Two failed cycles then a delivered batch log exactly one 'Upload recovered' with the
+        streak length and remaining backlog; the following routine batch logs no recovery."""
+        infos: list[dict] = []
+        monkeypatch.setattr(drain.logger, "info", lambda msg, **kw: infos.append({"msg": msg, **kw}))
+        outcomes: list = [RuntimeError("down"), RuntimeError("down"),
+                          Records([], 7, 5, 3), Records([], 9, 5, 0)]
+
+        class FlakyWriter:
+            async def write_batch(self, store, limit) -> Records:
+                out = outcomes.pop(0)
+                if isinstance(out, Exception):
+                    raise out
+                return out
+            async def teardown(self) -> None: ...
+
+        class StopClock(RecordingClock):
+            async def sleep(self, delay: float) -> None:
+                if not outcomes:                     # script ran dry: end the loop
+                    raise asyncio.CancelledError
+                await asyncio.sleep(0)
+
+        with pytest.raises(asyncio.CancelledError):
+            await drain.drain(FlakyWriter(), _FakeStore(),
+                              Upload(retry=Retry(attempts=1, base_delay=0)), Buffer(), StopClock())
+        recoveries = [i for i in infos if i["msg"] == "Upload recovered"]
+        assert recoveries == [{"msg": "Upload recovered", "failed_ticks": 2, "backlog": 3}]
+
+    async def test_failure_streak_counts_consecutive_cycles(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Every failed cycle logs an error carrying the running consecutive_failures count."""
+        errors: list[dict] = []
+        monkeypatch.setattr(drain.logger, "error", lambda msg, **kw: errors.append(kw))
+
+        class FailingWriter:
+            async def write_batch(self, store, limit) -> Records:
+                raise RuntimeError("down")
+            async def teardown(self) -> None: ...
+
+        class CountingClock(RecordingClock):
+            async def sleep(self, delay: float) -> None:
+                self.slept.append(delay)
+                if len(self.slept) >= 3:
+                    raise asyncio.CancelledError
+                await asyncio.sleep(0)
+
+        with pytest.raises(asyncio.CancelledError):
+            await drain.drain(FailingWriter(), _FakeStore(),
+                              Upload(retry=Retry(attempts=1, base_delay=0)), Buffer(), CountingClock())
+        assert [e["consecutive_failures"] for e in errors] == [1, 2, 3]

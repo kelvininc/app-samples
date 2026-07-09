@@ -138,12 +138,20 @@ class KafkaWriter:
         try:
             producer = await self._ensure_producer()
             for topic in sorted(set(self.topics.values())):
-                await producer.partitions_for(topic)    # proves the topic exists and is visible
+                try:
+                    await producer.partitions_for(topic)    # proves the topic exists and is visible
+                except UnknownTopicOrPartitionError:
+                    # Name the actionable failure: aiokafka only logs its internal
+                    # "Topic ... not found in cluster metadata" lines while retrying.
+                    logger.error("Kafka topic does not exist; create it or enable broker "
+                                 "auto-creation", topic=topic)
+                    raise
         except _CONFIG_ERRORS:
             raise                                       # misconfiguration: crash the deployment
         except Exception as e:
             logger.warning("Kafka unreachable at setup; buffering and retrying",
-                           brokers=self.cfg.bootstrap_servers, error=str(e))
+                           brokers=self.cfg.bootstrap_servers,
+                           error=str(e), error_type=type(e).__name__)
             await self._close_producer()
             return
         logger.info("Kafka writer ready", brokers=self.cfg.bootstrap_servers,
@@ -154,28 +162,39 @@ class KafkaWriter:
         if r.cursor is not None:
             producer = await self._ensure_producer()
             skipped = 0
+            non_finite = 0
+            batch_topics: set[str] = set()
             try:
                 futures = []
                 for row in r.rows:
                     topic = self.topics.get((row["asset"], row["datastream"]))
                     if topic is None:
                         # Mapping removed since the row was buffered (IO config changed on a
-                        # redeploy): drop it with the batch; same contract as unmapped streams.
+                        # redeploy): discard it with the batch; same contract as unmapped streams.
                         skipped += 1
                         continue
+                    batch_topics.add(topic)
+                    if isinstance(row["payload"], float) and not math.isfinite(row["payload"]):
+                        non_finite += 1                 # build_record publishes these as null
                     futures.append(await producer.send(topic, value=self.build_record(row),
                                                        key=self.build_key(row)))
                 # Await every delivery future (acks=all): the buffer is only trimmed once the
                 # broker acknowledged the whole batch.
                 await asyncio.gather(*futures)
+            except UnknownTopicOrPartitionError:
+                logger.warning("Kafka topic does not exist; create it or enable broker "
+                               "auto-creation", topics=sorted(batch_topics))
+                await self._close_producer()    # drop the producer so the next attempt restarts clean
+                raise
             except Exception:
                 await self._close_producer()    # drop the producer so the next attempt restarts clean
                 raise
             if skipped:
-                logger.warning("Dropped buffered rows whose stream no longer maps to a topic",
-                               count=skipped)
-            logger.info("Produced to Kafka", count=r.n_rows - skipped,
-                        brokers=self.cfg.bootstrap_servers)
+                logger.warning("Discarded rows for streams no longer mapped to a topic",
+                               rows=skipped)
+            extra = {"non_finite": non_finite} if non_finite else {}
+            logger.info("Published to Kafka", rows=r.n_rows - skipped, backlog=r.backlog,
+                        topics=len(batch_topics), brokers=self.cfg.bootstrap_servers, **extra)
         return r
 
     async def _ensure_producer(self) -> AIOKafkaProducer:

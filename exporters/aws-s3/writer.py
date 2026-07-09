@@ -56,11 +56,11 @@ class S3Writer:
             if code in _CONFIG_ERROR_CODES or status in (401, 403, 404):
                 raise                                    # misconfiguration: crash the deployment
             logger.warning("S3 bucket check failed; buffering until the drain retries",
-                           bucket=self.cfg.bucket, error=str(e))
+                           bucket=self.cfg.bucket, error=str(e), error_type=type(e).__name__)
             return
         except Exception as e:      # EndpointConnectionError, timeouts, anything unclassified
             logger.warning("S3 unreachable at setup; buffering until the drain retries",
-                           bucket=self.cfg.bucket, error=str(e))
+                           bucket=self.cfg.bucket, error=str(e), error_type=type(e).__name__)
             return
         logger.info("S3 writer ready", bucket=self.cfg.bucket, region=self.cfg.region, format=self.fmt)
 
@@ -72,17 +72,17 @@ class S3Writer:
         try:
             r = await store.read_to_file(path, self.fmt, limit)
             if r.cursor is not None:
-                await asyncio.to_thread(self._upload, path, r.cursor)
+                await asyncio.to_thread(self._upload, path, r)
             return r
         finally:
             if os.path.exists(path):
                 os.remove(path)
 
-    def _upload(self, path: str, cursor: int) -> None:
+    def _upload(self, path: str, r: FileRecords) -> None:
         # Timestamp generated at upload time: keys never collide across deployments or after a
         # volume loss. The trade-off is at-least-once delivery; a retried upload writes the
         # same batch under a second name (see README's delivery-semantics note).
-        key = f"batch-{datetime.now(timezone.utc):%Y%m%dT%H%M%S}-{cursor}.{self.fmt}"
+        key = f"batch-{datetime.now(timezone.utc):%Y%m%dT%H%M%S}-{r.cursor}.{self.fmt}"
         if self.cfg.prefix:
             key = f"{self.cfg.prefix.strip('/')}/{key}"
         try:
@@ -90,7 +90,8 @@ class S3Writer:
         except Exception:
             self._reset()                               # drop a possibly-stale client; retry rebuilds
             raise
-        logger.info("Uploaded to S3", bucket=self.cfg.bucket, key=key)
+        logger.info("Uploaded to S3", rows=r.n_rows, backlog=r.backlog,
+                    bucket=self.cfg.bucket, key=key)
 
     def _reset(self) -> None:
         self._client = None

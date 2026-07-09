@@ -128,11 +128,11 @@ class SftpWriter:
                                "buffering and retrying", host=self.cfg.host, error=str(e))
             else:
                 logger.warning("SFTP unreachable at setup; buffering and retrying",
-                               host=self.cfg.host, error=str(e))
+                               host=self.cfg.host, error=str(e), error_type=type(e).__name__)
             return
         except Exception as e:
             logger.warning("SFTP unreachable at setup; buffering and retrying", host=self.cfg.host,
-                           error=str(e))
+                           error=str(e), error_type=type(e).__name__)
             return
         try:
             sftp.stat(self.cfg.remote_dir)              # proves the remote dir exists/reachable
@@ -140,7 +140,7 @@ class SftpWriter:
             raise                                       # remote_dir missing/inaccessible: config error
         except Exception as e:                          # timeout, dropped connection, anything unclassified
             logger.warning("SFTP setup check failed; buffering and retrying", host=self.cfg.host,
-                           error=str(e))
+                           error=str(e), error_type=type(e).__name__)
             return
         logger.info("SFTP writer ready", host=self.cfg.host, remote_dir=self.cfg.remote_dir,
                     auth=self.cfg.auth.method, format=self.fmt)
@@ -153,24 +153,25 @@ class SftpWriter:
         try:
             r = await store.read_to_file(path, self.fmt, limit)
             if r.cursor is not None:
-                await asyncio.to_thread(self._upload, path, r.cursor)
+                await asyncio.to_thread(self._upload, path, r)
             return r
         finally:
             if os.path.exists(path):
                 os.remove(path)
 
-    def _upload(self, path: str, cursor: int) -> None:
+    def _upload(self, path: str, r: FileRecords) -> None:
         # Timestamp + cursor: names stay collision-free even if the buffer DB (and its seq)
         # is ever recreated. At-least-once delivery: a retry after a crash between upload and
         # drop re-sends the batch under a fresh timestamp, so consumers must tolerate duplicates.
         stamp = f"{datetime.now(timezone.utc):%Y%m%dT%H%M%S}"
-        remote = posixpath.join(self.cfg.remote_dir, f"batch-{stamp}-{cursor}.{self.fmt}")
+        remote = posixpath.join(self.cfg.remote_dir, f"batch-{stamp}-{r.cursor}.{self.fmt}")
         try:
             self._connection().put(path, remote)        # streams from disk
         except Exception:
             self._reset()                               # drop a possibly-stale connection; retry rebuilds
             raise
-        logger.info("Uploaded to SFTP", host=self.cfg.host, remote=remote)
+        logger.info("Uploaded to SFTP", rows=r.n_rows, backlog=r.backlog,
+                    host=self.cfg.host, remote=remote)
 
     def _reset(self) -> None:
         sftp, self._sftp = self._sftp, None

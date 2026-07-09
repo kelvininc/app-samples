@@ -89,7 +89,8 @@ class ZerobusWriter:
             raise                                   # misconfiguration: crash the deployment
         except Exception as e:
             logger.warning("Zerobus unreachable at setup; buffering and retrying",
-                           table=self.cfg.delta_table, endpoint=endpoint, error=str(e))
+                           table=self.cfg.delta_table, endpoint=endpoint,
+                           error=str(e), error_type=type(e).__name__)
             return
         logger.info("Zerobus writer ready", table=self.cfg.delta_table, endpoint=endpoint)
 
@@ -106,7 +107,8 @@ class ZerobusWriter:
             except Exception:
                 await self._close_stream()      # drop the stream so the next attempt reopens clean
                 raise
-            logger.info("Ingested to Zerobus", count=r.n_rows, table=self.cfg.delta_table)
+            logger.info("Published to Zerobus", rows=r.n_rows, backlog=r.backlog,
+                        table=self.cfg.delta_table)
         return r
 
     async def _ensure_stream(self):

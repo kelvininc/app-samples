@@ -42,6 +42,9 @@ async def on_connect() -> None:
         logger.error("Invalid configuration", errors=e.errors(include_url=False, include_input=False))
         raise
     _settings = settings
+    logger.info("Exporter configured", **settings.upload.model_dump(exclude={"retry"}),
+                retry_attempts=settings.upload.retry.attempts,
+                max_backlog=settings.buffer.max_backlog)
     await store.setup()
     if _writer is not None:                      # re-fire: drop the stale writer before rebuilding
         await _writer.teardown()

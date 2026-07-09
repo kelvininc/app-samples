@@ -80,7 +80,8 @@ class VolumeWriter:
         except Exception as e:
             # Transient or unclassified (network blip, 5xx): start anyway; the drain loop
             # retries uploads, and the ingestion job is re-ensured on the next restart.
-            logger.warning("Databricks connectivity check failed; continuing", error=str(e))
+            logger.warning("Databricks connectivity check failed; continuing",
+                           error=str(e), error_type=type(e).__name__)
             return
         logger.info("Volume writer ready", volume=self.cfg.uc_volume,
                     table=self.cfg.delta_table, auth=self.cfg.auth.method, format=self.fmt)
@@ -107,21 +108,21 @@ class VolumeWriter:
         try:
             r = await store.read_to_file(path, self.fmt, limit)
             if r.cursor is not None:
-                await asyncio.to_thread(self._upload, path, r.cursor)
+                await asyncio.to_thread(self._upload, path, r)
             return r
         finally:
             if os.path.exists(path):
                 os.remove(path)
 
-    def _upload(self, path: str, cursor: int) -> None:
-        volume_path = self._volume_data_path(cursor)
+    def _upload(self, path: str, r: FileRecords) -> None:
+        volume_path = self._volume_data_path(r.cursor)
         try:
             with open(path, "rb") as f:
                 self._connection().files.upload(volume_path, f, overwrite=True)   # streams from disk
         except Exception:
             self._reset()                               # drop a possibly-stale client; retry rebuilds
             raise
-        logger.info("Uploaded to Volume", volume_path=volume_path)
+        logger.info("Uploaded to Volume", rows=r.n_rows, backlog=r.backlog, volume_path=volume_path)
 
     def _reset(self) -> None:
         self._client = None

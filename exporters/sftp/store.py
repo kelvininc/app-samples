@@ -24,12 +24,14 @@ class Records(NamedTuple):
     rows: list[dict]
     cursor: Optional[int]      # highest seq read; None if the buffer was empty
     n_rows: int                # not `count`: that shadows tuple.count() (a real footgun)
+    backlog: int               # rows still buffered once this batch is cleared
 
 
 class FileRecords(NamedTuple):
     path: str                  # rows were streamed here
     cursor: Optional[int]
     n_rows: int
+    backlog: int
 
 
 class Store:
@@ -45,6 +47,10 @@ class Store:
     Rows appended during a slow upload get a higher seq and survive. An upsert that
     lands on an already-read key also takes a fresh seq, so a corrected value re-queues
     instead of being dropped under the in-flight cursor.
+
+    Every read also reports ``backlog`` (rows that remain once the batch is cleared),
+    counted in the same locked snapshot as the batch, so upload logs can show whether
+    the exporter is keeping up.
     """
 
     def __init__(self, db_path: str = ":memory:"):
@@ -58,6 +64,11 @@ class Store:
         if self._con is None:
             raise RuntimeError("Store.setup() must be called before use")
         return self._con
+
+    def _total(self) -> int:
+        # Callers hold self._lock. COUNT(*) on the buffer: cheap even at max_backlog scale.
+        row = self._conn().execute("SELECT COUNT(*) FROM buffer").fetchone()
+        return row[0] if row else 0     # COUNT(*) always returns a row
 
     async def setup(self) -> None:
         await asyncio.to_thread(self._setup)
@@ -80,7 +91,10 @@ class Store:
                 )
                 """
             )
-        logger.info("Buffer ready", db_path=self.db_path)
+            # Rows carried over on the persistent volume: surfaced at startup because
+            # shutdown logs are the ones that get lost (crash, OOM, log shipper stopping).
+            pending = self._total()
+        logger.info("Buffer ready", db_path=self.db_path, pending_rows=pending)
 
     async def teardown(self) -> None:
         await asyncio.to_thread(self._teardown)
@@ -115,6 +129,13 @@ class Store:
                 (timestamp, asset, datastream, payload),
             )
 
+    async def count(self) -> int:
+        return await asyncio.to_thread(self._count)
+
+    def _count(self) -> int:
+        with self._lock:
+            return self._total()
+
     async def read(self, limit: int) -> Records:
         return await asyncio.to_thread(self._read, limit)
 
@@ -124,8 +145,9 @@ class Store:
                 "SELECT seq, timestamp, asset, datastream, payload FROM buffer ORDER BY seq ASC LIMIT ?",
                 (limit,),
             ).fetchall()
+            total = self._total()
         data = [{"timestamp": r[1], "asset": r[2], "datastream": r[3], "payload": r[4]} for r in rows]
-        return Records(data, rows[-1][0] if rows else None, len(data))
+        return Records(data, rows[-1][0] if rows else None, len(data), total - len(data))
 
     async def read_to_file(self, path: str, fmt: str, limit: int) -> FileRecords:
         return await asyncio.to_thread(self._read_to_file, path, fmt, limit)
@@ -140,20 +162,22 @@ class Store:
             row = self._conn().execute(f"SELECT COUNT(*), MAX(seq) FROM ({batch})").fetchone()
             count, cursor = row if row else (0, None)   # COUNT(*) always returns a row
             if not count:
-                return FileRecords(path, None, 0)
+                return FileRecords(path, None, 0, 0)
+            total = self._total()
             select = f"SELECT timestamp, asset, datastream, {payload_expr} AS payload FROM ({batch})"
             # path is app-generated (never user input); DuckDB COPY can't bind the path. Streams to disk.
             self._conn().execute(f"COPY ({select}) TO '{path}' (FORMAT {fmt})")
-        logger.info("Buffer streamed to file", count=count, file=path, format=fmt)
-        return FileRecords(path, cursor, count)
+        logger.info("Batch staged to temporary file", rows=count, file=path, format=fmt)
+        return FileRecords(path, cursor, count, total - count)
 
     async def drop(self, cursor: int) -> None:
         await asyncio.to_thread(self._drop, cursor)
 
     def _drop(self, cursor: int) -> None:
         with self._lock:
-            self._conn().execute("DELETE FROM buffer WHERE seq <= ?", (cursor,))
-        logger.info("Dropped buffered rows", up_to_seq=cursor)
+            row = self._conn().execute("DELETE FROM buffer WHERE seq <= ?", (cursor,)).fetchone()
+        # Housekeeping after a confirmed upload, NOT data loss: loss logs say "discarded".
+        logger.info("Cleared uploaded rows from buffer", rows=row[0] if row else 0)
 
     async def cap(self, max_backlog: int) -> None:
         if max_backlog:
@@ -161,12 +185,12 @@ class Store:
 
     def _cap(self, max_backlog: int) -> None:
         with self._lock:
-            row = self._conn().execute("SELECT COUNT(*) - ? FROM buffer", (max_backlog,)).fetchone()
-            overflow = row[0] if row else 0             # COUNT(*) always returns a row
+            overflow = self._total() - max_backlog
             if overflow <= 0:
                 return
             self._conn().execute(
                 "DELETE FROM buffer WHERE seq IN (SELECT seq FROM buffer ORDER BY seq ASC LIMIT ?)",
                 (overflow,),
             )
-        logger.warning("Backlog cap exceeded; dropped oldest", dropped=overflow, max_backlog=max_backlog)
+        logger.warning("Buffer over max_backlog; discarded oldest unsent rows",
+                       discarded=overflow, max_backlog=max_backlog)

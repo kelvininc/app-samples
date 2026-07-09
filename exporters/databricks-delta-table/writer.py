@@ -78,7 +78,8 @@ class DeltaTableWriter:
             if _fatal_setup_error(e):
                 raise
             await asyncio.to_thread(self._reset)        # drop the possibly-stale connection; drain reconnects
-            logger.warning("Delta Table probe failed; starting anyway (drain will retry)", error=str(e))
+            logger.warning("Delta Table probe failed; starting anyway (drain will retry)",
+                           error=str(e), error_type=type(e).__name__)
 
     def _validate(self) -> None:
         # Probe the table itself, not just SELECT 1: LIMIT 0 moves no data but still fails on a
@@ -91,18 +92,19 @@ class DeltaTableWriter:
     async def write_batch(self, store: Store, limit: int) -> Records:
         r = await store.read(limit)
         if r.cursor is not None:
-            await asyncio.to_thread(self._insert, r.rows)
+            await asyncio.to_thread(self._insert, r)
         return r
 
-    def _insert(self, rows: list[dict]) -> None:
-        query, params = self.build_insert(self.cfg.delta_table, rows)
+    def _insert(self, r: Records) -> None:
+        query, params = self.build_insert(self.cfg.delta_table, r.rows)
         try:
             with self._connection().cursor() as cur:
                 cur.execute(query, params)
         except Exception:
             self._reset()                               # drop a possibly-stale connection; retry reconnects
             raise
-        logger.info("Uploaded to Delta table", count=len(rows), table=self.cfg.delta_table)
+        logger.info("Uploaded to Delta table", rows=r.n_rows, backlog=r.backlog,
+                    table=self.cfg.delta_table)
 
     def _connection(self):
         # use_inline_params lifts the connector's 255-native-parameter-marker cap so the default

@@ -71,7 +71,7 @@ class _FakeStore:
 
     def __init__(self, rows: list[dict]) -> None:
         from store import Records
-        self._records = Records(rows, len(rows) if rows else None, len(rows))
+        self._records = Records(rows, len(rows) if rows else None, len(rows), 0)
 
     async def read(self, limit: int):
         return self._records
@@ -129,7 +129,7 @@ class TestProducerLifecycle:
         assert json.loads(value)["payload"] == 1.0
 
     async def test_unmapped_row_is_skipped_not_sent(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """A row whose stream lost its mapping (redeploy) is dropped with a warning, not sent."""
+        """A row whose stream lost its mapping (redeploy) is discarded with a warning, not sent."""
         producer = _FakeProducer()
         _patch_producer(monkeypatch, producer)
         warnings: list[str] = []
@@ -140,7 +140,7 @@ class TestProducerLifecycle:
         r = await w.write_batch(_FakeStore([_row(1.0), _row(2.0, asset="ghost")]), 100)
 
         assert r.n_rows == 2 and len(producer.sent) == 1     # ghost row skipped
-        assert any("no longer maps" in msg for msg in warnings)
+        assert any("no longer mapped" in msg for msg in warnings)
 
     async def test_empty_batch_sends_nothing(self, monkeypatch: pytest.MonkeyPatch) -> None:
         producer = _FakeProducer()

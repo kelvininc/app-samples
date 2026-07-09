@@ -6,6 +6,7 @@ from databricks.sql.exc import ServerOperationError
 
 import writer as writer_mod
 from settings import Settings
+from store import Records
 from writer import DeltaTableWriter
 
 
@@ -178,5 +179,5 @@ class TestConnection:
         w = DeltaTableWriter(_cfg())
         w._con = BoomCon()
         with pytest.raises(RuntimeError, match="connection lost"):
-            w._insert([_row(1.0)])
+            w._insert(Records([_row(1.0)], 1, 1, 0))
         assert w._con is None                                # reset -> retry will reconnect

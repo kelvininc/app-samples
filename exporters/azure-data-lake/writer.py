@@ -54,9 +54,11 @@ class ADLSWriter:
         except HttpResponseError as e:
             if e.status_code in (401, 403, 404):        # auth/not-found via generic HTTP error
                 raise
-            logger.warning("ADLS connectivity check failed; continuing", error=str(e))
+            logger.warning("ADLS connectivity check failed; continuing",
+                           error=str(e), error_type=type(e).__name__)
         except Exception as e:                          # transient/unknown: uploads will retry
-            logger.warning("ADLS connectivity check failed; continuing", error=str(e))
+            logger.warning("ADLS connectivity check failed; continuing",
+                           error=str(e), error_type=type(e).__name__)
         else:
             logger.info("ADLS writer ready", account=self.cfg.account_name,
                         container=self.cfg.container, format=self.fmt)
@@ -69,16 +71,16 @@ class ADLSWriter:
         try:
             r = await store.read_to_file(path, self.fmt, limit)
             if r.cursor is not None:
-                await self._upload(path, r.cursor)
+                await self._upload(path, r)
             return r
         finally:
             if os.path.exists(path):
                 os.remove(path)
 
-    async def _upload(self, path: str, cursor: int) -> None:
+    async def _upload(self, path: str, r: FileRecords) -> None:
         # Timestamp generated at upload time: a retried upload gets a fresh name, so the
         # same batch can land under two names (at-least-once; consumers dedupe).
-        name = f"batch-{datetime.now(timezone.utc):%Y%m%dT%H%M%S}-{cursor}.{self.fmt}"
+        name = f"batch-{datetime.now(timezone.utc):%Y%m%dT%H%M%S}-{r.cursor}.{self.fmt}"
         size = os.path.getsize(path)
         try:
             fs = self._connection().get_file_system_client(self.cfg.container)
@@ -89,7 +91,8 @@ class ADLSWriter:
         except Exception:
             await self._reset()                 # drop a possibly-stale client; retry rebuilds
             raise
-        logger.info("Uploaded to ADLS", container=self.cfg.container, name=name)
+        logger.info("Uploaded to ADLS", rows=r.n_rows, backlog=r.backlog,
+                    container=self.cfg.container, name=name)
 
     async def _reset(self) -> None:
         client, self._service_client = self._service_client, None

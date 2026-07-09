@@ -89,7 +89,8 @@ class SnowflakeWriter:
             # OperationalError subclasses DatabaseError; this clause must come first so
             # network-ish failures stay tolerated instead of falling into the fatal branch.
             await asyncio.to_thread(self._reset)        # drop the possibly-stale connection; drain reconnects
-            logger.warning("Snowflake probe failed (transient); drain will retry", error=str(e))
+            logger.warning("Snowflake probe failed (transient); drain will retry",
+                           error=str(e), error_type=type(e).__name__)
         except (snowflake.connector.errors.DatabaseError,   # auth failure, no permission; covers
                                                             # ProgrammingError (its subclass), which the
                                                             # probe gets for a missing database/schema/table
@@ -97,7 +98,8 @@ class SnowflakeWriter:
             raise
         except Exception as e:
             await asyncio.to_thread(self._reset)        # drop the possibly-stale connection; drain reconnects
-            logger.warning("Snowflake probe failed (unknown); drain will retry", error=str(e))
+            logger.warning("Snowflake probe failed (unknown); drain will retry",
+                           error=str(e), error_type=type(e).__name__)
 
     def _validate(self) -> None:
         # Probe the table itself, not just SELECT 1: LIMIT 0 moves no data but still fails on a
@@ -111,11 +113,11 @@ class SnowflakeWriter:
     async def write_batch(self, store: Store, limit: int) -> Records:
         r = await store.read(limit)
         if r.cursor is not None:
-            await asyncio.to_thread(self._insert, r.rows)
+            await asyncio.to_thread(self._insert, r)
         return r
 
-    def _insert(self, rows: list[dict]) -> None:
-        query, params = self.build_insert(rows)
+    def _insert(self, r: Records) -> None:
+        query, params = self.build_insert(r.rows)
         try:
             with self._lock:                            # held for the whole statement (see class docstring)
                 with self._connection().cursor() as cur:
@@ -123,7 +125,7 @@ class SnowflakeWriter:
         except Exception:
             self._reset()                               # drop a possibly-stale connection; retry reconnects
             raise
-        logger.info("Uploaded to Snowflake", count=len(rows), table=self._fqn)
+        logger.info("Uploaded to Snowflake", rows=r.n_rows, backlog=r.backlog, table=self._fqn)
 
     def _connection(self):
         # Callers hold self._lock; this only builds/returns the shared connection.

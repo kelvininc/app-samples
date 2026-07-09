@@ -117,7 +117,7 @@ class TestStreamLifecycle:
 
         def __init__(self, rows: list[dict]) -> None:
             from store import Records
-            self._records = Records(rows, len(rows) if rows else None, len(rows))
+            self._records = Records(rows, len(rows) if rows else None, len(rows), 0)
 
         async def read(self, limit: int):
             return self._records

@@ -7,6 +7,7 @@ from snowflake.connector.errors import DatabaseError, OperationalError, Programm
 
 import writer as writer_mod
 from settings import Settings
+from store import Records
 from writer import SnowflakeWriter
 
 SF = {"account": "acc", "user": "u", "warehouse": "WH", "database": "DB", "schema": "PUBLIC", "table": "EVENTS"}
@@ -70,7 +71,7 @@ class TestConnection:
         w = SnowflakeWriter(_cfg())
         w._con = BoomCon()
         with pytest.raises(RuntimeError, match="connection lost"):
-            w._insert([_row(1.0)])
+            w._insert(Records([_row(1.0)], 1, 1, 0))
         assert w._con is None                             # reset -> retry reconnects
 
 
@@ -181,7 +182,7 @@ class TestTeardownLock:
             except BaseException as e:                       # surface worker failures in the test
                 errors.append(e)
 
-        insert = threading.Thread(target=run, args=(w._insert, [_row(1.0)]))
+        insert = threading.Thread(target=run, args=(w._insert, Records([_row(1.0)], 1, 1, 0)))
         insert.start()
         assert entered.wait(timeout=5)                       # _insert is mid-execute, lock held
 
