@@ -4,7 +4,7 @@ type: exporter
 name: kafka-exporter
 title: Kafka Exporter
 description: This exporter publishes asset data to Kafka topics, one JSON message per record.
-version: 1.0.1
+version: 1.0.2
 
 # Runtime update is off: the exporter builds its producer, topic map and buffer at startup, so
 # IO-mapping and configuration changes are applied by redeploying the workload (the platform
