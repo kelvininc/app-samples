@@ -1,9 +1,9 @@
 ![Kelvin Logo](logo.png)
 
 # Welcome to Kelvin SDK - App Samples
-This repository contains sample applications that demonstrate how to use the **Kelvin SDK**. 
+This repository contains sample applications that demonstrate how to use the **Kelvin SDK**.
 
-We recommend that you start first by reading the official Kelvin Documentation on https://docs.kelvin.ai.
+Start with the official [Kelvin Documentation](https://docs.kelvin.ai).
 
 # Sample Applications
 
@@ -40,10 +40,69 @@ We recommend that you start first by reading the official Kelvin Documentation o
 |------------------------------------------|--------------|--------------------------------------------------------|
 | [Mosquitto MQTT](docker/mqtt-mosquitto/) | Intermediate | Mosquitto MQTT Broker that supports SSL/TLS encryption |
 
+# Running Samples Locally
+
+Each sample is self-contained: its own `requirements.txt`, `Dockerfile`, and `app.yaml`.
+We use [uv](https://docs.astral.sh/uv/) to install the `kelvin` CLI and to run each app in an
+isolated environment built from its existing `requirements.txt`. This doesn't change how apps
+build and run on Kelvin.
+
+Two packages are involved, each with a different job:
+
+| Package             | Role                                              | Where it lives                |
+|---------------------|--------------------------------------------------|-------------------------------|
+| `kelvin-sdk`        | The `kelvin` CLI to build, test, and deploy apps | Installed once, globally      |
+| `kelvin-python-sdk` | The runtime library each app imports             | Each app's `requirements.txt` |
+
+All samples target **Python 3.13**.
+
+## Prerequisites
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then install the Kelvin
+CLI once, globally:
+
+```bash
+uv tool install kelvin-sdk     # provides the `kelvin` command
+kelvin --version               # verify it's on your PATH
+```
+
+Upgrade it later with `uv tool upgrade kelvin-sdk`.
+
+## Run a sample
+
+From inside any app folder:
+
+```bash
+cd exporters/aws-s3
+
+uv venv --python 3.13              # create an isolated environment
+uv pip install -r requirements.txt # install kelvin-python-sdk + the app's deps
+uv run python main.py              # run the app
+```
+
+`uv run` auto-detects the local `.venv`, so there's no need to activate it. After setup,
+re-running an app is just `uv run python main.py`.
+
+To feed an app simulated data, open a second terminal and use the CLI:
+
+```bash
+kelvin app test simulator
+```
+
+To skip keeping a `.venv`, run the app ephemerally; uv builds a throwaway
+environment each time:
+
+```bash
+uv run --python 3.13 --with-requirements requirements.txt python main.py
+```
 
 # Contributing
+
+Please read our [Style Guide](CONTRIBUTING.md) before contributing a new sample application.
+
 1. Fork the project.
 2. Create your feature branch (git checkout -b feature/YourFeature).
-3. Commit your changes (git commit -m 'Add some feature').
-4. Push to the branch (git push origin feature/YourFeature).
-5. Open a pull request.
+3. Follow the [Style Guide](CONTRIBUTING.md) for folder structure, naming conventions, and code style.
+4. Commit your changes (git commit -m 'Add some feature').
+5. Push to the branch (git push origin feature/YourFeature).
+6. Open a pull request.
