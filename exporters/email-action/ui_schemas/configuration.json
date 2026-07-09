@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "properties": {
+    "smtp": {
+      "type": "object",
+      "title": "SMTP",
+      "properties": {
+        "host": { "type": "string", "title": "Host" },
+        "port": { "type": "integer", "title": "Port", "minimum": 1, "maximum": 65535, "default": 587 },
+        "use_tls": { "type": "boolean", "title": "Use STARTTLS", "default": true },
+        "from_address": { "type": "string", "title": "From Address" },
+        "auth": {
+          "type": "object",
+          "title": "Authentication",
+          "description": "Wire credentials to a secret on deployment.",
+          "properties": {
+            "method": {
+              "type": "string", "title": "Method",
+              "enum": ["none", "username_password"], "default": "none"
+            }
+          },
+          "required": ["method"],
+          "allOf": [
+            {
+              "if": { "properties": { "method": { "const": "username_password" } } },
+              "then": {
+                "properties": {
+                  "username": { "type": "string", "title": "Username" },
+                  "password": { "type": "string", "title": "Password" }
+                },
+                "required": ["username", "password"]
+              }
+            }
+          ],
+          "x-kelvin-ui": {
+            "password": { "ui:widget": "password" },
+            "ui:order": ["method", "username", "password"]
+          }
+        }
+      },
+      "required": ["host", "from_address"]
+    }
+  },
+  "required": ["smtp"]
+}

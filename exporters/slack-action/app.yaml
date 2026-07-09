@@ -1,0 +1,29 @@
+spec_version: 5.0.0
+type: exporter
+
+name: slack-action-exporter
+title: Slack
+description: This exporter handles custom actions and sends Slack messages to a given channel.
+version: 2.0.0
+
+# Runtime update is off: the integration is configured at startup, so configuration changes are
+# applied by redeploying the workload (the platform restarts it).
+flags:
+  enable_runtime_update:
+    configuration: false
+
+custom_actions:
+  inputs:
+    - type: Slack Message
+
+ui_schemas:
+  configuration: "ui_schemas/configuration.json"
+
+defaults:
+  configuration:
+    slack:
+      # The unresolved "<% secrets %>" literal is normalized to unset by the settings
+      # validator, so an un-wired deployment fails fast (token is required).
+      token: <% secrets.slack-bot-token %>
+
+  system: {}

@@ -1,0 +1,60 @@
+spec_version: 5.0.0
+type: exporter
+
+name: databricks-volume-exporter
+title: Databricks Volume
+description: This exporter uploads data to a Databricks Unity Catalog Volume.
+version: 2.0.0
+
+# Runtime update is off: the exporter builds its client and buffer at startup, so IO-mapping and
+# configuration changes are applied by redeploying the workload (the platform restarts it).
+flags:
+  enable_runtime_update:
+    io: false
+    configuration: false
+
+exporter_io:
+  - name: default
+    data_types:
+      - number
+      - string
+      - boolean
+
+ui_schemas:
+  configuration: "ui_schemas/configuration.json"
+
+defaults:
+  configuration:
+    databricks:
+      server_hostname: ""
+      delta_table: ""          # catalog.schema.table
+      uc_volume: ""            # catalog.schema.volume
+      job:
+        # Set warehouse_id for a COPY INTO job, or cluster_id for an Auto Loader job.
+        # Leave both empty to skip ingestion-job creation (upload only).
+        cluster_id: ""
+        warehouse_id: ""
+      auth:
+        method: oauth            # "oauth" | "access_token"
+        # Credentials have NO default: a baked-in <% secrets %> makes them always-truthy
+        # and defeats the one-auth validator. Wire each to a secret per deployment, e.g.:
+        #   client_id: "<% secrets.databricks-client-id %>"
+        #   client_secret: "<% secrets.databricks-client-secret %>"
+        #   access_token: "<% secrets.databricks-access-token %>"
+    upload:
+      interval: 60
+      batch_size: 1000
+      format: parquet           # "parquet" | "csv" (both re-ingest via parse_json)
+      retry:
+        attempts: 3
+        base_delay: 1
+        max_delay: 30           # backoff ceiling, independent of upload.interval
+    buffer:
+      max_backlog: 0            # 0 = unbounded; set a cap to bound disk on prolonged outage
+
+  system:
+    # Persistent buffer: the DuckDB file must survive restarts (do NOT drop this).
+    volumes:
+      - name: data
+        target: data.db
+        type: persistent

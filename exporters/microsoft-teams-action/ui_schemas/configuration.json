@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "teams": {
+      "type": "object",
+      "title": "Microsoft Teams",
+      "properties": {
+        "webhook_url": {
+          "type": "string",
+          "title": "Webhook URL",
+          "description": "Teams Incoming Webhook / Power Automate Workflow URL.",
+          "default": "<% secrets.teams-webhook-url %>"
+        }
+      },
+      "required": ["webhook_url"],
+      "x-kelvin-ui": {
+        "webhook_url": { "ui:widget": "password" },
+        "ui:order": ["webhook_url"]
+      }
+    }
+  },
+  "required": ["teams"]
+}

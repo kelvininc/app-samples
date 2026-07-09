@@ -1,0 +1,37 @@
+spec_version: 5.0.0
+type: exporter
+
+name: email-action-exporter
+title: Email
+description: This exporter handles custom actions and sends emails via SMTP.
+version: 2.0.0
+
+# Runtime update is off: the integration is configured at startup, so configuration changes are
+# applied by redeploying the workload (the platform restarts it).
+flags:
+  enable_runtime_update:
+    configuration: false
+
+custom_actions:
+  inputs:
+    - type: Email Message
+
+ui_schemas:
+  configuration: "ui_schemas/configuration.json"
+
+defaults:
+  configuration:
+    smtp:
+      host: ""
+      port: 587
+      use_tls: true
+      from_address: ""
+      auth:
+        method: none              # "none" (unauthenticated relay) | "username_password"
+        # Credentials have NO default: for an authenticated server, wire both to secrets per
+        # deployment, e.g.:
+        #   method: username_password
+        #   username: "<% secrets.smtp-username %>"
+        #   password: "<% secrets.smtp-password %>"
+
+  system: {}

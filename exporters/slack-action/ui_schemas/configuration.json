@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "slack": {
+      "type": "object",
+      "title": "Slack",
+      "properties": {
+        "token": {
+          "type": "string",
+          "title": "Bot Token",
+          "description": "Slack bot token (xoxb-...).",
+          "default": "<% secrets.slack-bot-token %>"
+        }
+      },
+      "required": ["token"],
+      "x-kelvin-ui": {
+        "token": { "ui:widget": "password" },
+        "ui:order": ["token"]
+      }
+    }
+  },
+  "required": ["slack"]
+}

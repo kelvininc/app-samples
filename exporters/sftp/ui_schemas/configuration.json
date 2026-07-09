@@ -1,0 +1,87 @@
+{
+  "type": "object",
+  "properties": {
+    "sftp": {
+      "type": "object",
+      "title": "SFTP",
+      "properties": {
+        "host": { "type": "string", "title": "Host" },
+        "port": { "type": "integer", "title": "Port", "minimum": 1, "maximum": 65535, "default": 22 },
+        "username": { "type": "string", "title": "Username" },
+        "remote_dir": { "type": "string", "title": "Remote Directory", "default": "." },
+        "timeout": { "type": "number", "title": "Timeout (s)", "exclusiveMinimum": 0, "default": 30,
+                     "description": "Network timeout in seconds for connect/auth/transfers." },
+        "verify_host_key": { "type": "boolean", "title": "Verify Host Key", "default": true },
+        "known_hosts": { "type": "string", "title": "Known Hosts Path", "description": "Optional known_hosts file." },
+        "auth": {
+          "type": "object",
+          "title": "Authentication",
+          "description": "Wire credentials to a secret on deployment.",
+          "properties": {
+            "method": {
+              "type": "string", "title": "Method",
+              "enum": ["password", "private_key"], "default": "password"
+            }
+          },
+          "required": ["method"],
+          "allOf": [
+            {
+              "if": { "properties": { "method": { "const": "password" } } },
+              "then": {
+                "properties": { "password": { "type": "string", "title": "Password" } },
+                "required": ["password"]
+              }
+            },
+            {
+              "if": { "properties": { "method": { "const": "private_key" } } },
+              "then": {
+                "properties": {
+                  "private_key": { "type": "string", "title": "Private Key (PEM)" },
+                  "private_key_passphrase": { "type": "string", "title": "Private Key Passphrase" }
+                },
+                "required": ["private_key"]
+              }
+            }
+          ],
+          "x-kelvin-ui": {
+            "password": { "ui:widget": "password" },
+            "private_key": { "ui:widget": "textarea" },
+            "private_key_passphrase": { "ui:widget": "password" },
+            "ui:order": ["method", "password", "private_key", "private_key_passphrase"]
+          }
+        }
+      },
+      "required": ["host", "username", "auth"]
+    },
+    "upload": {
+      "type": "object",
+      "title": "Upload",
+      "properties": {
+        "interval": { "type": "integer", "title": "Interval (s)", "minimum": 1, "default": 60 },
+        "batch_size": { "type": "integer", "title": "Batch Size", "minimum": 1, "default": 1000 },
+        "format": {
+          "type": "string", "title": "File Format",
+          "enum": ["parquet", "csv", "json"], "default": "parquet"
+        },
+        "retry": {
+          "type": "object",
+          "title": "Retry",
+          "properties": {
+            "attempts": { "type": "integer", "title": "Attempts", "minimum": 1, "default": 3 },
+            "base_delay": { "type": "number", "title": "Base Delay (s)", "minimum": 0, "default": 1 },
+            "max_delay": { "type": "number", "title": "Max Delay (s)", "minimum": 0, "default": 30 }
+          }
+        }
+      }
+    },
+    "buffer": {
+      "type": "object",
+      "title": "Buffer",
+      "properties": {
+        "max_backlog": { "type": "integer", "title": "Max Backlog", "minimum": 0, "default": 0,
+                         "description": "Max un-uploaded rows kept before dropping oldest; 0 = unbounded." }
+      }
+    }
+  },
+  "required": ["sftp"]
+}

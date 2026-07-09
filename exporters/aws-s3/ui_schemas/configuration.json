@@ -1,0 +1,58 @@
+{
+  "type": "object",
+  "properties": {
+    "s3": {
+      "type": "object",
+      "title": "AWS S3",
+      "properties": {
+        "region": { "type": "string", "title": "Region", "default": "us-east-1" },
+        "bucket": { "type": "string", "title": "Bucket" },
+        "prefix": { "type": "string", "title": "Key Prefix", "description": "Optional folder within the bucket." },
+        "auth": {
+          "type": "object",
+          "title": "Authentication",
+          "description": "Leave empty to use the AWS default credential chain (IAM role).",
+          "properties": {
+            "access_key_id": { "type": "string", "title": "Access Key ID" },
+            "secret_access_key": { "type": "string", "title": "Secret Access Key" }
+          },
+          "x-kelvin-ui": {
+            "secret_access_key": { "ui:widget": "password" },
+            "ui:order": ["access_key_id", "secret_access_key"]
+          }
+        }
+      },
+      "required": ["region", "bucket"]
+    },
+    "upload": {
+      "type": "object",
+      "title": "Upload",
+      "properties": {
+        "interval": { "type": "integer", "title": "Interval (s)", "minimum": 1, "default": 60 },
+        "batch_size": { "type": "integer", "title": "Batch Size", "minimum": 1, "default": 1000 },
+        "format": {
+          "type": "string", "title": "File Format",
+          "enum": ["parquet", "csv", "json"], "default": "parquet"
+        },
+        "retry": {
+          "type": "object",
+          "title": "Retry",
+          "properties": {
+            "attempts": { "type": "integer", "title": "Attempts", "minimum": 1, "default": 3 },
+            "base_delay": { "type": "number", "title": "Base Delay (s)", "minimum": 0, "default": 1 },
+            "max_delay": { "type": "number", "title": "Max Delay (s)", "minimum": 0, "default": 30 }
+          }
+        }
+      }
+    },
+    "buffer": {
+      "type": "object",
+      "title": "Buffer",
+      "properties": {
+        "max_backlog": { "type": "integer", "title": "Max Backlog", "minimum": 0, "default": 0,
+                         "description": "Max un-uploaded rows kept before dropping oldest; 0 = unbounded." }
+      }
+    }
+  },
+  "required": ["s3"]
+}

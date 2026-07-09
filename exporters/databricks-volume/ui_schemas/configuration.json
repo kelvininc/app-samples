@@ -1,0 +1,95 @@
+{
+  "type": "object",
+  "properties": {
+    "databricks": {
+      "type": "object",
+      "title": "Databricks",
+      "properties": {
+        "server_hostname": { "type": "string", "title": "Server Hostname" },
+        "delta_table": { "type": "string", "title": "Delta Table", "description": "Fully-qualified name: catalog.schema.table.",
+                         "pattern": "^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$" },
+        "uc_volume": { "type": "string", "title": "UC Volume", "description": "Fully-qualified name: catalog.schema.volume.",
+                       "pattern": "^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$" },
+        "job": {
+          "type": "object",
+          "title": "Ingestion Job",
+          "description": "Set warehouse_id for a COPY INTO job, or cluster_id for an Auto Loader job. Leave both empty to upload only.",
+          "properties": {
+            "warehouse_id": { "type": "string", "title": "SQL Warehouse ID" },
+            "cluster_id": { "type": "string", "title": "Cluster ID" }
+          },
+          "x-kelvin-ui": {
+            "ui:order": ["warehouse_id", "cluster_id"]
+          }
+        },
+        "auth": {
+          "type": "object",
+          "title": "Authentication",
+          "description": "Wire credentials to a secret on deployment.",
+          "properties": {
+            "method": {
+              "type": "string", "title": "Method",
+              "enum": ["oauth", "access_token"], "default": "oauth"
+            }
+          },
+          "required": ["method"],
+          "allOf": [
+            {
+              "if": { "properties": { "method": { "const": "oauth" } } },
+              "then": {
+                "properties": {
+                  "client_id": { "type": "string", "title": "Client ID" },
+                  "client_secret": { "type": "string", "title": "Client Secret" }
+                },
+                "required": ["client_id", "client_secret"]
+              }
+            },
+            {
+              "if": { "properties": { "method": { "const": "access_token" } } },
+              "then": {
+                "properties": { "access_token": { "type": "string", "title": "Access Token" } },
+                "required": ["access_token"]
+              }
+            }
+          ],
+          "x-kelvin-ui": {
+            "client_secret": { "ui:widget": "password" },
+            "access_token": { "ui:widget": "password" },
+            "ui:order": ["method", "client_id", "client_secret", "access_token"]
+          }
+        }
+      },
+      "required": ["server_hostname", "delta_table", "uc_volume", "auth"]
+    },
+    "upload": {
+      "type": "object",
+      "title": "Upload",
+      "properties": {
+        "interval": { "type": "integer", "title": "Interval (s)", "minimum": 1, "default": 60 },
+        "batch_size": { "type": "integer", "title": "Batch Size", "minimum": 1, "default": 1000 },
+        "format": {
+          "type": "string", "title": "File Format",
+          "enum": ["parquet", "csv"], "default": "parquet"
+        },
+        "retry": {
+          "type": "object",
+          "title": "Retry",
+          "properties": {
+            "attempts": { "type": "integer", "title": "Attempts", "minimum": 1, "default": 3 },
+            "base_delay": { "type": "number", "title": "Base Delay (s)", "minimum": 0, "default": 1 },
+            "max_delay": { "type": "number", "title": "Max Delay (s)", "minimum": 0, "default": 30 }
+          }
+        }
+      }
+    },
+    "buffer": {
+      "type": "object",
+      "title": "Buffer",
+      "properties": {
+        "max_backlog": { "type": "integer", "title": "Max Backlog", "minimum": 0, "default": 0,
+                         "description": "Max un-uploaded rows kept before dropping oldest; 0 = unbounded." }
+      }
+    }
+  },
+  "required": ["databricks"]
+}

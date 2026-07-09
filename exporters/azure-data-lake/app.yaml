@@ -1,0 +1,51 @@
+spec_version: 5.0.0
+type: exporter
+
+name: azure-data-lake-exporter
+title: Azure Data Lake
+description: This exporter uploads data to an Azure Data Lake Storage container.
+version: 2.0.0
+
+# Runtime update is off: the exporter builds its client and buffer at startup, so IO-mapping and
+# configuration changes are applied by redeploying the workload (the platform restarts it).
+flags:
+  enable_runtime_update:
+    io: false
+    configuration: false
+
+exporter_io:
+  - name: default
+    data_types:
+      - number
+      - string
+      - boolean
+
+ui_schemas:
+  configuration: "ui_schemas/configuration.json"
+
+defaults:
+  configuration:
+    adls:
+      account_name: ""
+      container: ""
+      # account_key has NO default: leave it unset to use the cluster's managed identity
+      # (DefaultAzureCredential), or wire it to a secret per deployment, e.g.:
+      #   auth:
+      #     account_key: "<% secrets.azure-account-key %>"
+    upload:
+      interval: 60
+      batch_size: 1000
+      format: parquet           # "parquet" | "csv" | "json"
+      retry:
+        attempts: 3
+        base_delay: 1
+        max_delay: 30           # backoff ceiling, independent of upload.interval
+    buffer:
+      max_backlog: 0            # 0 = unbounded; set a cap to bound disk on prolonged outage
+
+  system:
+    # Persistent buffer: the DuckDB file must survive restarts (do NOT drop this).
+    volumes:
+      - name: data
+        target: data.db
+        type: persistent

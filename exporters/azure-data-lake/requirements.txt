@@ -1,0 +1,7 @@
+kelvin-python-sdk
+azure-storage-file-datalake
+azure-identity
+aiohttp
+pydantic
+pydantic-settings
+duckdb

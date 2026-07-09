@@ -1,0 +1,56 @@
+{
+  "type": "object",
+  "properties": {
+    "adls": {
+      "type": "object",
+      "title": "Azure Data Lake Storage",
+      "properties": {
+        "account_name": { "type": "string", "title": "Storage Account Name", "minLength": 3, "maxLength": 24, "pattern": "^[a-z0-9]+$" },
+        "container": { "type": "string", "title": "Container (File System)", "minLength": 1 },
+        "auth": {
+          "type": "object",
+          "title": "Authentication",
+          "description": "Storage account access key. Wire it to a secret on deployment.",
+          "properties": {
+            "account_key": { "type": "string", "title": "Account Key" }
+          },
+          "x-kelvin-ui": {
+            "account_key": { "ui:widget": "password" },
+            "ui:order": ["account_key"]
+          }
+        }
+      },
+      "required": ["account_name", "container"]
+    },
+    "upload": {
+      "type": "object",
+      "title": "Upload",
+      "properties": {
+        "interval": { "type": "integer", "title": "Interval (s)", "minimum": 1, "default": 60 },
+        "batch_size": { "type": "integer", "title": "Batch Size", "minimum": 1, "default": 1000 },
+        "format": {
+          "type": "string", "title": "File Format",
+          "enum": ["parquet", "csv", "json"], "default": "parquet"
+        },
+        "retry": {
+          "type": "object",
+          "title": "Retry",
+          "properties": {
+            "attempts": { "type": "integer", "title": "Attempts", "minimum": 1, "default": 3 },
+            "base_delay": { "type": "number", "title": "Base Delay (s)", "minimum": 0, "default": 1 },
+            "max_delay": { "type": "number", "title": "Max Delay (s)", "minimum": 0, "default": 30 }
+          }
+        }
+      }
+    },
+    "buffer": {
+      "type": "object",
+      "title": "Buffer",
+      "properties": {
+        "max_backlog": { "type": "integer", "title": "Max Backlog", "minimum": 0, "default": 0,
+                         "description": "Max un-uploaded rows kept before dropping oldest; 0 = unbounded." }
+      }
+    }
+  },
+  "required": ["adls"]
+}

@@ -1,0 +1,109 @@
+{
+  "type": "object",
+  "properties": {
+    "kafka": {
+      "type": "object",
+      "title": "Kafka",
+      "properties": {
+        "bootstrap_servers": { "type": "string", "title": "Bootstrap Servers", "default": "localhost:9092",
+                               "description": "Comma-separated host:port list." },
+        "client_id": { "type": "string", "title": "Client ID", "default": "kelvin-kafka-exporter" },
+        "security": {
+          "type": "object",
+          "title": "Security",
+          "properties": {
+            "protocol": {
+              "type": "string", "title": "Protocol",
+              "enum": ["PLAINTEXT", "SSL", "SASL_PLAINTEXT", "SASL_SSL"], "default": "PLAINTEXT"
+            },
+            "sasl": {
+              "type": "object",
+              "title": "SASL Authentication",
+              "description": "Required with a SASL_* protocol: set all three together.",
+              "properties": {
+                "mechanism": {
+                  "type": "string", "title": "Mechanism",
+                  "enum": ["PLAIN", "SCRAM-SHA-256", "SCRAM-SHA-512"]
+                },
+                "username": { "type": "string", "title": "Username" },
+                "password": { "type": "string", "title": "Password" }
+              },
+              "x-kelvin-ui": {
+                "password": { "ui:widget": "password" },
+                "ui:order": ["mechanism", "username", "password"]
+              }
+            },
+            "tls": {
+              "type": "object",
+              "title": "TLS",
+              "description": "SSL / SASL_SSL only. PEM content, wired to secrets on deployment.",
+              "properties": {
+                "ca_cert": { "type": "string", "title": "CA Certificate",
+                             "description": "Optional: private CA bundle; empty uses the system CAs." },
+                "client_cert": { "type": "string", "title": "Client Certificate (mTLS)",
+                                 "description": "Set together with the client key, or leave both empty." },
+                "client_key": { "type": "string", "title": "Client Key (mTLS)" }
+              },
+              "x-kelvin-ui": {
+                "client_key": { "ui:widget": "password" },
+                "ui:order": ["ca_cert", "client_cert", "client_key"]
+              }
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": { "protocol": { "enum": ["SASL_PLAINTEXT", "SASL_SSL"] } },
+                "required": ["protocol"]
+              },
+              "then": {
+                "required": ["sasl"],
+                "properties": { "sasl": { "required": ["mechanism", "username", "password"] } }
+              }
+            },
+            {
+              "if": {
+                "properties": { "protocol": { "enum": ["PLAINTEXT", "SSL"] } },
+                "required": ["protocol"]
+              },
+              "then": {
+                "properties": {
+                  "sasl": {
+                    "properties": { "mechanism": { "not": { "enum": ["PLAIN", "SCRAM-SHA-256", "SCRAM-SHA-512"] } } }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": ["bootstrap_servers"]
+    },
+    "upload": {
+      "type": "object",
+      "title": "Upload",
+      "properties": {
+        "interval": { "type": "integer", "title": "Interval (s)", "minimum": 1, "default": 60 },
+        "batch_size": { "type": "integer", "title": "Batch Size", "minimum": 1, "default": 1000 },
+        "retry": {
+          "type": "object",
+          "title": "Retry",
+          "properties": {
+            "attempts": { "type": "integer", "title": "Attempts", "minimum": 1, "default": 3 },
+            "base_delay": { "type": "number", "title": "Base Delay (s)", "minimum": 0, "default": 1 },
+            "max_delay": { "type": "number", "title": "Max Delay (s)", "minimum": 0, "default": 30 }
+          }
+        }
+      }
+    },
+    "buffer": {
+      "type": "object",
+      "title": "Buffer",
+      "properties": {
+        "max_backlog": { "type": "integer", "title": "Max Backlog", "minimum": 0, "default": 0,
+                         "description": "Max un-uploaded rows kept before dropping oldest; 0 = unbounded." }
+      }
+    }
+  },
+  "required": ["kafka"]
+}
