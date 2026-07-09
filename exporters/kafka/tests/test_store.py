@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 
-from store import PRIORITY_HIGH, Store
+from store import PRIORITY_HIGH, PRIORITY_LOW, Store
 
 pytestmark = pytest.mark.asyncio
 
@@ -83,13 +83,23 @@ class TestPriority:
         assert batch.seqs == sorted(batch.seqs)
         assert [row["datastream"] for row in batch.rows] == ["normal", "critical", "critical"]
 
-    async def test_unset_priority_ranks_normal(self, store: Store) -> None:
-        """An explicit Normal (2) doesn't outrank an unset stream: both are the same level,
+    async def test_unset_priority_ranks_medium(self, store: Store) -> None:
+        """An explicit Medium (2) doesn't outrank an unset stream: both are the same level,
         so fifo age decides."""
         base = datetime(2026, 1, 1)
         await store.append(base, "pump-1", "unset", 1.0)                      # older
         await store.append(base + timedelta(seconds=1), "pump-1", "explicit", 2.0)
         await store.set_priorities({("pump-1", "explicit"): 2})
+        batch = await store.read(1)
+        assert batch.rows[0]["datastream"] == "unset"
+
+    async def test_low_priority_ranks_below_unset_streams(self, store: Store) -> None:
+        """Low (3) explicitly demotes: an older Low row is selected after a newer stream
+        that nobody configured (unset ranks Medium)."""
+        base = datetime(2026, 1, 1)
+        await store.append(base, "pump-1", "verbose", 1.0)                    # older, marked Low
+        await store.append(base + timedelta(seconds=1), "pump-1", "unset", 2.0)
+        await store.set_priorities({("pump-1", "verbose"): PRIORITY_LOW})
         batch = await store.read(1)
         assert batch.rows[0]["datastream"] == "unset"
 
@@ -253,6 +263,20 @@ class TestCap:
         await store.cap(2)
         result = await store.read(10)
         assert {row["datastream"] for row in result.rows} == {"critical"}
+
+    async def test_cap_evicts_low_before_unset_before_high(self, store: Store) -> None:
+        """Eviction walks the levels bottom-up: Low goes first, then unset (Medium), and
+        High rows survive the longest, regardless of age."""
+        base = datetime(2026, 1, 1)
+        await store.append(base, "pump-1", "critical", 1.0)                   # oldest, High
+        await store.append(base + timedelta(seconds=1), "pump-1", "unset", 2.0)
+        await store.append(base + timedelta(seconds=2), "pump-1", "verbose", 3.0)  # newest, Low
+        await store.set_priorities({("pump-1", "critical"): PRIORITY_HIGH,
+                                    ("pump-1", "verbose"): PRIORITY_LOW})
+        await store.cap(2)
+        assert {r["datastream"] for r in (await store.read(10)).rows} == {"critical", "unset"}
+        await store.cap(1)
+        assert [r["datastream"] for r in (await store.read(10)).rows] == ["critical"]
 
     async def test_cap_zero_is_noop(self, seeded: Store) -> None:
         """cap(0) is unbounded and removes nothing."""

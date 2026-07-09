@@ -26,7 +26,7 @@ ui_schemas:
   io_configuration:
     default:
       "ui_schemas/io_default.json" # per-stream: topic (required, {asset}/{stream} placeholders)
-      # + priority (optional, 1 = High, 2 = Normal; unset ranks Normal)
+      # + priority (optional, 1 = High, 2 = Medium, 3 = Low; unset ranks Medium)
 
 defaults:
   configuration:

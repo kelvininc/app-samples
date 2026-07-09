@@ -42,8 +42,8 @@ def build_topic_map(assets: dict[str, AssetInfo]) -> dict[tuple[str, str], str]:
 
 def build_priority_map(assets: dict[str, AssetInfo]) -> dict[tuple[str, str], int]:
     """Map each (asset, stream) with an explicit priority in its IO configuration to that
-    priority (1 = High, 2 = Normal). Streams without one are left out: the store ranks
-    them Normal, so an explicit priority always wins over an unset one."""
+    priority (1 = High, 2 = Medium, 3 = Low). Streams without one are left out: the
+    store ranks them Medium, so High promotes and Low demotes."""
     priorities: dict[tuple[str, str], int] = {}
     for asset_name, asset_info in assets.items():
         for stream_name, sds in asset_info.datastreams.items():

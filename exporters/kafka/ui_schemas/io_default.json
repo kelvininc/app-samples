@@ -10,11 +10,12 @@
     "priority": {
       "type": "string",
       "title": "Priority",
-      "description": "High-priority streams are uploaded before Normal ones whenever a backlog builds up. Streams without a priority rank as Normal.",
+      "description": "Higher-priority streams are uploaded first whenever a backlog builds up. Streams without a priority rank as Medium; Low drains after unconfigured streams and is discarded first when the buffer cap evicts.",
       "default": "2",
       "oneOf": [
         { "const": "1", "title": "High" },
-        { "const": "2", "title": "Normal" }
+        { "const": "2", "title": "Medium" },
+        { "const": "3", "title": "Low" }
       ]
     }
   },

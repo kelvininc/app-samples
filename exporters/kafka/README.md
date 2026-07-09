@@ -29,13 +29,13 @@ There is no global default topic: every stream that should be exported must defi
 Both settings only matter while the buffer holds more than one batch (an outage, a slow broker, a burst); in the healthy steady state every buffered row ships on the next tick regardless.
 
 - **`upload.order`** picks which end of the backlog fills the next batch: `fifo` (default) drains oldest data first, `lifo` drains the newest first so fresh data reaches Kafka before the backlog is worked off.
-- **Priority** is set per stream in its IO configuration, next to the topic: **High** streams fill batches before **Normal** ones, whatever their age. A stream without a priority ranks as Normal, so setting one only ever promotes. Priority outranks recency: under LIFO, an old High row still ships before the newest Normal one.
+- **Priority** is set per stream in its IO configuration, next to the topic: **High** streams fill batches before **Medium** ones, and Medium before **Low**, whatever their age. A stream without a priority ranks as Medium, so High promotes and Low explicitly demotes: a Low stream drains after streams nobody configured. Priority outranks recency: under LIFO, an old High row still ships before the newest Medium one.
 
 Selection and emission are separate: however a batch is selected, its records are always produced in chronological order, so each batch reads in time order on the consumer side.
 
 Two sharp edges to opt into deliberately:
 
-- **Starvation.** Both features are strict. Under a sustained backlog, LIFO can defer the oldest data indefinitely, and High-priority inflow can defer Normal streams indefinitely. If `buffer.max_backlog` is set, deferred rows are eventually evicted (lowest priority first, oldest within a level).
+- **Starvation.** Both features are strict. Under a sustained backlog, LIFO can defer the oldest data indefinitely, and higher-priority inflow can defer lower-priority streams indefinitely. If `buffer.max_backlog` is set, deferred rows are eventually evicted (lowest priority first, oldest within a level), so marking a stream Low is a real data-loss decision under a capped buffer.
 - **Cross-batch ordering.** The `asset/datastream` message key guarantees a stream lands in one partition, and each batch is produced in time order; but with `lifo` (or mixed priorities) *batches* themselves are not oldest-first during recovery, so consumers can see event-time regressions between batches. Keep `fifo` (and one priority level) if your consumers assume per-key monotonic event time.
 
 Priorities and topics are read at startup: changing them means redeploying the workload. Already-buffered rows re-rank against the new priorities on restart.

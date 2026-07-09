@@ -9,7 +9,8 @@ from kelvin.logs import logger
 Scalar = Union[float, str, bool]
 
 PRIORITY_HIGH = 1
-PRIORITY_NORMAL = 2        # also the rank of any stream without an explicit priority
+PRIORITY_MEDIUM = 2        # also the rank of any stream without an explicit priority
+PRIORITY_LOW = 3
 
 # Project the UNION payload to one clean scalar-JSON string for file exports:
 #   number -> 42.5   string -> "running"   boolean -> true
@@ -22,7 +23,7 @@ CASE union_tag(payload)
 END
 """
 
-# Batch SELECTION: priority decides which rows make the batch (High before Normal/unset),
+# Batch SELECTION: priority decides which rows make the batch (High, then Medium/unset, then Low),
 # then `order` decides which end of each level wins (fifo = oldest seqs, lifo = newest).
 # EMISSION is a separate concern: callers re-sort the selected rows by seq ASC so every
 # batch is produced/written in chronological order no matter how it was selected.
@@ -30,7 +31,7 @@ _BATCH = """
 SELECT b.seq, b.timestamp, b.asset, b.datastream, b.payload
 FROM buffer b
 LEFT JOIN priorities p ON b.asset = p.asset AND b.datastream = p.datastream
-ORDER BY COALESCE(p.priority, {normal}) ASC, b.seq {seq_dir}
+ORDER BY COALESCE(p.priority, {medium}) ASC, b.seq {seq_dir}
 LIMIT {limit}
 """
 
@@ -64,8 +65,8 @@ class Store:
     corrected value re-queues instead of being deleted with the in-flight batch.
 
     Batch selection honors ``order`` ("fifo" = oldest first, "lifo" = newest first) and
-    the per-stream ``priorities`` table (``set_priorities``): High (1) rows are selected
-    before Normal (2) and unset ones, whatever their age. Selection only decides which
+    the per-stream ``priorities`` table (``set_priorities``): High (1) before Medium (2)
+    before Low (3), whatever their age; unset streams rank Medium. Selection only decides which
     rows make the batch; the rows themselves always come back in chronological (seq)
     order, so files and produced batches read in time order.
 
@@ -96,7 +97,7 @@ class Store:
         # limit is int-cast (never user text); DuckDB can't bind inside a COPY's subquery,
         # so the whole batch template is interpolated for both the record and file paths.
         seq_dir = "DESC" if self.order == "lifo" else "ASC"
-        return _BATCH.format(normal=PRIORITY_NORMAL, seq_dir=seq_dir, limit=int(limit))
+        return _BATCH.format(medium=PRIORITY_MEDIUM, seq_dir=seq_dir, limit=int(limit))
 
     async def setup(self) -> None:
         await asyncio.to_thread(self._setup)
@@ -245,13 +246,13 @@ class Store:
             if overflow <= 0:
                 return
             # Evict lowest-priority first, oldest within a level: an outage should cost
-            # Normal rows before it costs a single High one.
+            # Low rows before Medium ones, and Medium before a single High one.
             self._conn().execute(
                 f"""
                 DELETE FROM buffer WHERE seq IN (
                     SELECT b.seq FROM buffer b
                     LEFT JOIN priorities p ON b.asset = p.asset AND b.datastream = p.datastream
-                    ORDER BY COALESCE(p.priority, {PRIORITY_NORMAL}) DESC, b.seq ASC
+                    ORDER BY COALESCE(p.priority, {PRIORITY_MEDIUM}) DESC, b.seq ASC
                     LIMIT ?
                 )
                 """,
