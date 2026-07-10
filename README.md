@@ -24,15 +24,19 @@ We recommend that you start first by reading the official Kelvin Documentation o
 
 ## 📤 Exporters
 
-| Application                                                                   | Level         | Description                                             |
-|-------------------------------------------------------------------------------|---------------|---------------------------------------------------------|
-| [AWS S3 Uploader](exporters/aws-s3-uploader/)                                 | Intermediate  | Uploads time-series data to an AWS S3 Bucket.           |
-| [Azure Data Lake Gen2 Uploader](exporters/azure-data-lake-uploader/)          | Intermediate  | Uploads streaming data to Azure Data Lake Storage Gen2. |
-| [Databricks Delta Table Uploader](exporters/databricks-delta-table-uploader/) | Intermediate  | Uploads streaming data to Databricks Delta Table.       |
-| [Databricks Volume Uploader](exporters/databricks-volume-uploader/)           | Intermediate  | Uploads streaming data to a Databricks Volume.          |
-| [Databricks Volume Uploader](exporters/databricks-volume-uploader/)           | Intermediate  | Uploads streaming data to a Databricks Volume.          |
-| [Resnet Custom Actions](exporters/resnet-custom-actions/)                     | Intermediate  | Creates issues in the Resnet system.                    |
-| [Slack Custom Actions](exporters/slack-custom-actions/)                       | Intermediate  | Sends slack messages to a given channel.                |
+| Application                                                            | Level        | Description                                                                          |
+|------------------------------------------------------------------------|--------------|--------------------------------------------------------------------------------------|
+| [AWS S3 Exporter](exporters/aws-s3/)                                   | Intermediate | Uploads streaming data to an AWS S3 bucket.                                          |
+| [Azure Data Lake Exporter](exporters/azure-data-lake/)                 | Intermediate | Uploads streaming data to Azure Data Lake Storage Gen2.                              |
+| [Databricks Delta Table Exporter](exporters/databricks-delta-table/)   | Intermediate | Uploads streaming data to a Databricks Delta Table.                                  |
+| [Databricks Volume Exporter](exporters/databricks-volume/)             | Intermediate | Uploads streaming data to a Databricks Volume.                                       |
+| [Databricks Zerobus Exporter](exporters/databricks-zerobus/)           | Intermediate | Streams data into a Databricks Unity Catalog Delta table via the Zerobus Ingest API. |
+| [Kafka Exporter](exporters/kafka/)                                     | Intermediate | Publishes asset data to Kafka topics, one JSON message per record.                   |
+| [Snowflake Exporter](exporters/snowflake/)                             | Intermediate | Uploads streaming data to a Snowflake table.                                         |
+| [SFTP Exporter](exporters/sftp/)                                       | Intermediate | Uploads batched files to an SFTP server.                                             |
+| [Email Exporter](exporters/email-action/)                              | Intermediate | Sends email notifications via a custom action (SMTP).                               |
+| [Slack Exporter](exporters/slack-action/)                              | Intermediate | Posts Slack messages via a custom action.                                            |
+| [Microsoft Teams Exporter](exporters/microsoft-teams-action/)          | Intermediate | Posts Microsoft Teams messages via a custom action.                                  |
 
 ## 🤖 Docker
 
