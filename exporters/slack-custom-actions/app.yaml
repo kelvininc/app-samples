@@ -7,7 +7,7 @@ type: exporter
 name: slack-message-sender
 title: Slack Message Sender
 description: This exporter handles slack custom actions and sends slack messages to a given channel
-version: 1.0.0
+version: 1.1.1
 
 # Capabilities
 flags:
@@ -23,6 +23,9 @@ custom_actions:
 ui_schemas:
   # Application Configuration Schema
   configuration: "ui_schemas/configuration.json"
+  # Custom Action Payload Schemas (keyed by action type)
+  custom_actions:
+    Slack Message: "ui_schemas/slack_message.json"
 
 # Defaults (Runtime/Deployment)
 defaults:

@@ -14,6 +14,7 @@ Start with the official [Kelvin Documentation](https://docs.kelvin.ai).
 | [Casting Defect Detection](applications/casting-defect-detection/)               | Computer Vision      | Advanced     | Uses a TensorFlow-based model to identify and analyze manufacturing defects in casting processes.   |
 | [Event Detection](applications/event-detection/)                                 | Event Detection      | Beginner     | Monitors streaming data for threshold-crossing events and emits Control Changes or Recommendations. |
 | [Multi-Objective Optimization ML](applications/multi-objective-optimization-ml/) | Machine Learning     | Advanced     | Solves multi-objective optimization problems using ML techniques.                                   |
+| [Slack Message Test](applications/slack-message-test/)                           | Custom Actions       | Beginner     | Publishes a Slack Message custom action every minute to test the Slack Custom Actions exporter.     |
 
 ## 📥 Importers
 
