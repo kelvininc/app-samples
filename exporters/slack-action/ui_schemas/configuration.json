@@ -1,0 +1,36 @@
+{
+  "title": "Slack Exporter Configuration",
+  "description": "Slack workspace credentials used to post the messages.",
+  "type": "object",
+  "properties": {
+    "slack": {
+      "type": "object",
+      "title": "Slack",
+      "description": "Credentials for the Slack workspace.",
+      "properties": {
+        "token": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "default": "<% secrets.slack-bot-token %>",
+          "title": "Bot Token",
+          "description": "Slack bot token (xoxb-...). Wire this to a secret; an unresolved default fails at connect."
+        }
+      },
+      "required": [
+        "token"
+      ],
+      "x-kelvin-ui": {
+        "token": {
+          "ui:widget": "password"
+        },
+        "ui:order": [
+          "token"
+        ]
+      }
+    }
+  },
+  "required": [
+    "slack"
+  ]
+}

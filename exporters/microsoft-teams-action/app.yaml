@@ -1,0 +1,32 @@
+spec_version: 5.0.0
+type: exporter
+
+name: microsoft-teams-action-exporter
+title: Microsoft Teams Exporter
+description: This exporter handles custom actions and posts messages to a Microsoft Teams channel.
+version: 2.0.0
+
+# Runtime update is off: the integration is configured at startup, so configuration changes are
+# applied by redeploying the workload (the platform restarts it).
+flags:
+  enable_runtime_update:
+    configuration: false
+
+custom_actions:
+  inputs:
+    - type: Teams Message
+
+ui_schemas:
+  configuration: "ui_schemas/configuration.json"
+  # Custom action payload schemas, keyed by action type.
+  custom_actions:
+    Teams Message: "ui_schemas/teams_message.json"
+
+defaults:
+  configuration:
+    teams:
+      # The unresolved "<% secrets %>" literal is normalized to unset by the settings
+      # validator, so an un-wired deployment fails fast (webhook_url is required).
+      webhook_url: <% secrets.teams-webhook-url %>
+
+  system: {}

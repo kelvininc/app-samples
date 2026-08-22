@@ -1,0 +1,36 @@
+{
+  "title": "Slack Message",
+  "description": "Payload schema for the Slack Message custom action.",
+  "type": "object",
+  "properties": {
+    "channel": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Channel",
+      "description": "Slack channel to send the message to (e.g. #alerts)"
+    },
+    "message": {
+      "type": "object",
+      "title": "Message",
+      "description": "The message to post to the channel.",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Text",
+          "description": "Message text to send to the channel"
+        }
+      },
+      "required": [
+        "text"
+      ]
+    }
+  },
+  "required": [
+    "channel",
+    "message"
+  ],
+  "additionalProperties": false
+}

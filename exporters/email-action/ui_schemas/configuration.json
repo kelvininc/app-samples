@@ -1,0 +1,99 @@
+{
+  "title": "Email Exporter Configuration",
+  "description": "SMTP server, sender, and authentication used to send the messages.",
+  "type": "object",
+  "properties": {
+    "smtp": {
+      "type": "object",
+      "title": "SMTP",
+      "description": "Connection and sender settings for the SMTP server.",
+      "properties": {
+        "host": {
+          "type": "string",
+          "pattern": "^$|\\S",
+          "title": "Host",
+          "description": "Hostname of the SMTP server (e.g. smtp.example.com). Required to deploy."
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 587,
+          "title": "Port",
+          "description": "587 for STARTTLS, 25 for an unauthenticated relay"
+        },
+        "use_tls": {
+          "type": "boolean",
+          "default": true,
+          "title": "Use STARTTLS",
+          "description": "Upgrade the connection with STARTTLS; required for password auth"
+        },
+        "from_address": {
+          "type": "string",
+          "pattern": "^$|^[^@\\s]+@[^@\\s]+$",
+          "title": "From Address",
+          "description": "Sender address; must be a valid email address. A display name is reduced to the bare address. Required to deploy."
+        },
+        "auth": {
+          "type": "object",
+          "title": "Authentication",
+          "description": "Wire credentials to a secret on deployment.",
+          "properties": {
+            "method": {
+              "type": "string",
+              "enum": [
+                "none",
+                "username_password"
+              ],
+              "default": "none",
+              "title": "Method",
+              "description": "none for an unauthenticated relay; username_password requires STARTTLS"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "method": {
+                    "const": "username_password"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "title": "Username",
+                    "description": "SMTP AUTH username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "title": "Password",
+                    "description": "SMTP AUTH password; wire this to a secret"
+                  }
+                }
+              }
+            }
+          ],
+          "x-kelvin-ui": {
+            "password": {
+              "ui:widget": "password"
+            },
+            "ui:order": [
+              "method",
+              "username",
+              "password"
+            ]
+          }
+        }
+      },
+      "required": [
+        "host",
+        "from_address"
+      ]
+    }
+  },
+  "required": [
+    "smtp"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "title": "Microsoft Teams Exporter Configuration",
+  "description": "Teams incoming webhook used to post the messages.",
+  "type": "object",
+  "properties": {
+    "teams": {
+      "type": "object",
+      "title": "Microsoft Teams",
+      "description": "Webhook target for the Teams channel.",
+      "properties": {
+        "webhook_url": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "default": "<% secrets.teams-webhook-url %>",
+          "title": "Webhook URL",
+          "description": "Teams Incoming Webhook / Power Automate Workflow URL; must be http(s). Wire this to a secret."
+        }
+      },
+      "required": [
+        "webhook_url"
+      ],
+      "x-kelvin-ui": {
+        "webhook_url": {
+          "ui:widget": "password"
+        },
+        "ui:order": [
+          "webhook_url"
+        ]
+      }
+    }
+  },
+  "required": [
+    "teams"
+  ]
+}

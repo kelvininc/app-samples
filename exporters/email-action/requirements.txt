@@ -1,0 +1,4 @@
+kelvin-python-sdk
+aiosmtplib
+pydantic[email]
+pydantic-settings

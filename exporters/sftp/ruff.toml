@@ -1,0 +1,3 @@
+# Declare the Python baseline so lint resolves 3.11+ builtins (e.g. ExceptionGroup)
+# and won't false-flag them as undefined names. The apps deploy on Python 3.13.
+target-version = "py311"

@@ -1,0 +1,5 @@
+kelvin-python-sdk
+databricks-sdk
+pydantic
+pydantic-settings
+duckdb

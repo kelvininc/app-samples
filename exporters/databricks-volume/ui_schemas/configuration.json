@@ -1,0 +1,210 @@
+{
+  "title": "Databricks Volume Exporter Configuration",
+  "description": "Workspace connection, credentials, and upload settings.",
+  "type": "object",
+  "properties": {
+    "databricks": {
+      "type": "object",
+      "title": "Databricks",
+      "description": "Workspace connection, volume, and credentials.",
+      "properties": {
+        "server_hostname": {
+          "type": "string",
+          "title": "Server Hostname",
+          "description": "Workspace hostname. Required to deploy."
+        },
+        "delta_table": {
+          "type": "string",
+          "title": "Delta Table",
+          "description": "Fully-qualified name: catalog.schema.table.",
+          "pattern": "^$|^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$"
+        },
+        "uc_volume": {
+          "type": "string",
+          "title": "UC Volume",
+          "description": "Fully-qualified name: catalog.schema.volume.",
+          "pattern": "^$|^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$"
+        },
+        "job": {
+          "type": "object",
+          "title": "Ingestion Job",
+          "description": "Set warehouse_id for a COPY INTO job, or cluster_id for an Auto Loader job. Leave both empty to upload only.",
+          "properties": {
+            "warehouse_id": {
+              "type": "string",
+              "title": "SQL Warehouse ID",
+              "description": "Set to run a COPY INTO job on this SQL warehouse."
+            },
+            "cluster_id": {
+              "type": "string",
+              "title": "Cluster ID",
+              "description": "Set to run an Auto Loader job on this cluster."
+            }
+          },
+          "x-kelvin-ui": {
+            "ui:order": [
+              "warehouse_id",
+              "cluster_id"
+            ]
+          }
+        },
+        "auth": {
+          "type": "object",
+          "title": "Authentication",
+          "description": "Wire credentials to a secret on deployment.",
+          "properties": {
+            "method": {
+              "type": "string",
+              "title": "Method",
+              "description": "oauth uses a service principal; access_token uses a PAT.",
+              "enum": [
+                "oauth",
+                "access_token"
+              ],
+              "default": "oauth"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "method": {
+                    "const": "oauth"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "client_id": {
+                    "type": "string",
+                    "title": "Client ID",
+                    "description": "Service principal ID; oauth only."
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "title": "Client Secret",
+                    "description": "Service principal secret; oauth only. Wire to a secret."
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "method": {
+                    "const": "access_token"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "access_token": {
+                    "type": "string",
+                    "title": "Access Token",
+                    "description": "Personal access token; access_token method only. Wire to a secret."
+                  }
+                }
+              }
+            }
+          ],
+          "x-kelvin-ui": {
+            "client_secret": {
+              "ui:widget": "password"
+            },
+            "access_token": {
+              "ui:widget": "password"
+            },
+            "ui:order": [
+              "method",
+              "client_id",
+              "client_secret",
+              "access_token"
+            ]
+          }
+        }
+      },
+      "required": [
+        "server_hostname",
+        "delta_table",
+        "uc_volume",
+        "auth"
+      ]
+    },
+    "upload": {
+      "type": "object",
+      "title": "Upload",
+      "description": "Batching and retry for the drain loop.",
+      "properties": {
+        "interval": {
+          "type": "integer",
+          "title": "Interval (s)",
+          "description": "Seconds between drain runs.",
+          "minimum": 1,
+          "default": 60
+        },
+        "batch_size": {
+          "type": "integer",
+          "title": "Batch Size",
+          "description": "Rows per batch.",
+          "minimum": 1,
+          "default": 1000
+        },
+        "format": {
+          "type": "string",
+          "title": "File Format",
+          "description": "Output file format.",
+          "enum": [
+            "parquet",
+            "csv"
+          ],
+          "default": "parquet"
+        },
+        "retry": {
+          "type": "object",
+          "title": "Retry",
+          "description": "Exponential backoff for a failed batch.",
+          "properties": {
+            "attempts": {
+              "type": "integer",
+              "title": "Attempts",
+              "description": "Attempts before a batch is abandoned.",
+              "minimum": 1,
+              "default": 3
+            },
+            "base_delay": {
+              "type": "number",
+              "title": "Base Delay (s)",
+              "description": "Delay before the first retry; doubles each attempt.",
+              "minimum": 0,
+              "default": 1
+            },
+            "max_delay": {
+              "type": "number",
+              "title": "Max Delay (s)",
+              "description": "Ceiling on the backoff delay.",
+              "minimum": 0,
+              "default": 30
+            }
+          }
+        }
+      }
+    },
+    "buffer": {
+      "type": "object",
+      "title": "Buffer",
+      "description": "Local backlog held between drains.",
+      "properties": {
+        "max_backlog": {
+          "type": "integer",
+          "title": "Max Backlog",
+          "minimum": 0,
+          "default": 1000000,
+          "description": "Max un-uploaded rows kept before dropping oldest; 0 = unbounded."
+        }
+      }
+    }
+  },
+  "required": [
+    "databricks"
+  ]
+}
