@@ -1,24 +1,29 @@
 {
-    "type": "object",
-    "properties": {
-        "closed_loop": {
-            "type": "boolean",
-            "default": false,
-            "title": "Closed Loop"
-        },
-        "speed_decrease_set_point": {
-            "type": "number",
-            "default": 1000,
-            "title": "Speed Decrease SetPoint",
-            "minimum": 1000,
-            "maximum": 3000
-        },
-        "temperature_max_threshold": {
-            "type": "number",
-            "default": 59,
-            "title": "Temperature Max Threshold",
-            "minimum": 50,
-            "maximum": 100
-        }
+  "title": "Event Detection Parameters",
+  "description": "Temperature threshold, the set point written when it is crossed, and whether to close the loop.",
+  "type": "object",
+  "properties": {
+    "kelvin_closed_loop": {
+      "type": "boolean",
+      "default": false,
+      "title": "Closed Loop",
+      "description": "When true the recommendation is auto-accepted instead of awaiting approval."
+    },
+    "speed_decrease_set_point": {
+      "type": "number",
+      "default": 1000,
+      "title": "Speed Decrease SetPoint",
+      "description": "Speed set point written when the threshold is crossed.",
+      "minimum": 1000,
+      "maximum": 3000
+    },
+    "temperature_max_threshold": {
+      "type": "number",
+      "default": 59,
+      "title": "Temperature Max Threshold",
+      "description": "Temperature above which a control change is emitted.",
+      "minimum": 50,
+      "maximum": 100
     }
+  }
 }

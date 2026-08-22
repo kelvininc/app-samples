@@ -1,8 +1,9 @@
-FROM python:3.10-slim
+FROM python:3.13-slim
 
 ENV PYTHONUNBUFFERED=1
-WORKDIR /opt/kelvin/app 
+WORKDIR /opt/kelvin/app
+COPY requirements.txt /opt/kelvin/app/
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 COPY . /opt/kelvin/app
-RUN pip install -r requirements.txt
 
-ENTRYPOINT python main.py
+ENTRYPOINT ["python", "main.py"]
