@@ -1,0 +1,197 @@
+{
+  "title": "Kafka Importer Configuration",
+  "description": "Broker connection, consumer group, and reconnect behaviour.",
+  "type": "object",
+  "properties": {
+    "kafka": {
+      "type": "object",
+      "title": "Kafka",
+      "description": "Broker connection, consumer group, and security.",
+      "properties": {
+        "bootstrap_servers": {
+          "type": "string",
+          "title": "Bootstrap Servers",
+          "description": "Comma-separated host:port list.",
+          "default": "localhost:9092",
+          "minLength": 1
+        },
+        "group_id": {
+          "type": "string",
+          "title": "Consumer Group ID",
+          "description": "Consumer group id.",
+          "default": "kelvin-kafka-importer",
+          "minLength": 1
+        },
+        "auto_offset_reset": {
+          "type": "string",
+          "title": "Auto Offset Reset",
+          "description": "Where to start when the group has no committed offset.",
+          "enum": [
+            "latest",
+            "earliest"
+          ],
+          "default": "latest"
+        },
+        "security": {
+          "type": "object",
+          "title": "Security",
+          "description": "Protocol and credentials for the broker connection.",
+          "properties": {
+            "protocol": {
+              "type": "string",
+              "title": "Protocol",
+              "description": "SASL_* enables SASL; *_SSL enables TLS.",
+              "enum": [
+                "PLAINTEXT",
+                "SSL",
+                "SASL_PLAINTEXT",
+                "SASL_SSL"
+              ],
+              "default": "PLAINTEXT"
+            },
+            "sasl": {
+              "type": "object",
+              "title": "SASL Authentication",
+              "description": "Required with a SASL_* protocol: set all three together.",
+              "properties": {
+                "mechanism": {
+                  "type": "string",
+                  "title": "Mechanism",
+                  "description": "Set with username and password.",
+                  "enum": [
+                    "PLAIN",
+                    "SCRAM-SHA-256",
+                    "SCRAM-SHA-512"
+                  ]
+                },
+                "username": {
+                  "type": "string",
+                  "title": "Username",
+                  "description": "SASL username."
+                },
+                "password": {
+                  "type": "string",
+                  "title": "Password",
+                  "description": "SASL password. Wire to a secret."
+                }
+              },
+              "x-kelvin-ui": {
+                "password": {
+                  "ui:widget": "password"
+                },
+                "ui:order": [
+                  "mechanism",
+                  "username",
+                  "password"
+                ]
+              }
+            },
+            "tls": {
+              "type": "object",
+              "title": "TLS",
+              "description": "SSL / SASL_SSL only. PEM content, wired to secrets on deployment.",
+              "properties": {
+                "ca_cert": {
+                  "type": "string",
+                  "title": "CA Certificate",
+                  "description": "Optional: private CA bundle; empty uses the system CAs."
+                },
+                "client_cert": {
+                  "type": "string",
+                  "title": "Client Certificate (mTLS)",
+                  "description": "Set together with the client key, or leave both empty."
+                },
+                "client_key": {
+                  "type": "string",
+                  "title": "Client Key (mTLS)",
+                  "description": "PEM client key for mTLS. Wire to a secret."
+                }
+              },
+              "x-kelvin-ui": {
+                "client_key": {
+                  "ui:widget": "password"
+                },
+                "ui:order": [
+                  "ca_cert",
+                  "client_cert",
+                  "client_key"
+                ]
+              }
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "protocol": {
+                    "enum": [
+                      "SASL_PLAINTEXT",
+                      "SASL_SSL"
+                    ]
+                  }
+                },
+                "required": [
+                  "protocol"
+                ]
+              },
+              "then": {
+                "required": [
+                  "sasl"
+                ],
+                "properties": {
+                  "sasl": {
+                    "required": [
+                      "mechanism",
+                      "username",
+                      "password"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "protocol": {
+                    "enum": [
+                      "PLAINTEXT",
+                      "SSL"
+                    ]
+                  }
+                },
+                "required": [
+                  "protocol"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "sasl": {
+                    "properties": {
+                      "mechanism": {
+                        "not": {
+                          "enum": [
+                            "PLAIN",
+                            "SCRAM-SHA-256",
+                            "SCRAM-SHA-512"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "reconnect_interval": {
+      "type": "integer",
+      "title": "Reconnect Interval (s)",
+      "description": "Seconds before retrying a dropped connection.",
+      "default": 5,
+      "minimum": 1,
+      "maximum": 300
+    }
+  }
+}
