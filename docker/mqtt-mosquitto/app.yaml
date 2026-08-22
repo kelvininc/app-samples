@@ -7,8 +7,8 @@ type: docker
 
 # Info
 name: mqtt-mosquitto
-title: MQTT Mosquitto
-description: Run MQTT Mosquitto broker and configure it using multiple environment variables.
+title: MQTT Mosquitto Broker
+description: This Docker application runs an MQTT Mosquitto broker, configurable via environment variables.
 version: 1.0.0
 
 # Capabilities
@@ -34,6 +34,13 @@ defaults:
         type: persistent
         target: /mosquitto/data
     ports:
+      # Other workloads reach the broker at <workload-name>:<port>.
+      # For clients outside the cluster, add host-type ports on the
+      # deployment (see README.md):
+      #   - name: mqtt-insecure
+      #     type: host
+      #     host:
+      #       port: 21883
       - name: cluster-mqtt-insecure
         type: service
         service:
@@ -42,30 +49,27 @@ defaults:
         type: service
         service:
           port: 28883
-      - name: mqtt-insecure
-        type: host
-        host:
-          port: 21883
-      - name: mqtt-secure
-        type: host
-        host:
-          port: 28883
     environment_vars:
       - name: MQTT_PORT
         value: "21883"
-      - name: MQTT_USER
-        value: "<% secrets.mqttssl-user %>"
-      - name: MQTT_PASSWORD
-        value: "<% secrets.mqttssl-password %>"
-      - name: MQTT_SSL_PORT
-        value: "28883"
-      - name: MQTT_SSL_USER
-        value: "<% secrets.mqttssl-ssl-user %>"
-      - name: MQTT_SSL_PASSWORD
-        value: "<% secrets.mqttssl-ssl-password %>"
-      - name: MQTT_SSL_CA_CRT
-        value: "<% secrets.mqttssl-ssl-ca-crt %>"
-      - name: "MQTT_SSL_TLS_CRT"
-        value: "<% secrets.mqttssl-ssl-tls-crt %>"
-      - name: "MQTT_SSL_TLS_KEY"
-        value: "<% secrets.mqttssl-ssl-tls-key %>"
+      # Optional settings (add on the deployment as needed, see README.md):
+      #
+      # Authentication for the insecure listener:
+      #   - name: MQTT_USER
+      #     value: "<% secrets.mqttssl-user %>"
+      #   - name: MQTT_PASSWORD
+      #     value: "<% secrets.mqttssl-password %>"
+      #
+      # Secure (SSL) listener:
+      #   - name: MQTT_SSL_PORT
+      #     value: "28883"
+      #   - name: MQTT_SSL_USER
+      #     value: "<% secrets.mqttssl-ssl-user %>"
+      #   - name: MQTT_SSL_PASSWORD
+      #     value: "<% secrets.mqttssl-ssl-password %>"
+      #   - name: MQTT_SSL_CA_CRT
+      #     value: "<% secrets.mqttssl-ssl-ca-crt %>"
+      #   - name: MQTT_SSL_TLS_CRT
+      #     value: "<% secrets.mqttssl-ssl-tls-crt %>"
+      #   - name: MQTT_SSL_TLS_KEY
+      #     value: "<% secrets.mqttssl-ssl-tls-key %>"

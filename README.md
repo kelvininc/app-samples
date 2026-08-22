@@ -37,9 +37,11 @@ Start with the official [Kelvin Documentation](https://docs.kelvin.ai).
 
 ## 🤖 Docker
 
-| Application                              | Level        | Description                                            |
-|------------------------------------------|--------------|--------------------------------------------------------|
-| [Mosquitto MQTT](docker/mqtt-mosquitto/) | Intermediate | Mosquitto MQTT Broker that supports SSL/TLS encryption |
+| Application                                     | Level        | Description                                                              |
+|-------------------------------------------------|--------------|---------------------------------------------------------------------------|
+| [MQTT Mosquitto Broker](docker/mqtt-mosquitto/) | Intermediate | Mosquitto MQTT broker that supports SSL/TLS encryption.                  |
+| [Kafka Broker](docker/kafka/)                   | Intermediate | Single-node Apache Kafka broker (KRaft) with optional SASL auth and TLS. |
+| [Redis Server](docker/redis/)                   | Intermediate | Single-node Redis server with optional authentication and TLS.           |
 
 # Running Samples Locally
 

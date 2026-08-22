@@ -1,0 +1,75 @@
+# yaml-language-server: $schema=https://apps.kelvininc.com/schemas/kelvin/5.0.0/docker.json
+
+# YAML (Structure) Spec Version
+spec_version: 5.0.0
+# Type
+type: docker
+
+# Info
+name: redis
+title: Redis Server
+description: Single-node Redis server with optional authentication and TLS.
+version: 1.0.0
+
+# Capabilities
+flags:
+  enable_runtime_update:
+    # Server settings require a restart; configuration changes apply on redeploy
+    configuration: false
+
+# UI JSON schemas (Optional)
+ui_schemas:
+  # Application Configuration Schema
+  configuration: "ui_schemas/configuration.json"
+
+# Defaults (Runtime/Deployment)
+defaults:
+  # Application Configuration Default Values
+  configuration: {}
+
+  # System Settings
+  system:
+    volumes:
+      # RDB snapshots (and AOF when enabled); must survive restarts
+      - name: redis-data
+        type: persistent
+        target: /data
+    ports:
+      # Other workloads reach the server at <workload-name>:6379.
+      # For clients outside the cluster, add a host-type port on the
+      # deployment (see README.md):
+      #   - name: redis-external
+      #     type: host
+      #     host:
+      #       port: 6379
+      - name: redis
+        type: service
+        service:
+          port: 6379
+    environment_vars:
+      - name: REDIS_PORT
+        value: "6379"
+      # Data memory cap; keep below the workload memory limit
+      - name: REDIS_MAXMEMORY
+        value: "256mb"
+      - name: REDIS_MAXMEMORY_POLICY
+        value: "noeviction"
+      # Optional settings (add on the deployment as needed, see README.md):
+      #
+      # Authentication:
+      #   - name: REDIS_PASSWORD
+      #     value: "<% secrets.redis-password %>"
+      #
+      # TLS (PEM content):
+      #   - name: REDIS_SSL_CA_CRT
+      #     value: "<% secrets.redis-ssl-ca-crt %>"
+      #   - name: REDIS_SSL_TLS_CRT
+      #     value: "<% secrets.redis-ssl-tls-crt %>"
+      #   - name: REDIS_SSL_TLS_KEY
+      #     value: "<% secrets.redis-ssl-tls-key %>"
+      #
+      # AOF persistence, extra redis-server arguments:
+      #   - name: REDIS_APPENDONLY
+      #     value: "yes"
+      #   - name: REDIS_EXTRA_ARGS
+      #     value: "--loglevel notice"

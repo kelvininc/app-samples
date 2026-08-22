@@ -66,6 +66,11 @@ if [ ! -z "$MQTT_SSL_PORT" ]; then
     fi
 fi
 
+# Check if both MQTT_USER and MQTT_PASSWORD are defined. If not, allow anonymous access
+if [ -z "$MQTT_USER" ] && [ -z "$MQTT_PASSWORD" ]; then
+  INSECURE_ANONYMOUS="true"
+fi
+
 # Log configuration
 echo "$TIMESTAMP: Insecure listener enabled: $INSECURE_LISTENER_ENABLED"
 if [ "$INSECURE_LISTENER_ENABLED" = "true" ]; then
@@ -81,11 +86,6 @@ if [ "$SECURE_LISTENER_ENABLED" = "true" ]; then
             SECURE_WITH_SSL="false"
             ;;
     esac
-fi
-
-# Check if both MQTT_USER and MQTT_PASSWORD are defined. If not, allow anonymous access
-if [ -z "$MQTT_USER" ] && [ -z "$MQTT_PASSWORD" ]; then
-  INSECURE_ANONYMOUS="true"
 fi
 
 # Check if both MQTT_SSL_USER and MQTT_SSL_PASSWORD are defined. If not, allow anonymous access
