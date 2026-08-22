@@ -1,0 +1,36 @@
+{
+  "title": "Teams Message",
+  "description": "Payload schema for the Teams Message custom action.",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "title": "Title",
+      "description": "Optional card title shown above the message"
+    },
+    "message": {
+      "type": "object",
+      "title": "Message",
+      "description": "The message to post to the channel.",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Text",
+          "description": "Message text to post to the channel"
+        }
+      },
+      "required": [
+        "text"
+      ]
+    }
+  },
+  "required": [
+    "message"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,128 @@
+{
+  "title": "Databricks Zerobus Exporter Configuration",
+  "description": "Zerobus endpoint, credentials, and upload settings.",
+  "type": "object",
+  "properties": {
+    "databricks": {
+      "type": "object",
+      "title": "Databricks",
+      "description": "Zerobus endpoint and service principal credentials.",
+      "properties": {
+        "server_hostname": {
+          "type": "string",
+          "title": "Server Hostname",
+          "description": "Workspace hostname, used for OAuth."
+        },
+        "zerobus_endpoint": {
+          "type": "string",
+          "title": "Zerobus Endpoint",
+          "description": "gRPC ingestion endpoint."
+        },
+        "delta_table": {
+          "type": "string",
+          "title": "Delta Table",
+          "description": "Fully-qualified name: catalog.schema.table.",
+          "pattern": "^$|^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$"
+        },
+        "auth": {
+          "type": "object",
+          "title": "Authentication",
+          "description": "Wire credentials to a secret on deployment.",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "title": "Client ID",
+              "description": "Service principal ID; Zerobus supports OAuth only."
+            },
+            "client_secret": {
+              "type": "string",
+              "title": "Client Secret",
+              "description": "Service principal secret. Wire to a secret."
+            }
+          },
+          "x-kelvin-ui": {
+            "client_secret": {
+              "ui:widget": "password"
+            },
+            "ui:order": [
+              "client_id",
+              "client_secret"
+            ]
+          }
+        }
+      },
+      "required": [
+        "server_hostname",
+        "zerobus_endpoint",
+        "delta_table",
+        "auth"
+      ]
+    },
+    "upload": {
+      "type": "object",
+      "title": "Upload",
+      "description": "Batching and retry for the drain loop.",
+      "properties": {
+        "interval": {
+          "type": "integer",
+          "title": "Interval (s)",
+          "description": "Seconds between drain runs.",
+          "minimum": 1,
+          "default": 60
+        },
+        "batch_size": {
+          "type": "integer",
+          "title": "Batch Size",
+          "description": "Rows per batch.",
+          "minimum": 1,
+          "default": 1000
+        },
+        "retry": {
+          "type": "object",
+          "title": "Retry",
+          "description": "Exponential backoff for a failed batch.",
+          "properties": {
+            "attempts": {
+              "type": "integer",
+              "title": "Attempts",
+              "description": "Attempts before a batch is abandoned.",
+              "minimum": 1,
+              "default": 3
+            },
+            "base_delay": {
+              "type": "number",
+              "title": "Base Delay (s)",
+              "description": "Delay before the first retry; doubles each attempt.",
+              "minimum": 0,
+              "default": 1
+            },
+            "max_delay": {
+              "type": "number",
+              "title": "Max Delay (s)",
+              "description": "Ceiling on the backoff delay.",
+              "minimum": 0,
+              "default": 30
+            }
+          }
+        }
+      }
+    },
+    "buffer": {
+      "type": "object",
+      "title": "Buffer",
+      "description": "Local backlog held between drains.",
+      "properties": {
+        "max_backlog": {
+          "type": "integer",
+          "title": "Max Backlog",
+          "minimum": 0,
+          "default": 1000000,
+          "description": "Max un-uploaded rows kept before dropping oldest; 0 = unbounded."
+        }
+      }
+    }
+  },
+  "required": [
+    "databricks"
+  ]
+}

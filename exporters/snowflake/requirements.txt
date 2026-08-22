@@ -1,0 +1,6 @@
+kelvin-python-sdk
+snowflake-connector-python
+cryptography
+pydantic
+pydantic-settings
+duckdb

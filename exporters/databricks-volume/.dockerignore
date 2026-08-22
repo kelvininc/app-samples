@@ -1,0 +1,43 @@
+# Never ship local dev artifacts or credentials in the image
+config.yaml
+data/
+*.db
+*.wal
+.venv/
+venv/
+tests/
+pytest.ini
+pyrightconfig.json
+**/__pycache__/
+**/.pytest_cache/
+.git/
+.gitignore
+
+# general
+.DS_Store
+.travis.yml
+Dockerfile
+Jenkinsfile
+build/
+*.swp
+*.swo
+
+# python
+**/*.pyc
+**/.benchmarks/
+**/.coverage
+**/.ipynb_checkpoints/
+**/.mypy_cache/
+*.egg-info/
+.eggs/
+.idea/
+.direnv/
+dist/
+docs/_build/
+htmlcov/
+pip-wheel-metadata/
+*.whl
+
+# retain packaged build outputs
+!build/datatype/
+!build/app.yaml

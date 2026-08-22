@@ -1,0 +1,200 @@
+{
+  "title": "Snowflake Exporter Configuration",
+  "description": "Account connection, credentials, and upload settings.",
+  "type": "object",
+  "properties": {
+    "snowflake": {
+      "type": "object",
+      "title": "Snowflake",
+      "description": "Account connection, target table, and credentials.",
+      "properties": {
+        "account": {
+          "type": "string",
+          "title": "Account",
+          "description": "Account identifier, e.g. xy12345.us-east-1."
+        },
+        "user": {
+          "type": "string",
+          "title": "User",
+          "description": "Login user. Required to deploy."
+        },
+        "warehouse": {
+          "type": "string",
+          "title": "Warehouse",
+          "description": "Warehouse used for the load. Required to deploy."
+        },
+        "database": {
+          "type": "string",
+          "title": "Database",
+          "description": "Target database. Required to deploy.",
+          "pattern": "^$|^[A-Za-z0-9_]+$"
+        },
+        "schema": {
+          "type": "string",
+          "title": "Schema",
+          "description": "Target schema. Required to deploy.",
+          "pattern": "^$|^[A-Za-z0-9_]+$"
+        },
+        "table": {
+          "type": "string",
+          "title": "Table",
+          "description": "Target table. Required to deploy.",
+          "pattern": "^$|^[A-Za-z0-9_]+$"
+        },
+        "auth": {
+          "type": "object",
+          "title": "Authentication",
+          "description": "Wire credentials to a secret on deployment.",
+          "properties": {
+            "method": {
+              "type": "string",
+              "title": "Method",
+              "description": "password uses a password; key_pair uses a PEM key.",
+              "enum": [
+                "password",
+                "key_pair"
+              ],
+              "default": "password"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "method": {
+                    "const": "password"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "title": "Password",
+                    "description": "password method only. Wire to a secret."
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "method": {
+                    "const": "key_pair"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "private_key": {
+                    "type": "string",
+                    "title": "Private Key (PEM)",
+                    "description": "PEM RSA key; key_pair method only."
+                  },
+                  "private_key_passphrase": {
+                    "type": "string",
+                    "title": "Private Key Passphrase",
+                    "description": "Only if the key is encrypted. Wire to a secret."
+                  }
+                }
+              }
+            }
+          ],
+          "x-kelvin-ui": {
+            "password": {
+              "ui:widget": "password"
+            },
+            "private_key": {
+              "ui:widget": "textarea"
+            },
+            "private_key_passphrase": {
+              "ui:widget": "password"
+            },
+            "ui:order": [
+              "method",
+              "password",
+              "private_key",
+              "private_key_passphrase"
+            ]
+          }
+        }
+      },
+      "required": [
+        "account",
+        "user",
+        "warehouse",
+        "database",
+        "schema",
+        "table",
+        "auth"
+      ]
+    },
+    "upload": {
+      "type": "object",
+      "title": "Upload",
+      "description": "Batching and retry for the drain loop.",
+      "properties": {
+        "interval": {
+          "type": "integer",
+          "title": "Interval (s)",
+          "description": "Seconds between drain runs.",
+          "minimum": 1,
+          "default": 60
+        },
+        "batch_size": {
+          "type": "integer",
+          "title": "Batch Size",
+          "description": "Rows per batch.",
+          "minimum": 1,
+          "maximum": 4000,
+          "default": 1000
+        },
+        "retry": {
+          "type": "object",
+          "title": "Retry",
+          "description": "Exponential backoff for a failed batch.",
+          "properties": {
+            "attempts": {
+              "type": "integer",
+              "title": "Attempts",
+              "description": "Attempts before a batch is abandoned.",
+              "minimum": 1,
+              "default": 3
+            },
+            "base_delay": {
+              "type": "number",
+              "title": "Base Delay (s)",
+              "description": "Delay before the first retry; doubles each attempt.",
+              "minimum": 0,
+              "default": 1
+            },
+            "max_delay": {
+              "type": "number",
+              "title": "Max Delay (s)",
+              "description": "Ceiling on the backoff delay.",
+              "minimum": 0,
+              "default": 30
+            }
+          }
+        }
+      }
+    },
+    "buffer": {
+      "type": "object",
+      "title": "Buffer",
+      "description": "Local backlog held between drains.",
+      "properties": {
+        "max_backlog": {
+          "type": "integer",
+          "title": "Max Backlog",
+          "minimum": 0,
+          "default": 1000000,
+          "description": "Max un-uploaded rows kept before dropping oldest; 0 = unbounded."
+        }
+      }
+    }
+  },
+  "required": [
+    "snowflake"
+  ]
+}

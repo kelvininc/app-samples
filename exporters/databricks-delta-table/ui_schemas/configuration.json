@@ -1,0 +1,176 @@
+{
+  "title": "Databricks Delta Table Exporter Configuration",
+  "description": "Warehouse connection, credentials, and upload settings.",
+  "type": "object",
+  "properties": {
+    "databricks": {
+      "type": "object",
+      "title": "Databricks",
+      "description": "SQL warehouse connection and credentials.",
+      "properties": {
+        "server_hostname": {
+          "type": "string",
+          "title": "Server Hostname",
+          "description": "Workspace hostname. Required to deploy."
+        },
+        "http_path": {
+          "type": "string",
+          "title": "HTTP Path",
+          "description": "SQL warehouse HTTP path. Required to deploy."
+        },
+        "delta_table": {
+          "type": "string",
+          "title": "Delta Table",
+          "description": "Fully-qualified name: catalog.schema.table.",
+          "pattern": "^$|^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$"
+        },
+        "auth": {
+          "type": "object",
+          "title": "Authentication",
+          "description": "Wire credentials to a secret on deployment.",
+          "properties": {
+            "method": {
+              "type": "string",
+              "title": "Method",
+              "description": "oauth uses a service principal; access_token uses a PAT.",
+              "enum": [
+                "oauth",
+                "access_token"
+              ],
+              "default": "oauth"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "method": {
+                    "const": "oauth"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "client_id": {
+                    "type": "string",
+                    "title": "Client ID",
+                    "description": "Service principal ID; oauth only."
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "title": "Client Secret",
+                    "description": "Service principal secret; oauth only. Wire to a secret."
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "method": {
+                    "const": "access_token"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "access_token": {
+                    "type": "string",
+                    "title": "Access Token",
+                    "description": "Personal access token; access_token method only. Wire to a secret."
+                  }
+                }
+              }
+            }
+          ],
+          "x-kelvin-ui": {
+            "client_secret": {
+              "ui:widget": "password"
+            },
+            "access_token": {
+              "ui:widget": "password"
+            },
+            "ui:order": [
+              "method",
+              "client_id",
+              "client_secret",
+              "access_token"
+            ]
+          }
+        }
+      },
+      "required": [
+        "server_hostname",
+        "http_path",
+        "delta_table",
+        "auth"
+      ]
+    },
+    "upload": {
+      "type": "object",
+      "title": "Upload",
+      "description": "Batching and retry for the drain loop.",
+      "properties": {
+        "interval": {
+          "type": "integer",
+          "title": "Interval (s)",
+          "description": "Seconds between drain runs.",
+          "minimum": 1,
+          "default": 60
+        },
+        "batch_size": {
+          "type": "integer",
+          "title": "Batch Size",
+          "description": "Rows per batch.",
+          "minimum": 1,
+          "default": 1000
+        },
+        "retry": {
+          "type": "object",
+          "title": "Retry",
+          "description": "Exponential backoff for a failed batch.",
+          "properties": {
+            "attempts": {
+              "type": "integer",
+              "title": "Attempts",
+              "description": "Attempts before a batch is abandoned.",
+              "minimum": 1,
+              "default": 3
+            },
+            "base_delay": {
+              "type": "number",
+              "title": "Base Delay (s)",
+              "description": "Delay before the first retry; doubles each attempt.",
+              "minimum": 0,
+              "default": 1
+            },
+            "max_delay": {
+              "type": "number",
+              "title": "Max Delay (s)",
+              "description": "Ceiling on the backoff delay.",
+              "minimum": 0,
+              "default": 30
+            }
+          }
+        }
+      }
+    },
+    "buffer": {
+      "type": "object",
+      "title": "Buffer",
+      "description": "Local backlog held between drains.",
+      "properties": {
+        "max_backlog": {
+          "type": "integer",
+          "title": "Max Backlog",
+          "minimum": 0,
+          "default": 1000000,
+          "description": "Max un-uploaded rows kept before dropping oldest; 0 = unbounded."
+        }
+      }
+    }
+  },
+  "required": [
+    "databricks"
+  ]
+}

@@ -1,0 +1,58 @@
+spec_version: 5.0.0
+type: exporter
+
+name: snowflake-exporter
+title: Snowflake Exporter
+description: This exporter uploads data to a Snowflake table.
+version: 2.0.0
+
+# Runtime update is off: the exporter builds its client and buffer at startup, so IO-mapping and
+# configuration changes are applied by redeploying the workload (the platform restarts it).
+flags:
+  enable_runtime_update:
+    io: false
+    configuration: false
+
+exporter_io:
+  - name: default
+    data_types:
+      - number
+      - string
+      - boolean
+
+ui_schemas:
+  configuration: "ui_schemas/configuration.json"
+
+defaults:
+  configuration:
+    snowflake:
+      account: ""
+      user: ""
+      warehouse: ""
+      database: ""
+      schema: ""
+      table: ""
+      auth:
+        method: password          # "password" | "key_pair"
+        # Credentials have NO default: a baked-in <% secrets %> makes them always-truthy
+        # and defeats the one-auth validator. Wire each to a secret per deployment, e.g.:
+        #   password: "<% secrets.snowflake-password %>"
+        #   private_key: "<% secrets.snowflake-private-key %>"
+        #   private_key_passphrase: "<% secrets.snowflake-private-key-passphrase %>"
+    upload:
+      interval: 60
+      batch_size: 1000
+      retry:
+        attempts: 3
+        base_delay: 1
+        max_delay: 30           # backoff ceiling, independent of upload.interval
+    buffer:
+      max_backlog: 1000000      # rows kept before dropping oldest; 0 = unbounded
+
+  system:
+    # Persistent buffer: mount the directory (not just data.db) so the DuckDB file AND its
+    # data.db.wal sidecar survive a crash and restart (do NOT drop this).
+    volumes:
+      - name: data
+        target: data
+        type: persistent

@@ -1,0 +1,247 @@
+{
+  "title": "Kafka Exporter Configuration",
+  "description": "Broker connection, security, and producer settings.",
+  "type": "object",
+  "properties": {
+    "kafka": {
+      "type": "object",
+      "title": "Kafka",
+      "description": "Broker connection and security.",
+      "properties": {
+        "bootstrap_servers": {
+          "type": "string",
+          "title": "Bootstrap Servers",
+          "default": "localhost:9092",
+          "description": "Comma-separated host:port list."
+        },
+        "client_id": {
+          "type": "string",
+          "title": "Client ID",
+          "description": "Client id reported to the broker.",
+          "default": "kelvin-kafka-exporter"
+        },
+        "security": {
+          "type": "object",
+          "title": "Security",
+          "description": "Protocol and credentials for the broker connection.",
+          "properties": {
+            "protocol": {
+              "type": "string",
+              "title": "Protocol",
+              "description": "SASL_* enables SASL; *_SSL enables TLS.",
+              "enum": [
+                "PLAINTEXT",
+                "SSL",
+                "SASL_PLAINTEXT",
+                "SASL_SSL"
+              ],
+              "default": "PLAINTEXT"
+            },
+            "sasl": {
+              "type": "object",
+              "title": "SASL Authentication",
+              "description": "Required with a SASL_* protocol: set all three together.",
+              "properties": {
+                "mechanism": {
+                  "type": "string",
+                  "title": "Mechanism",
+                  "description": "Set with username and password.",
+                  "enum": [
+                    "PLAIN",
+                    "SCRAM-SHA-256",
+                    "SCRAM-SHA-512"
+                  ]
+                },
+                "username": {
+                  "type": "string",
+                  "title": "Username",
+                  "description": "SASL username."
+                },
+                "password": {
+                  "type": "string",
+                  "title": "Password",
+                  "description": "SASL password. Wire to a secret."
+                }
+              },
+              "x-kelvin-ui": {
+                "password": {
+                  "ui:widget": "password"
+                },
+                "ui:order": [
+                  "mechanism",
+                  "username",
+                  "password"
+                ]
+              }
+            },
+            "tls": {
+              "type": "object",
+              "title": "TLS",
+              "description": "SSL / SASL_SSL only. PEM content, wired to secrets on deployment.",
+              "properties": {
+                "ca_cert": {
+                  "type": "string",
+                  "title": "CA Certificate",
+                  "description": "Optional: private CA bundle; empty uses the system CAs."
+                },
+                "client_cert": {
+                  "type": "string",
+                  "title": "Client Certificate (mTLS)",
+                  "description": "Set together with the client key, or leave both empty."
+                },
+                "client_key": {
+                  "type": "string",
+                  "title": "Client Key (mTLS)",
+                  "description": "PEM client key for mTLS. Wire to a secret."
+                }
+              },
+              "x-kelvin-ui": {
+                "client_key": {
+                  "ui:widget": "password"
+                },
+                "ui:order": [
+                  "ca_cert",
+                  "client_cert",
+                  "client_key"
+                ]
+              }
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "protocol": {
+                    "enum": [
+                      "SASL_PLAINTEXT",
+                      "SASL_SSL"
+                    ]
+                  }
+                },
+                "required": [
+                  "protocol"
+                ]
+              },
+              "then": {
+                "required": [
+                  "sasl"
+                ],
+                "properties": {
+                  "sasl": {
+                    "required": [
+                      "mechanism",
+                      "username",
+                      "password"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "protocol": {
+                    "enum": [
+                      "PLAINTEXT",
+                      "SSL"
+                    ]
+                  }
+                },
+                "required": [
+                  "protocol"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "sasl": {
+                    "properties": {
+                      "mechanism": {
+                        "not": {
+                          "enum": [
+                            "PLAIN",
+                            "SCRAM-SHA-256",
+                            "SCRAM-SHA-512"
+                          ]
+                        },
+                        "description": "Set with username and password."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "bootstrap_servers"
+      ]
+    },
+    "upload": {
+      "type": "object",
+      "title": "Upload",
+      "description": "Batching and retry for the drain loop.",
+      "properties": {
+        "interval": {
+          "type": "integer",
+          "title": "Interval (s)",
+          "description": "Seconds between drain runs.",
+          "minimum": 1,
+          "default": 60
+        },
+        "batch_size": {
+          "type": "integer",
+          "title": "Batch Size",
+          "description": "Rows per batch.",
+          "minimum": 1,
+          "default": 1000
+        },
+        "retry": {
+          "type": "object",
+          "title": "Retry",
+          "description": "Exponential backoff for a failed batch.",
+          "properties": {
+            "attempts": {
+              "type": "integer",
+              "title": "Attempts",
+              "description": "Attempts before a batch is abandoned.",
+              "minimum": 1,
+              "default": 3
+            },
+            "base_delay": {
+              "type": "number",
+              "title": "Base Delay (s)",
+              "description": "Delay before the first retry; doubles each attempt.",
+              "minimum": 0,
+              "default": 1
+            },
+            "max_delay": {
+              "type": "number",
+              "title": "Max Delay (s)",
+              "description": "Ceiling on the backoff delay.",
+              "minimum": 0,
+              "default": 30
+            }
+          }
+        }
+      }
+    },
+    "buffer": {
+      "type": "object",
+      "title": "Buffer",
+      "description": "Local backlog held between drains.",
+      "properties": {
+        "max_backlog": {
+          "type": "integer",
+          "title": "Max Backlog",
+          "minimum": 0,
+          "default": 1000000,
+          "description": "Max un-uploaded rows kept before dropping oldest; 0 = unbounded."
+        }
+      }
+    }
+  },
+  "required": [
+    "kafka"
+  ]
+}
