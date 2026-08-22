@@ -41,6 +41,14 @@ Start with the official [Kelvin Documentation](https://docs.kelvin.ai).
 |------------------------------------------|--------------|--------------------------------------------------------|
 | [Mosquitto MQTT](docker/mqtt-mosquitto/) | Intermediate | Mosquitto MQTT Broker that supports SSL/TLS encryption |
 
+## 🏭 Simulators
+
+| Application                                          | Level        | Description                                                                              |
+|------------------------------------------------------|--------------|-------------------------------------------------------------------------------------------|
+| [Kafka Machine Simulator](simulators/kafka/)         | Intermediate | Simulates fleets of industrial machines producing telemetry to Kafka topics.            |
+| [MQTT Machine Simulator](simulators/mqtt/)           | Intermediate | Simulates fleets of industrial machines publishing telemetry to an MQTT broker.         |
+| [OPC-UA Machine Simulator](simulators/opcua/)        | Intermediate | Simulates fleets of industrial machines as an OPC-UA server with writable setpoints.    |
+
 # Running Samples Locally
 
 Each sample is self-contained: its own `requirements.txt`, `Dockerfile`, and `app.yaml`.

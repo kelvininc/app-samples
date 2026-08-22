@@ -1,0 +1,95 @@
+# yaml-language-server: $schema=https://apps.kelvininc.com/schemas/kelvin/5.0.0/docker.json
+
+# YAML (Structure) Spec Version
+spec_version: 5.0.0
+# Type
+type: docker
+
+# Info
+name: opcua-simulator
+title: OPC-UA Machine Simulator
+description: Simulates fleets of industrial machines (beam pumps, PCPs, compressors, or custom) as an OPC-UA server with configurable waveforms and writable setpoints.
+version: 1.0.0
+
+# Capabilities
+flags:
+  enable_runtime_update:
+    # The address space is built at startup; configuration changes apply on redeploy
+    configuration: false
+
+# UI JSON schemas (Optional)
+ui_schemas:
+  # Application Configuration Schema
+  configuration: "ui_schemas/configuration.json"
+
+# Defaults (Runtime/Deployment)
+defaults:
+  # Application Configuration Default Values
+  configuration:
+    opcua:
+      port: 50000
+      # Hostname advertised in GetEndpoints (clients reconnect to it). Empty ->
+      # the workload name (KELVIN_WORKLOAD_NAME), which is the service DNS name.
+      advertised_host: ""
+      # Both empty -> anonymous access allowed. Wire to secrets on the deployment:
+      #   username: "<% secrets.opc-sim-user %>"
+      #   password: "<% secrets.opc-sim-password %>"
+      auth:
+        username: ""
+        password: ""
+
+    simulation:
+      tick: 1.0
+      seed: 42
+
+    assets:
+      - name: BeamPump
+        count: 2
+        tags:
+          spm:             { waveform: random_walk, min: 6.0, max: 12.0, unit: "strokes/min" }
+          pump_fillage:    { waveform: sine, min: 55, max: 95, period: 300, noise: 2, unit: "%" }
+          rod_load_max:    { waveform: sine, min: 15000, max: 24000, period: 300, noise: 500, unit: "lbf" }
+          tubing_pressure: { waveform: random_walk, min: 80, max: 140, unit: "psi" }
+          casing_pressure: { waveform: random_walk, min: 40, max: 90, unit: "psi" }
+          motor_current:   { waveform: sine, min: 18, max: 42, period: 15, noise: 1.5, unit: "A" }
+          spm_setpoint:    { writable: true, initial: 8.0, unit: "strokes/min" }
+          run_command:     { writable: true, initial: true, type: bool }
+
+      - name: PCP
+        count: 2
+        tags:
+          rotor_speed:     { waveform: random_walk, min: 150, max: 350, unit: "rpm" }
+          torque:          { waveform: sine, min: 250, max: 600, period: 120, noise: 20, unit: "N.m" }
+          motor_temp:      { waveform: ramp, min: 60, max: 85, period: 3600, unit: "degC" }
+          tubing_pressure: { waveform: random_walk, min: 90, max: 160, unit: "psi" }
+          flow_rate:       { waveform: sine, min: 12, max: 28, period: 600, noise: 1, unit: "m3/h" }
+          speed_setpoint:  { writable: true, initial: 250.0, unit: "rpm" }
+          run_command:     { writable: true, initial: true, type: bool }
+
+      - name: Compressor
+        count: 1
+        tags:
+          suction_pressure:   { waveform: random_walk, min: 2.0, max: 4.5, unit: "bar" }
+          discharge_pressure: { waveform: random_walk, min: 8.0, max: 12.0, unit: "bar" }
+          discharge_temp:     { waveform: sine, min: 95, max: 130, period: 900, noise: 3, unit: "degC" }
+          flow:               { waveform: sine, min: 800, max: 1400, period: 600, noise: 25, unit: "m3/h" }
+          vibration:          { waveform: random, min: 1.2, max: 4.8, unit: "mm/s" }
+          surge_margin:       { waveform: random_walk, min: 8, max: 25, unit: "%" }
+          speed_setpoint:     { writable: true, initial: 9500.0, unit: "rpm" }
+          recycle_valve_cmd:  { writable: true, initial: 12.5, unit: "%" }
+          run_command:        { writable: true, initial: true, type: bool }
+
+  # System Settings
+  system:
+    ports:
+      # Other workloads (and Kelvin OPC-UA connections) reach the server at
+      # opc.tcp://<workload-name>:50000. For clients outside the cluster, add
+      # a host-type port on the deployment (see README.md):
+      #   - name: opcua-external
+      #     type: host
+      #     host:
+      #       port: 50000
+      - name: opcua
+        type: service
+        service:
+          port: 50000

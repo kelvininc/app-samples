@@ -1,0 +1,238 @@
+{
+  "title": "MQTT Simulator Configuration",
+  "description": "Broker connection, publishing, and the simulated asset fleet.",
+  "type": "object",
+  "properties": {
+    "mqtt": {
+      "type": "object",
+      "title": "MQTT Broker",
+      "description": "Broker connection, credentials, and publishing.",
+      "properties": {
+        "host": {
+          "type": "string",
+          "title": "Host",
+          "description": "Broker hostname.",
+          "default": "mqtt-broker",
+          "minLength": 1
+        },
+        "port": {
+          "type": "integer",
+          "title": "Port",
+          "description": "Broker port; pair with use_tls for the secure port.",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 21883
+        },
+        "client_id": {
+          "type": "string",
+          "title": "Client ID",
+          "description": "Client id presented to the broker.",
+          "default": "mqtt-simulator"
+        },
+        "use_tls": {
+          "type": "boolean",
+          "title": "Use TLS",
+          "description": "Connect with TLS using the default SSL context.",
+          "default": false
+        },
+        "auth": {
+          "type": "object",
+          "title": "Authentication",
+          "description": "Leave empty for an anonymous broker.",
+          "properties": {
+            "username": {
+              "type": "string",
+              "title": "Username",
+              "description": "Empty with the password allows anonymous access."
+            },
+            "password": {
+              "type": "string",
+              "title": "Password",
+              "description": "Wire to a secret; empty allows anonymous access."
+            }
+          },
+          "x-kelvin-ui": {
+            "password": {
+              "ui:widget": "password"
+            },
+            "ui:order": [
+              "username",
+              "password"
+            ]
+          }
+        },
+        "publish": {
+          "type": "object",
+          "title": "Publishing",
+          "description": "Topic, QoS, and payload shape of published messages.",
+          "properties": {
+            "topic": {
+              "type": "string",
+              "title": "Topic",
+              "default": "sim/{asset}/{tag}",
+              "description": "{asset}/{tag} placeholders; {tag} is invalid with payload=json_bundle.",
+              "minLength": 1
+            },
+            "qos": {
+              "type": "string",
+              "title": "QoS",
+              "description": "MQTT quality of service: 0 at-most-once, 1 at-least-once, 2 exactly-once.",
+              "enum": [
+                "0",
+                "1",
+                "2"
+              ],
+              "default": "0"
+            },
+            "payload": {
+              "type": "string",
+              "title": "Payload",
+              "enum": [
+                "raw",
+                "json",
+                "json_bundle"
+              ],
+              "default": "json",
+              "description": "raw = scalar; json = one tag; json_bundle = all of an asset's tags per message."
+            },
+            "timestamp": {
+              "type": "string",
+              "title": "Timestamp",
+              "description": "Timestamp format in the payload.",
+              "enum": [
+                "iso",
+                "epoch_ms",
+                "none"
+              ],
+              "default": "iso"
+            }
+          }
+        }
+      }
+    },
+    "simulation": {
+      "type": "object",
+      "title": "Simulation",
+      "description": "Tick rate and seed for value generation.",
+      "properties": {
+        "tick": {
+          "type": "number",
+          "title": "Tick (s)",
+          "exclusiveMinimum": 0,
+          "default": 1.0,
+          "description": "Seconds between value updates."
+        },
+        "seed": {
+          "type": "integer",
+          "title": "Seed",
+          "default": 42,
+          "description": "Base random seed; runs are reproducible for a given seed."
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "title": "Assets",
+      "description": "Each entry creates <count> asset instances with identical tag sets. At least one group is required.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "title": "Asset group",
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "minLength": 1,
+            "description": "Asset type / prefix; instances are named <Name>01..NN."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "minimum": 1,
+            "default": 1
+          },
+          "tags": {
+            "type": "object",
+            "title": "Tags",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "object",
+              "title": "Tag",
+              "properties": {
+                "waveform": {
+                  "type": "string",
+                  "title": "Waveform",
+                  "default": "constant",
+                  "enum": [
+                    "sine",
+                    "ramp",
+                    "square",
+                    "random_walk",
+                    "random",
+                    "constant"
+                  ]
+                },
+                "type": {
+                  "type": "string",
+                  "title": "Type",
+                  "enum": [
+                    "float",
+                    "int",
+                    "bool"
+                  ],
+                  "default": "float"
+                },
+                "min": {
+                  "type": "number",
+                  "title": "Min",
+                  "default": 0
+                },
+                "max": {
+                  "type": "number",
+                  "title": "Max",
+                  "default": 100
+                },
+                "period": {
+                  "type": "number",
+                  "title": "Period (s)",
+                  "exclusiveMinimum": 0,
+                  "default": 60
+                },
+                "noise": {
+                  "type": "number",
+                  "title": "Noise",
+                  "minimum": 0,
+                  "default": 0
+                },
+                "initial": {
+                  "title": "Initial value"
+                },
+                "writable": {
+                  "type": "boolean",
+                  "title": "Writable",
+                  "default": false,
+                  "description": "Setpoints/commands: published at their initial value (publishers have no inbound path)."
+                },
+                "unit": {
+                  "type": "string",
+                  "title": "Unit"
+                },
+                "description": {
+                  "type": "string",
+                  "title": "Description"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "name",
+          "tags"
+        ]
+      }
+    }
+  },
+  "required": [
+    "assets"
+  ]
+}
