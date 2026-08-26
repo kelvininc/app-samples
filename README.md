@@ -14,11 +14,6 @@ Start with the official [Kelvin Documentation](https://docs.kelvin.ai).
 | [Casting Defect Detection](applications/casting-defect-detection/)               | Computer Vision      | Advanced     | Uses a TensorFlow-based model to identify and analyze manufacturing defects in casting processes.   |
 | [Event Detection](applications/event-detection/)                                 | Event Detection      | Beginner     | Monitors streaming data for threshold-crossing events and emits Control Changes or Recommendations. |
 | [Multi-Objective Optimization ML](applications/multi-objective-optimization-ml/) | Machine Learning     | Advanced     | Solves multi-objective optimization problems using ML techniques.                                   |
-<<<<<<< HEAD
-=======
-| [Slack Message Test](applications/slack-message-test/)                           | Custom Actions       | Beginner     | Publishes a Slack Message custom action every minute to test the Slack Custom Actions exporter.     |
-| [Teams Message Test](applications/teams-message-test/)                           | Custom Actions       | Beginner     | Publishes a Teams Message custom action every minute to test the Microsoft Teams Sender exporter.   |
->>>>>>> ac2f3fe (added microsoft-teams-sender exporter)
 
 ## 📥 Importers
 
@@ -36,10 +31,11 @@ Start with the official [Kelvin Documentation](https://docs.kelvin.ai).
 | [Databricks Delta Table Uploader](exporters/databricks-delta-table-uploader/) | Intermediate  | Uploads streaming data to Databricks Delta Table.       |
 | [Databricks Volume Uploader](exporters/databricks-volume-uploader/)           | Intermediate  | Uploads streaming data to a Databricks Volume.          |
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 | [Databricks Volume Uploader](exporters/databricks-volume-uploader/)           | Intermediate  | Uploads streaming data to a Databricks Volume.          |
+| [Databricks Volume Uploader](exporters/databricks-volume-uploader/)           | Intermediate  | Uploads streaming data to a Databricks Volume.          |
 | [Microsoft Teams Sender](exporters/microsoft-teams-sender/)                   | Intermediate  | Sends Microsoft Teams messages to a given channel.      |
->>>>>>> ac2f3fe (added microsoft-teams-sender exporter)
 | [Resnet Custom Actions](exporters/resnet-custom-actions/)                     | Intermediate  | Creates issues in the Resnet system.                    |
 | [Slack Custom Actions](exporters/slack-custom-actions/)                       | Intermediate  | Sends slack messages to a given channel.                |
 
