@@ -1,13 +1,15 @@
+# yaml-language-server: $schema=https://apps.kelvininc.com/schemas/kelvin/5.0.0/app/app.json
+
 # YAML (Structure) Spec Version
 spec_version: 5.0.0
 # Type
 type: exporter
 
 # Info
-name: slack-message-sender
-title: Slack Message Sender
-description: This exporter handles slack custom actions and sends slack messages to a given channel
-version: 1.1.3
+name: microsoft-teams-sender
+title: Microsoft Teams Sender
+description: This exporter handles Teams Message custom actions and sends Microsoft Teams messages to a given channel
+version: 0.0.1
 
 # Capabilities
 flags:
@@ -17,7 +19,7 @@ flags:
 # Custom Actions
 custom_actions:
   inputs:
-    - type: Slack Message
+    - type: Teams Message
 
 # UI JSON schemas (Optional)
 ui_schemas:
@@ -25,13 +27,15 @@ ui_schemas:
   configuration: "ui_schemas/configuration.json"
   # Custom Action Payload Schemas (keyed by action type)
   custom_actions:
-    Slack Message: "ui_schemas/slack_message.json"
+    Teams Message: "ui_schemas/teams_message.json"
 
 # Defaults (Runtime/Deployment)
 defaults:
   # Application Configuration Default Values
   configuration:
-    token: <% secrets.slack-bot-token %>
+    webhooks:
+      - channel: test
+        url: <% secrets.teams-webhook-test %>
 
   # System Settings
   system: {}
