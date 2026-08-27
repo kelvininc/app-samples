@@ -50,15 +50,6 @@
               "title": "Password",
               "description": "Wire to a secret; empty allows anonymous access."
             }
-          },
-          "x-kelvin-ui": {
-            "password": {
-              "ui:widget": "password"
-            },
-            "ui:order": [
-              "username",
-              "password"
-            ]
           }
         },
         "publish": {
@@ -234,5 +225,45 @@
   },
   "required": [
     "assets"
-  ]
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "mqtt",
+      "simulation",
+      "assets"
+    ],
+    "mqtt": {
+      "ui:order": [
+        "host",
+        "port",
+        "client_id",
+        "use_tls",
+        "auth",
+        "publish"
+      ],
+      "auth": {
+        "ui:order": [
+          "username",
+          "password"
+        ],
+        "password": {
+          "ui:widget": "password"
+        }
+      },
+      "publish": {
+        "ui:order": [
+          "topic",
+          "qos",
+          "payload",
+          "timestamp"
+        ]
+      }
+    },
+    "simulation": {
+      "ui:order": [
+        "tick",
+        "seed"
+      ]
+    }
+  }
 }

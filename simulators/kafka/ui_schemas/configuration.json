@@ -57,16 +57,6 @@
                   "title": "Password",
                   "description": "SASL password. Wire to a secret."
                 }
-              },
-              "x-kelvin-ui": {
-                "password": {
-                  "ui:widget": "password"
-                },
-                "ui:order": [
-                  "mechanism",
-                  "username",
-                  "password"
-                ]
               }
             },
             "tls": {
@@ -89,16 +79,6 @@
                   "title": "Client Key",
                   "description": "PEM client key for mTLS. Wire to a secret."
                 }
-              },
-              "x-kelvin-ui": {
-                "client_key": {
-                  "ui:widget": "password"
-                },
-                "ui:order": [
-                  "ca_cert",
-                  "client_cert",
-                  "client_key"
-                ]
               }
             }
           }
@@ -272,5 +252,60 @@
   },
   "required": [
     "assets"
-  ]
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "kafka",
+      "simulation",
+      "assets"
+    ],
+    "kafka": {
+      "ui:order": [
+        "bootstrap_servers",
+        "security",
+        "publish"
+      ],
+      "security": {
+        "ui:order": [
+          "protocol",
+          "sasl",
+          "tls"
+        ],
+        "sasl": {
+          "ui:order": [
+            "mechanism",
+            "username",
+            "password"
+          ],
+          "password": {
+            "ui:widget": "password"
+          }
+        },
+        "tls": {
+          "ui:order": [
+            "ca_cert",
+            "client_cert",
+            "client_key"
+          ],
+          "client_key": {
+            "ui:widget": "password"
+          }
+        }
+      },
+      "publish": {
+        "ui:order": [
+          "topic",
+          "key",
+          "payload",
+          "timestamp"
+        ]
+      }
+    },
+    "simulation": {
+      "ui:order": [
+        "tick",
+        "seed"
+      ]
+    }
+  }
 }
