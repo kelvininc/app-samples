@@ -36,15 +36,6 @@
               "title": "Password",
               "description": "Wire to a secret; empty allows anonymous access."
             }
-          },
-          "x-kelvin-ui": {
-            "password": {
-              "ui:widget": "password"
-            },
-            "ui:order": [
-              "username",
-              "password"
-            ]
           }
         }
       }
@@ -173,5 +164,34 @@
   },
   "required": [
     "assets"
-  ]
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "opcua",
+      "simulation",
+      "assets"
+    ],
+    "opcua": {
+      "ui:order": [
+        "port",
+        "advertised_host",
+        "auth"
+      ],
+      "auth": {
+        "ui:order": [
+          "username",
+          "password"
+        ],
+        "password": {
+          "ui:widget": "password"
+        }
+      }
+    },
+    "simulation": {
+      "ui:order": [
+        "tick",
+        "seed"
+      ]
+    }
+  }
 }
