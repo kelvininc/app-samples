@@ -25,5 +25,12 @@
       "minimum": 50,
       "maximum": 100
     }
+  },
+  "x-kelvin-ui": {
+    "ui:order": [
+      "kelvin_closed_loop",
+      "speed_decrease_set_point",
+      "temperature_max_threshold"
+    ]
   }
 }
