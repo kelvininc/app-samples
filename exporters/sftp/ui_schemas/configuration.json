@@ -11,7 +11,8 @@
         "host": {
           "type": "string",
           "title": "Host",
-          "description": "Server hostname. Required to deploy."
+          "description": "Server hostname. Required to deploy.",
+          "minLength": 1
         },
         "port": {
           "type": "integer",
@@ -24,7 +25,8 @@
         "username": {
           "type": "string",
           "title": "Username",
-          "description": "Login user. Required to deploy."
+          "description": "Login user. Required to deploy.",
+          "minLength": 1
         },
         "remote_dir": {
           "type": "string",
@@ -54,78 +56,53 @@
           "type": "object",
           "title": "Authentication",
           "description": "Wire credentials to a secret on deployment.",
-          "properties": {
-            "method": {
-              "type": "string",
-              "title": "Method",
-              "description": "password uses a password; private_key uses a PEM key.",
-              "enum": [
-                "password",
-                "private_key"
-              ],
-              "default": "password"
-            }
-          },
-          "allOf": [
+          "oneOf": [
             {
-              "if": {
-                "properties": {
-                  "method": {
-                    "const": "password"
-                  }
+              "title": "Password auth",
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "title": "Method",
+                  "description": "password uses a password; private_key uses a PEM key.",
+                  "const": "password",
+                  "default": "password"
+                },
+                "password": {
+                  "type": "string",
+                  "title": "Password",
+                  "description": "password method only. Wire to a secret."
                 }
               },
-              "then": {
-                "properties": {
-                  "password": {
-                    "type": "string",
-                    "title": "Password",
-                    "description": "password method only. Wire to a secret."
-                  }
-                }
-              }
+              "required": [
+                "method"
+              ]
             },
             {
-              "if": {
-                "properties": {
-                  "method": {
-                    "const": "private_key"
-                  }
+              "title": "SSH key auth",
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "title": "Method",
+                  "description": "password uses a password; private_key uses a PEM key.",
+                  "const": "private_key",
+                  "default": "private_key"
+                },
+                "private_key": {
+                  "type": "string",
+                  "title": "Private Key (PEM)",
+                  "description": "PEM key (RSA/Ed25519/ECDSA); private_key method only."
+                },
+                "private_key_passphrase": {
+                  "type": "string",
+                  "title": "Private Key Passphrase",
+                  "description": "Only if the key is encrypted. Wire to a secret."
                 }
               },
-              "then": {
-                "properties": {
-                  "private_key": {
-                    "type": "string",
-                    "title": "Private Key (PEM)",
-                    "description": "PEM key (RSA/Ed25519/ECDSA); private_key method only."
-                  },
-                  "private_key_passphrase": {
-                    "type": "string",
-                    "title": "Private Key Passphrase",
-                    "description": "Only if the key is encrypted. Wire to a secret."
-                  }
-                }
-              }
+              "required": [
+                "method"
+              ]
             }
-          ],
-          "x-kelvin-ui": {
-            "password": {
-              "ui:widget": "password"
-            },
-            "private_key": {
-              "ui:widget": "textarea"
-            },
-            "private_key_passphrase": {
-              "ui:widget": "password"
-            },
-            "ui:order": [
-              "method",
-              "password",
-              "private_key",
-              "private_key_passphrase"
-            ]
-          }
+          ]
         }
       },
       "required": [
@@ -211,5 +188,64 @@
   },
   "required": [
     "sftp"
-  ]
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "sftp",
+      "upload",
+      "buffer"
+    ],
+    "sftp": {
+      "ui:order": [
+        "host",
+        "port",
+        "username",
+        "remote_dir",
+        "timeout",
+        "verify_host_key",
+        "known_hosts",
+        "auth"
+      ],
+      "auth": {
+        "ui:order": [
+          "method",
+          "password",
+          "private_key",
+          "private_key_passphrase"
+        ],
+        "password": {
+          "ui:widget": "password"
+        },
+        "private_key": {
+          "ui:widget": "textarea"
+        },
+        "private_key_passphrase": {
+          "ui:widget": "password"
+        },
+        "method": {
+          "ui:widget": "hidden"
+        }
+      }
+    },
+    "upload": {
+      "ui:order": [
+        "interval",
+        "batch_size",
+        "format",
+        "retry"
+      ],
+      "retry": {
+        "ui:order": [
+          "attempts",
+          "base_delay",
+          "max_delay"
+        ]
+      }
+    },
+    "buffer": {
+      "ui:order": [
+        "max_backlog"
+      ]
+    }
+  }
 }

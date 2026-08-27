@@ -11,112 +11,93 @@
         "account": {
           "type": "string",
           "title": "Account",
-          "description": "Account identifier, e.g. xy12345.us-east-1."
+          "description": "Account identifier, e.g. xy12345.us-east-1.",
+          "minLength": 1
         },
         "user": {
           "type": "string",
           "title": "User",
-          "description": "Login user. Required to deploy."
+          "description": "Login user. Required to deploy.",
+          "minLength": 1
         },
         "warehouse": {
           "type": "string",
           "title": "Warehouse",
-          "description": "Warehouse used for the load. Required to deploy."
+          "description": "Warehouse used for the load. Required to deploy.",
+          "minLength": 1
         },
         "database": {
           "type": "string",
           "title": "Database",
           "description": "Target database. Required to deploy.",
-          "pattern": "^$|^[A-Za-z0-9_]+$"
+          "pattern": "^[A-Za-z0-9_]+$",
+          "minLength": 1
         },
         "schema": {
           "type": "string",
           "title": "Schema",
           "description": "Target schema. Required to deploy.",
-          "pattern": "^$|^[A-Za-z0-9_]+$"
+          "pattern": "^[A-Za-z0-9_]+$",
+          "minLength": 1
         },
         "table": {
           "type": "string",
           "title": "Table",
           "description": "Target table. Required to deploy.",
-          "pattern": "^$|^[A-Za-z0-9_]+$"
+          "pattern": "^[A-Za-z0-9_]+$",
+          "minLength": 1
         },
         "auth": {
           "type": "object",
           "title": "Authentication",
           "description": "Wire credentials to a secret on deployment.",
-          "properties": {
-            "method": {
-              "type": "string",
-              "title": "Method",
-              "description": "password uses a password; key_pair uses a PEM key.",
-              "enum": [
-                "password",
-                "key_pair"
-              ],
-              "default": "password"
-            }
-          },
-          "allOf": [
+          "oneOf": [
             {
-              "if": {
-                "properties": {
-                  "method": {
-                    "const": "password"
-                  }
+              "title": "Password auth",
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "title": "Method",
+                  "description": "password uses a password; key_pair uses a PEM key.",
+                  "const": "password",
+                  "default": "password"
+                },
+                "password": {
+                  "type": "string",
+                  "title": "Password",
+                  "description": "password method only. Wire to a secret."
                 }
               },
-              "then": {
-                "properties": {
-                  "password": {
-                    "type": "string",
-                    "title": "Password",
-                    "description": "password method only. Wire to a secret."
-                  }
-                }
-              }
+              "required": [
+                "method"
+              ]
             },
             {
-              "if": {
-                "properties": {
-                  "method": {
-                    "const": "key_pair"
-                  }
+              "title": "Key pair auth",
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "title": "Method",
+                  "description": "password uses a password; key_pair uses a PEM key.",
+                  "const": "key_pair",
+                  "default": "key_pair"
+                },
+                "private_key": {
+                  "type": "string",
+                  "title": "Private Key (PEM)",
+                  "description": "PEM RSA key; key_pair method only."
+                },
+                "private_key_passphrase": {
+                  "type": "string",
+                  "title": "Private Key Passphrase",
+                  "description": "Only if the key is encrypted. Wire to a secret."
                 }
               },
-              "then": {
-                "properties": {
-                  "private_key": {
-                    "type": "string",
-                    "title": "Private Key (PEM)",
-                    "description": "PEM RSA key; key_pair method only."
-                  },
-                  "private_key_passphrase": {
-                    "type": "string",
-                    "title": "Private Key Passphrase",
-                    "description": "Only if the key is encrypted. Wire to a secret."
-                  }
-                }
-              }
+              "required": [
+                "method"
+              ]
             }
-          ],
-          "x-kelvin-ui": {
-            "password": {
-              "ui:widget": "password"
-            },
-            "private_key": {
-              "ui:widget": "textarea"
-            },
-            "private_key_passphrase": {
-              "ui:widget": "password"
-            },
-            "ui:order": [
-              "method",
-              "password",
-              "private_key",
-              "private_key_passphrase"
-            ]
-          }
+          ]
         }
       },
       "required": [
@@ -196,5 +177,62 @@
   },
   "required": [
     "snowflake"
-  ]
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "snowflake",
+      "upload",
+      "buffer"
+    ],
+    "snowflake": {
+      "ui:order": [
+        "account",
+        "user",
+        "warehouse",
+        "database",
+        "schema",
+        "table",
+        "auth"
+      ],
+      "auth": {
+        "ui:order": [
+          "method",
+          "password",
+          "private_key",
+          "private_key_passphrase"
+        ],
+        "password": {
+          "ui:widget": "password"
+        },
+        "private_key": {
+          "ui:widget": "textarea"
+        },
+        "private_key_passphrase": {
+          "ui:widget": "password"
+        },
+        "method": {
+          "ui:widget": "hidden"
+        }
+      }
+    },
+    "upload": {
+      "ui:order": [
+        "interval",
+        "batch_size",
+        "retry"
+      ],
+      "retry": {
+        "ui:order": [
+          "attempts",
+          "base_delay",
+          "max_delay"
+        ]
+      }
+    },
+    "buffer": {
+      "ui:order": [
+        "max_backlog"
+      ]
+    }
+  }
 }

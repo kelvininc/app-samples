@@ -11,13 +11,15 @@
         "account_name": {
           "type": "string",
           "title": "Storage Account Name",
-          "pattern": "^$|^[a-z0-9]{3,24}$",
-          "description": "3-24 lowercase letters and digits. Required to deploy."
+          "pattern": "^[a-z0-9]{3,24}$",
+          "description": "3-24 lowercase letters and digits. Required to deploy.",
+          "minLength": 1
         },
         "container": {
           "type": "string",
           "title": "Container (File System)",
-          "description": "Required to deploy."
+          "description": "Required to deploy.",
+          "minLength": 1
         },
         "auth": {
           "type": "object",
@@ -29,14 +31,6 @@
               "title": "Account Key",
               "description": "Leave empty to use the cluster's managed identity. Wire to a secret."
             }
-          },
-          "x-kelvin-ui": {
-            "account_key": {
-              "ui:widget": "password"
-            },
-            "ui:order": [
-              "account_key"
-            ]
           }
         }
       },
@@ -123,5 +117,47 @@
   },
   "required": [
     "adls"
-  ]
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "adls",
+      "upload",
+      "buffer"
+    ],
+    "adls": {
+      "ui:order": [
+        "account_name",
+        "container",
+        "auth"
+      ],
+      "auth": {
+        "ui:order": [
+          "account_key"
+        ],
+        "account_key": {
+          "ui:widget": "password"
+        }
+      }
+    },
+    "upload": {
+      "ui:order": [
+        "interval",
+        "batch_size",
+        "format",
+        "retry"
+      ],
+      "retry": {
+        "ui:order": [
+          "attempts",
+          "base_delay",
+          "max_delay"
+        ]
+      }
+    },
+    "buffer": {
+      "ui:order": [
+        "max_backlog"
+      ]
+    }
+  }
 }

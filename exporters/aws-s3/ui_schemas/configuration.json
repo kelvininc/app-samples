@@ -12,12 +12,14 @@
           "type": "string",
           "title": "Region",
           "description": "AWS region of the bucket.",
-          "default": "us-east-1"
+          "default": "us-east-1",
+          "minLength": 1
         },
         "bucket": {
           "type": "string",
           "title": "Bucket",
-          "description": "Destination bucket. Required to deploy."
+          "description": "Destination bucket. Required to deploy.",
+          "minLength": 1
         },
         "prefix": {
           "type": "string",
@@ -39,15 +41,6 @@
               "title": "Secret Access Key",
               "description": "Set together with the access key ID. Wire to a secret."
             }
-          },
-          "x-kelvin-ui": {
-            "secret_access_key": {
-              "ui:widget": "password"
-            },
-            "ui:order": [
-              "access_key_id",
-              "secret_access_key"
-            ]
           }
         }
       },
@@ -133,5 +126,49 @@
   },
   "required": [
     "s3"
-  ]
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "s3",
+      "upload",
+      "buffer"
+    ],
+    "s3": {
+      "ui:order": [
+        "region",
+        "bucket",
+        "prefix",
+        "auth"
+      ],
+      "auth": {
+        "ui:order": [
+          "access_key_id",
+          "secret_access_key"
+        ],
+        "secret_access_key": {
+          "ui:widget": "password"
+        }
+      }
+    },
+    "upload": {
+      "ui:order": [
+        "interval",
+        "batch_size",
+        "format",
+        "retry"
+      ],
+      "retry": {
+        "ui:order": [
+          "attempts",
+          "base_delay",
+          "max_delay"
+        ]
+      }
+    },
+    "buffer": {
+      "ui:order": [
+        "max_backlog"
+      ]
+    }
+  }
 }

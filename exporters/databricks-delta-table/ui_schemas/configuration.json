@@ -11,92 +11,73 @@
         "server_hostname": {
           "type": "string",
           "title": "Server Hostname",
-          "description": "Workspace hostname. Required to deploy."
+          "description": "Workspace hostname. Required to deploy.",
+          "minLength": 1
         },
         "http_path": {
           "type": "string",
           "title": "HTTP Path",
-          "description": "SQL warehouse HTTP path. Required to deploy."
+          "description": "SQL warehouse HTTP path. Required to deploy.",
+          "minLength": 1
         },
         "delta_table": {
           "type": "string",
           "title": "Delta Table",
           "description": "Fully-qualified name: catalog.schema.table.",
-          "pattern": "^$|^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$"
+          "pattern": "^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$",
+          "minLength": 1
         },
         "auth": {
           "type": "object",
           "title": "Authentication",
           "description": "Wire credentials to a secret on deployment.",
-          "properties": {
-            "method": {
-              "type": "string",
-              "title": "Method",
-              "description": "oauth uses a service principal; access_token uses a PAT.",
-              "enum": [
-                "oauth",
-                "access_token"
-              ],
-              "default": "oauth"
-            }
-          },
-          "allOf": [
+          "oneOf": [
             {
-              "if": {
-                "properties": {
-                  "method": {
-                    "const": "oauth"
-                  }
+              "title": "OAuth (service principal)",
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "title": "Method",
+                  "description": "oauth uses a service principal; access_token uses a PAT.",
+                  "const": "oauth",
+                  "default": "oauth"
+                },
+                "client_id": {
+                  "type": "string",
+                  "title": "Client ID",
+                  "description": "Service principal ID; oauth only."
+                },
+                "client_secret": {
+                  "type": "string",
+                  "title": "Client Secret",
+                  "description": "Service principal secret; oauth only. Wire to a secret."
                 }
               },
-              "then": {
-                "properties": {
-                  "client_id": {
-                    "type": "string",
-                    "title": "Client ID",
-                    "description": "Service principal ID; oauth only."
-                  },
-                  "client_secret": {
-                    "type": "string",
-                    "title": "Client Secret",
-                    "description": "Service principal secret; oauth only. Wire to a secret."
-                  }
-                }
-              }
+              "required": [
+                "method"
+              ]
             },
             {
-              "if": {
-                "properties": {
-                  "method": {
-                    "const": "access_token"
-                  }
+              "title": "Personal access token",
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "title": "Method",
+                  "description": "oauth uses a service principal; access_token uses a PAT.",
+                  "const": "access_token",
+                  "default": "access_token"
+                },
+                "access_token": {
+                  "type": "string",
+                  "title": "Access Token",
+                  "description": "Personal access token; access_token method only. Wire to a secret."
                 }
               },
-              "then": {
-                "properties": {
-                  "access_token": {
-                    "type": "string",
-                    "title": "Access Token",
-                    "description": "Personal access token; access_token method only. Wire to a secret."
-                  }
-                }
-              }
+              "required": [
+                "method"
+              ]
             }
-          ],
-          "x-kelvin-ui": {
-            "client_secret": {
-              "ui:widget": "password"
-            },
-            "access_token": {
-              "ui:widget": "password"
-            },
-            "ui:order": [
-              "method",
-              "client_id",
-              "client_secret",
-              "access_token"
-            ]
-          }
+          ]
         }
       },
       "required": [
@@ -172,5 +153,56 @@
   },
   "required": [
     "databricks"
-  ]
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "databricks",
+      "upload",
+      "buffer"
+    ],
+    "databricks": {
+      "ui:order": [
+        "server_hostname",
+        "http_path",
+        "delta_table",
+        "auth"
+      ],
+      "auth": {
+        "ui:order": [
+          "method",
+          "client_id",
+          "client_secret",
+          "access_token"
+        ],
+        "client_secret": {
+          "ui:widget": "password"
+        },
+        "access_token": {
+          "ui:widget": "password"
+        },
+        "method": {
+          "ui:widget": "hidden"
+        }
+      }
+    },
+    "upload": {
+      "ui:order": [
+        "interval",
+        "batch_size",
+        "retry"
+      ],
+      "retry": {
+        "ui:order": [
+          "attempts",
+          "base_delay",
+          "max_delay"
+        ]
+      }
+    },
+    "buffer": {
+      "ui:order": [
+        "max_backlog"
+      ]
+    }
+  }
 }

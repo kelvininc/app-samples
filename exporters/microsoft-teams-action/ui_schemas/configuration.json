@@ -19,18 +19,23 @@
       },
       "required": [
         "webhook_url"
-      ],
-      "x-kelvin-ui": {
-        "webhook_url": {
-          "ui:widget": "password"
-        },
-        "ui:order": [
-          "webhook_url"
-        ]
-      }
+      ]
     }
   },
   "required": [
     "teams"
-  ]
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "teams"
+    ],
+    "teams": {
+      "ui:order": [
+        "webhook_url"
+      ],
+      "webhook_url": {
+        "ui:widget": "password"
+      }
+    }
+  }
 }

@@ -19,18 +19,23 @@
       },
       "required": [
         "token"
-      ],
-      "x-kelvin-ui": {
-        "token": {
-          "ui:widget": "password"
-        },
-        "ui:order": [
-          "token"
-        ]
-      }
+      ]
     }
   },
   "required": [
     "slack"
-  ]
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "slack"
+    ],
+    "slack": {
+      "ui:order": [
+        "token"
+      ],
+      "token": {
+        "ui:widget": "password"
+      }
+    }
+  }
 }

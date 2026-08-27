@@ -11,18 +11,21 @@
         "server_hostname": {
           "type": "string",
           "title": "Server Hostname",
-          "description": "Workspace hostname, used for OAuth."
+          "description": "Workspace hostname, used for OAuth.",
+          "minLength": 1
         },
         "zerobus_endpoint": {
           "type": "string",
           "title": "Zerobus Endpoint",
-          "description": "gRPC ingestion endpoint."
+          "description": "gRPC ingestion endpoint.",
+          "minLength": 1
         },
         "delta_table": {
           "type": "string",
           "title": "Delta Table",
           "description": "Fully-qualified name: catalog.schema.table.",
-          "pattern": "^$|^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$"
+          "pattern": "^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$",
+          "minLength": 1
         },
         "auth": {
           "type": "object",
@@ -39,15 +42,6 @@
               "title": "Client Secret",
               "description": "Service principal secret. Wire to a secret."
             }
-          },
-          "x-kelvin-ui": {
-            "client_secret": {
-              "ui:widget": "password"
-            },
-            "ui:order": [
-              "client_id",
-              "client_secret"
-            ]
           }
         }
       },
@@ -124,5 +118,48 @@
   },
   "required": [
     "databricks"
-  ]
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "databricks",
+      "upload",
+      "buffer"
+    ],
+    "databricks": {
+      "ui:order": [
+        "server_hostname",
+        "zerobus_endpoint",
+        "delta_table",
+        "auth"
+      ],
+      "auth": {
+        "ui:order": [
+          "client_id",
+          "client_secret"
+        ],
+        "client_secret": {
+          "ui:widget": "password"
+        }
+      }
+    },
+    "upload": {
+      "ui:order": [
+        "interval",
+        "batch_size",
+        "retry"
+      ],
+      "retry": {
+        "ui:order": [
+          "attempts",
+          "base_delay",
+          "max_delay"
+        ]
+      }
+    },
+    "buffer": {
+      "ui:order": [
+        "max_backlog"
+      ]
+    }
+  }
 }

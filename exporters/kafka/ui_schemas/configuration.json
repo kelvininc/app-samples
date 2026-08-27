@@ -11,8 +11,9 @@
         "bootstrap_servers": {
           "type": "string",
           "title": "Bootstrap Servers",
-          "default": "localhost:9092",
-          "description": "Comma-separated host:port list."
+          "default": "kafka.example.com:9092",
+          "description": "Comma-separated host:port list.",
+          "minLength": 1
         },
         "client_id": {
           "type": "string",
@@ -24,151 +25,174 @@
           "type": "object",
           "title": "Security",
           "description": "Protocol and credentials for the broker connection.",
-          "properties": {
-            "protocol": {
-              "type": "string",
-              "title": "Protocol",
-              "description": "SASL_* enables SASL; *_SSL enables TLS.",
-              "enum": [
-                "PLAINTEXT",
-                "SSL",
-                "SASL_PLAINTEXT",
-                "SASL_SSL"
-              ],
-              "default": "PLAINTEXT"
-            },
-            "sasl": {
-              "type": "object",
-              "title": "SASL Authentication",
-              "description": "Required with a SASL_* protocol: set all three together.",
+          "oneOf": [
+            {
+              "title": "Plaintext",
               "properties": {
-                "mechanism": {
+                "protocol": {
                   "type": "string",
-                  "title": "Mechanism",
-                  "description": "Set with username and password.",
-                  "enum": [
-                    "PLAIN",
-                    "SCRAM-SHA-256",
-                    "SCRAM-SHA-512"
-                  ]
-                },
-                "username": {
-                  "type": "string",
-                  "title": "Username",
-                  "description": "SASL username."
-                },
-                "password": {
-                  "type": "string",
-                  "title": "Password",
-                  "description": "SASL password. Wire to a secret."
+                  "title": "Protocol",
+                  "description": "SASL_* enables SASL; *_SSL enables TLS.",
+                  "const": "PLAINTEXT",
+                  "default": "PLAINTEXT"
                 }
               },
-              "x-kelvin-ui": {
-                "password": {
-                  "ui:widget": "password"
-                },
-                "ui:order": [
-                  "mechanism",
-                  "username",
-                  "password"
-                ]
-              }
+              "required": [
+                "protocol"
+              ]
             },
-            "tls": {
-              "type": "object",
+            {
               "title": "TLS",
-              "description": "SSL / SASL_SSL only. PEM content, wired to secrets on deployment.",
               "properties": {
-                "ca_cert": {
+                "protocol": {
                   "type": "string",
-                  "title": "CA Certificate",
-                  "description": "Optional: private CA bundle; empty uses the system CAs."
+                  "title": "Protocol",
+                  "description": "SASL_* enables SASL; *_SSL enables TLS.",
+                  "const": "SSL",
+                  "default": "SSL"
                 },
-                "client_cert": {
-                  "type": "string",
-                  "title": "Client Certificate (mTLS)",
-                  "description": "Set together with the client key, or leave both empty."
-                },
-                "client_key": {
-                  "type": "string",
-                  "title": "Client Key (mTLS)",
-                  "description": "PEM client key for mTLS. Wire to a secret."
-                }
-              },
-              "x-kelvin-ui": {
-                "client_key": {
-                  "ui:widget": "password"
-                },
-                "ui:order": [
-                  "ca_cert",
-                  "client_cert",
-                  "client_key"
-                ]
-              }
-            }
-          },
-          "allOf": [
-            {
-              "if": {
-                "properties": {
-                  "protocol": {
-                    "enum": [
-                      "SASL_PLAINTEXT",
-                      "SASL_SSL"
-                    ]
-                  }
-                },
-                "required": [
-                  "protocol"
-                ]
-              },
-              "then": {
-                "required": [
-                  "sasl"
-                ],
-                "properties": {
-                  "sasl": {
-                    "required": [
-                      "mechanism",
-                      "username",
-                      "password"
-                    ]
-                  }
-                }
-              }
-            },
-            {
-              "if": {
-                "properties": {
-                  "protocol": {
-                    "enum": [
-                      "PLAINTEXT",
-                      "SSL"
-                    ]
-                  }
-                },
-                "required": [
-                  "protocol"
-                ]
-              },
-              "then": {
-                "properties": {
-                  "sasl": {
-                    "properties": {
-                      "mechanism": {
-                        "not": {
-                          "enum": [
-                            "PLAIN",
-                            "SCRAM-SHA-256",
-                            "SCRAM-SHA-512"
-                          ]
-                        },
-                        "description": "Set with username and password."
-                      }
+                "tls": {
+                  "type": "object",
+                  "title": "TLS",
+                  "description": "SSL / SASL_SSL only. PEM content, wired to secrets on deployment.",
+                  "properties": {
+                    "ca_cert": {
+                      "type": "string",
+                      "title": "CA Certificate",
+                      "description": "Optional: private CA bundle; empty uses the system CAs."
+                    },
+                    "client_cert": {
+                      "type": "string",
+                      "title": "Client Certificate (mTLS)",
+                      "description": "Set together with the client key, or leave both empty."
+                    },
+                    "client_key": {
+                      "type": "string",
+                      "title": "Client Key (mTLS)",
+                      "description": "PEM client key for mTLS. Wire to a secret."
                     }
                   }
                 }
-              }
+              },
+              "required": [
+                "protocol"
+              ]
+            },
+            {
+              "title": "SASL",
+              "properties": {
+                "protocol": {
+                  "type": "string",
+                  "title": "Protocol",
+                  "description": "SASL_* enables SASL; *_SSL enables TLS.",
+                  "const": "SASL_PLAINTEXT",
+                  "default": "SASL_PLAINTEXT"
+                },
+                "sasl": {
+                  "type": "object",
+                  "title": "SASL Authentication",
+                  "description": "Required with a SASL_* protocol: set all three together.",
+                  "properties": {
+                    "mechanism": {
+                      "type": "string",
+                      "title": "Mechanism",
+                      "description": "Set with username and password.",
+                      "enum": [
+                        "PLAIN",
+                        "SCRAM-SHA-256",
+                        "SCRAM-SHA-512"
+                      ]
+                    },
+                    "username": {
+                      "type": "string",
+                      "title": "Username",
+                      "description": "SASL username."
+                    },
+                    "password": {
+                      "type": "string",
+                      "title": "Password",
+                      "description": "SASL password. Wire to a secret."
+                    }
+                  },
+                  "required": [
+                    "mechanism",
+                    "username",
+                    "password"
+                  ]
+                }
+              },
+              "required": [
+                "protocol"
+              ]
+            },
+            {
+              "title": "SASL over TLS",
+              "properties": {
+                "protocol": {
+                  "type": "string",
+                  "title": "Protocol",
+                  "description": "SASL_* enables SASL; *_SSL enables TLS.",
+                  "const": "SASL_SSL",
+                  "default": "SASL_SSL"
+                },
+                "sasl": {
+                  "type": "object",
+                  "title": "SASL Authentication",
+                  "description": "Required with a SASL_* protocol: set all three together.",
+                  "properties": {
+                    "mechanism": {
+                      "type": "string",
+                      "title": "Mechanism",
+                      "description": "Set with username and password.",
+                      "enum": [
+                        "PLAIN",
+                        "SCRAM-SHA-256",
+                        "SCRAM-SHA-512"
+                      ]
+                    },
+                    "username": {
+                      "type": "string",
+                      "title": "Username",
+                      "description": "SASL username."
+                    },
+                    "password": {
+                      "type": "string",
+                      "title": "Password",
+                      "description": "SASL password. Wire to a secret."
+                    }
+                  },
+                  "required": [
+                    "mechanism",
+                    "username",
+                    "password"
+                  ]
+                },
+                "tls": {
+                  "type": "object",
+                  "title": "TLS",
+                  "description": "SSL / SASL_SSL only. PEM content, wired to secrets on deployment.",
+                  "properties": {
+                    "ca_cert": {
+                      "type": "string",
+                      "title": "CA Certificate",
+                      "description": "Optional: private CA bundle; empty uses the system CAs."
+                    },
+                    "client_cert": {
+                      "type": "string",
+                      "title": "Client Certificate (mTLS)",
+                      "description": "Set together with the client key, or leave both empty."
+                    },
+                    "client_key": {
+                      "type": "string",
+                      "title": "Client Key (mTLS)",
+                      "description": "PEM client key for mTLS. Wire to a secret."
+                    }
+                  }
+                }
+              },
+              "required": [
+                "protocol"
+              ]
             }
           ]
         }
@@ -243,5 +267,74 @@
   },
   "required": [
     "kafka"
-  ]
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "kafka",
+      "upload",
+      "buffer"
+    ],
+    "kafka": {
+      "ui:order": [
+        "bootstrap_servers",
+        "client_id",
+        "security"
+      ],
+      "security": {
+        "ui:order": [
+          "protocol",
+          "sasl",
+          "tls"
+        ],
+        "sasl": {
+          "ui:order": [
+            "mechanism",
+            "username",
+            "password"
+          ],
+          "password": {
+            "ui:widget": "password"
+          }
+        },
+        "tls": {
+          "ui:order": [
+            "ca_cert",
+            "client_cert",
+            "client_key"
+          ],
+          "client_key": {
+            "ui:widget": "password"
+          },
+          "ca_cert": {
+            "ui:widget": "textarea"
+          },
+          "client_cert": {
+            "ui:widget": "textarea"
+          }
+        },
+        "protocol": {
+          "ui:widget": "hidden"
+        }
+      }
+    },
+    "upload": {
+      "ui:order": [
+        "interval",
+        "batch_size",
+        "retry"
+      ],
+      "retry": {
+        "ui:order": [
+          "attempts",
+          "base_delay",
+          "max_delay"
+        ]
+      }
+    },
+    "buffer": {
+      "ui:order": [
+        "max_backlog"
+      ]
+    }
+  }
 }

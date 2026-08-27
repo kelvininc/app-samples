@@ -10,9 +10,10 @@
       "properties": {
         "host": {
           "type": "string",
-          "pattern": "^$|\\S",
+          "pattern": "\\S",
           "title": "Host",
-          "description": "Hostname of the SMTP server (e.g. smtp.example.com). Required to deploy."
+          "description": "Hostname of the SMTP server (e.g. smtp.example.com). Required to deploy.",
+          "minLength": 1
         },
         "port": {
           "type": "integer",
@@ -30,61 +31,57 @@
         },
         "from_address": {
           "type": "string",
-          "pattern": "^$|^[^@\\s]+@[^@\\s]+$",
+          "pattern": "^[^@\\s]+@[^@\\s]+$",
           "title": "From Address",
-          "description": "Sender address; must be a valid email address. A display name is reduced to the bare address. Required to deploy."
+          "description": "Sender address; must be a valid email address. A display name is reduced to the bare address. Required to deploy.",
+          "minLength": 1
         },
         "auth": {
           "type": "object",
           "title": "Authentication",
           "description": "Wire credentials to a secret on deployment.",
-          "properties": {
-            "method": {
-              "type": "string",
-              "enum": [
-                "none",
-                "username_password"
-              ],
-              "default": "none",
-              "title": "Method",
-              "description": "none for an unauthenticated relay; username_password requires STARTTLS"
-            }
-          },
-          "allOf": [
+          "oneOf": [
             {
-              "if": {
-                "properties": {
-                  "method": {
-                    "const": "username_password"
-                  }
+              "title": "None",
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "title": "Method",
+                  "description": "none for an unauthenticated relay; username_password requires STARTTLS",
+                  "const": "none",
+                  "default": "none"
                 }
               },
-              "then": {
-                "properties": {
-                  "username": {
-                    "type": "string",
-                    "title": "Username",
-                    "description": "SMTP AUTH username"
-                  },
-                  "password": {
-                    "type": "string",
-                    "title": "Password",
-                    "description": "SMTP AUTH password; wire this to a secret"
-                  }
-                }
-              }
-            }
-          ],
-          "x-kelvin-ui": {
-            "password": {
-              "ui:widget": "password"
+              "required": [
+                "method"
+              ]
             },
-            "ui:order": [
-              "method",
-              "username",
-              "password"
-            ]
-          }
+            {
+              "title": "Username & Password",
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "title": "Method",
+                  "description": "none for an unauthenticated relay; username_password requires STARTTLS",
+                  "const": "username_password",
+                  "default": "username_password"
+                },
+                "username": {
+                  "type": "string",
+                  "title": "Username",
+                  "description": "SMTP AUTH username"
+                },
+                "password": {
+                  "type": "string",
+                  "title": "Password",
+                  "description": "SMTP AUTH password; wire this to a secret"
+                }
+              },
+              "required": [
+                "method"
+              ]
+            }
+          ]
         }
       },
       "required": [
@@ -95,5 +92,32 @@
   },
   "required": [
     "smtp"
-  ]
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "smtp"
+    ],
+    "smtp": {
+      "ui:order": [
+        "host",
+        "port",
+        "use_tls",
+        "from_address",
+        "auth"
+      ],
+      "auth": {
+        "ui:order": [
+          "method",
+          "username",
+          "password"
+        ],
+        "password": {
+          "ui:widget": "password"
+        },
+        "method": {
+          "ui:widget": "hidden"
+        }
+      }
+    }
+  }
 }
