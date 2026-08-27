@@ -113,17 +113,123 @@ Write log messages for the operator, not the code:
 
 ### UI schemas and upload validation
 
-`kelvin app upload` validates `defaults.configuration` against the `ui_schemas` JSON schemas,
-and defaults are intentionally incomplete scaffolding — so a schema strict about content
-breaks the upload. The "must be set" gate is the pydantic settings model at connect, not the
-schema. The rules:
+`kelvin app upload` validates `defaults.configuration` as a **complete instance** of the
+`ui_schemas` JSON schema. Defaults aren't scaffolding you can leave half-filled: a `required`
+field absent from defaults fails the upload with `missing property`, and an empty string under
+`minLength` fails with `got 0, want 1`. The schema gates presence and shape at upload; the
+pydantic settings model still validates content at connect.
 
-- Content constraints must tolerate empty: `"pattern": "^$|^[a-z0-9]{3,24}$"`, never
-  `minLength` or a bare pattern on a field whose default is `""`.
-- No `required` on credential fields inside method-conditional `if/then` blocks; the default
-  `method` triggers the branch and credentials wire to secrets, absent by design.
-- Never a bare `auth:` key in yaml defaults — it parses as `null` and fails
-  `"type": "object"`. Use `auth: {}` or omit the key.
+**Required fields need a reserved placeholder.** `required` only checks that a key exists, so
+`bucket: ""` satisfies it and the workload deploys with no destination. Pair a non-empty
+placeholder default with `minLength: 1`, and the UI pre-fills the placeholder and flags the
+field the moment someone clears it.
+
+```yaml
+# app.yaml
+defaults:
+  configuration:
+    s3:
+      bucket: "amzn-s3-demo-bucket"
+```
+
+```json
+// ui_schemas/configuration.json
+"bucket": { "type": "string", "title": "Bucket", "minLength": 1 }
+```
+
+Prefer a placeholder the provider reserves, so an unedited deploy can't reach a real resource:
+
+- S3 bucket: `amzn-s3-demo-bucket`. AWS blocks the `amzn-s3-demo-` prefix outright.
+- Hostname or email: `smtp.example.com`, `noreply@example.com`. RFC 2606 reserves `example.com`.
+- Anything else (Snowflake, Azure, Databricks): use the vendor's own doc placeholder, e.g.
+  `myorg-myaccount`. These are conventions, not reservations, so the name is still ownable.
+
+**Optional fields still tolerate empty.** A field defaulting to `""` needs a pattern that
+permits it. Never add `minLength` here: `"prefix": { "pattern": "^$|^[a-z0-9/-]+$" }`.
+
+**Put `x-kelvin-ui` at the schema root.** The platform passes the root `x-kelvin-ui` block to
+react-jsonschema-form as its `uiSchema`. An `x-kelvin-ui` inside a subschema is an unknown
+annotation and is silently ignored, so password widgets render as plain text and fields fall
+back to alphabetical order. Use one root-level block mirroring the property nesting:
+
+```json
+{
+  "properties": {
+    "s3": {
+      "type": "object",
+      "properties": {
+        "region": { "type": "string" },
+        "bucket": { "type": "string", "minLength": 1 },
+        "auth": {
+          "type": "object",
+          "properties": { "secret_access_key": { "type": "string" } }
+        }
+      }
+    }
+  },
+  "x-kelvin-ui": {
+    "ui:order": ["s3", "upload", "buffer"],
+    "s3": {
+      "ui:order": ["region", "bucket", "auth"],
+      "auth": { "secret_access_key": { "ui:widget": "password" } }
+    }
+  }
+}
+```
+
+- Declaration order in `properties` is not respected. Without `ui:order` at a level, that level
+  renders alphabetically by key, which buries required fields under optional ones. Set
+  `ui:order` at every level holding more than one field.
+- Directives nest by data path: `s3.auth.secret_access_key` lives at
+  `x-kelvin-ui.s3.auth.secret_access_key`.
+- `ui:widget: password` masks the value and adds a reveal toggle. `ui:widget: textarea` gives a
+  multi-line box. Every field holding a multi-line blob needs it: PEM certificates and keys,
+  `known_hosts`, CA bundles. Without it the value goes into a single-line input and is
+  effectively unreadable once pasted.
+
+Remaining rules:
+
+- **Use `oneOf` for mutually-exclusive shapes, not `allOf` + `if/then`.** This matters for
+  credentials. `if/then` is *additive*: react-jsonschema-form layers the branch's properties
+  on and never removes them, so a password typed under one auth method stays in the payload
+  after you switch methods. The field vanishes from the form, the value does not:
+
+  ```json
+  // after switching to key_pair, having typed a password first
+  "auth": { "method": "key_pair", "password": "S3c" }
+  ```
+
+  It deploys, the app ignores the stale key, and nobody notices. With `oneOf` the branch is a
+  real discriminator, so switching swaps the subschema and drops the other branch's data.
+  Give each branch a `title` (it becomes the selector label), a `const` discriminator, and its
+  own complete property set:
+
+  ```json
+  "auth": {
+    "type": "object",
+    "oneOf": [
+      { "title": "Password",
+        "properties": {
+          "method": { "type": "string", "const": "password", "default": "password" },
+          "password": { "type": "string", "title": "Password" } },
+        "required": ["method"] },
+      { "title": "Key Pair",
+        "properties": {
+          "method": { "type": "string", "const": "key_pair", "default": "key_pair" },
+          "private_key": { "type": "string", "title": "Private Key (PEM)" } },
+        "required": ["method"] }
+    ]
+  }
+  ```
+
+  Hide the discriminator with `"method": {"ui:widget": "hidden"}` in the root `x-kelvin-ui`;
+  the branch selector already shows it, and leaving it visible renders a redundant text field.
+  Keep `defaults.configuration` matching exactly one branch or the upload fails `oneOf`.
+- `required` inside a branch works and is reactive: Kafka's SASL branches mark
+  `mechanism`/`username`/`password` required, and the asterisks appear the moment you pick
+  that branch. Just keep the default on a branch that demands no credentials.
+- Never a bare `auth:` key in yaml defaults. It parses as `null` and fails `"type": "object"`.
+  Use `auth: {}` or omit the key.
 - Dropdown values must be strings: integer `oneOf`/`const` options fail the platform form
   with "must be a string". Use string consts (`"1"`) with `title` labels; coerce in the app.
 
@@ -348,6 +454,10 @@ Shared:
 Python SDK archetypes (SmartApp, Importer, Exporter) also:
 
 - [ ] `ui_schemas/` present (`parameters.json` for SmartApps; `configuration.json`, plus `io_default.json` for importers).
+- [ ] `x-kelvin-ui` sits at the schema root (never inside a subschema), with `ui:order` at
+      every level holding more than one field.
+- [ ] Every `required` string has `minLength: 1` and a reserved placeholder default in
+      `app.yaml`; `kelvin app upload` succeeds.
 - [ ] App runs locally with `python3 main.py`.
 - [ ] Test dependencies stay out of `requirements.txt`.
 - [ ] Unit tests pass with `pytest`; integration tests, if any, are marker-gated behind `-m integration`.
