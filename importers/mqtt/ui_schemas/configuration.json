@@ -50,15 +50,6 @@
               "title": "Password",
               "description": "Set with the username. Wire to a secret."
             }
-          },
-          "x-kelvin-ui": {
-            "password": {
-              "ui:widget": "password"
-            },
-            "ui:order": [
-              "username",
-              "password"
-            ]
           }
         }
       }
@@ -81,6 +72,31 @@
         "2"
       ],
       "description": "MQTT quality of service for inbound subscriptions: 0 at-most-once, 1 at-least-once, 2 exactly-once."
+    }
+  },
+  "x-kelvin-ui": {
+    "ui:order": [
+      "mqtt",
+      "reconnect_interval",
+      "qos"
+    ],
+    "mqtt": {
+      "ui:order": [
+        "host",
+        "port",
+        "client_id",
+        "use_tls",
+        "auth"
+      ],
+      "auth": {
+        "ui:order": [
+          "username",
+          "password"
+        ],
+        "password": {
+          "ui:widget": "password"
+        }
+      }
     }
   }
 }
