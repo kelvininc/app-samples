@@ -4,7 +4,7 @@ type: exporter
 name: databricks-delta-table-exporter
 title: Databricks Delta Table Exporter
 description: This exporter uploads data to a Databricks Delta Table.
-version: 2.0.0
+version: 2.0.4
 
 # Runtime update is off: the exporter builds its client and buffer at startup, so IO-mapping and
 # configuration changes are applied by redeploying the workload (the platform restarts it).
@@ -26,9 +26,9 @@ ui_schemas:
 defaults:
   configuration:
     databricks:
-      server_hostname: ""
-      http_path: ""
-      delta_table: ""
+      server_hostname: "example.cloud.databricks.com"
+      http_path: "/sql/1.0/warehouses/0123456789abcdef"
+      delta_table: "main.default.example_table"
       auth:
         method: oauth            # "oauth" | "access_token"
         # Credentials have NO default: a baked-in <% secrets %> makes them always-truthy

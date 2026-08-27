@@ -4,7 +4,7 @@ type: exporter
 name: aws-s3-exporter
 title: AWS S3 Exporter
 description: This exporter uploads data to an AWS S3 bucket.
-version: 2.0.0
+version: 2.0.7
 
 # Runtime update is off: the exporter builds its client and buffer at startup, so IO-mapping and
 # configuration changes are applied by redeploying the workload (the platform restarts it).
@@ -27,7 +27,7 @@ defaults:
   configuration:
     s3:
       region: "us-east-1"
-      bucket: ""
+      bucket: "amzn-s3-demo-bucket"
       prefix: ""
       # Credentials have NO default: leave them unset to use the AWS default credential
       # chain (IAM role on the cluster), or wire each to a secret per deployment, e.g.:

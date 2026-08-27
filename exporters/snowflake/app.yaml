@@ -4,7 +4,7 @@ type: exporter
 name: snowflake-exporter
 title: Snowflake Exporter
 description: This exporter uploads data to a Snowflake table.
-version: 2.0.0
+version: 2.0.5
 
 # Runtime update is off: the exporter builds its client and buffer at startup, so IO-mapping and
 # configuration changes are applied by redeploying the workload (the platform restarts it).
@@ -26,12 +26,12 @@ ui_schemas:
 defaults:
   configuration:
     snowflake:
-      account: ""
-      user: ""
-      warehouse: ""
-      database: ""
-      schema: ""
-      table: ""
+      account: "myorg-myaccount"
+      user: "EXAMPLE_USER"
+      warehouse: "EXAMPLE_WH"
+      database: "EXAMPLE_DB"
+      schema: "PUBLIC"
+      table: "EXAMPLE_TABLE"
       auth:
         method: password          # "password" | "key_pair"
         # Credentials have NO default: a baked-in <% secrets %> makes them always-truthy

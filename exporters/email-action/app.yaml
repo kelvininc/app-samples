@@ -4,7 +4,7 @@ type: exporter
 name: email-action-exporter
 title: Email Exporter
 description: This exporter handles custom actions and sends emails via SMTP.
-version: 2.0.0
+version: 2.0.3
 
 # Runtime update is off: the integration is configured at startup, so configuration changes are
 # applied by redeploying the workload (the platform restarts it).
@@ -25,10 +25,10 @@ ui_schemas:
 defaults:
   configuration:
     smtp:
-      host: ""
+      host: "smtp.example.com"
       port: 587
       use_tls: true
-      from_address: ""
+      from_address: "noreply@example.com"
       auth:
         method: none              # "none" (unauthenticated relay) | "username_password"
         # Credentials have NO default: for an authenticated server, wire both to secrets per

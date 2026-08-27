@@ -4,7 +4,7 @@ type: exporter
 name: slack-action-exporter
 title: Slack Exporter
 description: This exporter handles custom actions and sends Slack messages to a given channel.
-version: 2.0.0
+version: 2.0.1
 
 # Runtime update is off: the integration is configured at startup, so configuration changes are
 # applied by redeploying the workload (the platform restarts it).

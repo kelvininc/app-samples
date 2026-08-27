@@ -4,7 +4,7 @@ type: exporter
 name: sftp-exporter
 title: SFTP Exporter
 description: This exporter uploads data to an SFTP server.
-version: 2.0.0
+version: 2.0.5
 
 # Runtime update is off: the exporter builds its client and buffer at startup, so IO-mapping and
 # configuration changes are applied by redeploying the workload (the platform restarts it).
@@ -26,9 +26,9 @@ ui_schemas:
 defaults:
   configuration:
     sftp:
-      host: ""
+      host: "sftp.example.com"
       port: 22
-      username: ""
+      username: "example-user"
       remote_dir: "."
       timeout: 30                 # network timeout (s) for connect/auth/transfers
       verify_host_key: true       # set false to auto-accept unknown host keys (dev only; MITM risk)

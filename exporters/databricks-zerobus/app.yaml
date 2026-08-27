@@ -4,7 +4,7 @@ type: exporter
 name: databricks-zerobus-exporter
 title: Databricks Zerobus Exporter
 description: This exporter streams data directly into a Databricks Unity Catalog Delta table using the Zerobus Ingest API.
-version: 2.0.0
+version: 2.0.2
 
 # Runtime update is off: the exporter builds its client and buffer at startup, so IO-mapping and
 # configuration changes are applied by redeploying the workload (the platform restarts it).
@@ -26,9 +26,9 @@ ui_schemas:
 defaults:
   configuration:
     databricks:
-      server_hostname: ""        # workspace hostname, used for OAuth (e.g. dbc-xxxx.cloud.databricks.com)
-      zerobus_endpoint: ""       # gRPC ingestion endpoint (e.g. 123.zerobus.<region>.cloud.databricks.com)
-      delta_table: ""            # catalog.schema.table
+      server_hostname: "example.cloud.databricks.com"        # workspace hostname, used for OAuth (e.g. dbc-xxxx.cloud.databricks.com)
+      zerobus_endpoint: "example.zerobus.cloud.databricks.com"       # gRPC ingestion endpoint (e.g. 123.zerobus.<region>.cloud.databricks.com)
+      delta_table: "main.default.example_table"            # catalog.schema.table
       auth: {}                   # must be an object (the ui schema types it), never a bare key
         # Credentials have NO default: a baked-in <% secrets %> makes them always-truthy
         # and defeats the require-both validator. Wire each to a secret per deployment, e.g.:

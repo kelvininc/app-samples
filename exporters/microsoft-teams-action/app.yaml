@@ -4,7 +4,7 @@ type: exporter
 name: microsoft-teams-action-exporter
 title: Microsoft Teams Exporter
 description: This exporter handles custom actions and posts messages to a Microsoft Teams channel.
-version: 2.0.0
+version: 2.0.1
 
 # Runtime update is off: the integration is configured at startup, so configuration changes are
 # applied by redeploying the workload (the platform restarts it).

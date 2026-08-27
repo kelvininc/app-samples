@@ -4,7 +4,7 @@ type: exporter
 name: databricks-volume-exporter
 title: Databricks Volume Exporter
 description: This exporter uploads data to a Databricks Unity Catalog Volume.
-version: 2.0.0
+version: 2.0.4
 
 # Runtime update is off: the exporter builds its client and buffer at startup, so IO-mapping and
 # configuration changes are applied by redeploying the workload (the platform restarts it).
@@ -26,9 +26,9 @@ ui_schemas:
 defaults:
   configuration:
     databricks:
-      server_hostname: ""
-      delta_table: ""          # catalog.schema.table
-      uc_volume: ""            # catalog.schema.volume
+      server_hostname: "example.cloud.databricks.com"
+      delta_table: "main.default.example_table"          # catalog.schema.table
+      uc_volume: "main.default.example_volume"            # catalog.schema.volume
       job:
         # Set warehouse_id for a COPY INTO job, or cluster_id for an Auto Loader job.
         # Leave both empty to skip ingestion-job creation (upload only).
