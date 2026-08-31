@@ -1,0 +1,78 @@
+# yaml-language-server: $schema=https://apps.kelvininc.com/schemas/kelvin/5.0.0/docker.json
+
+# YAML (Structure) Spec Version
+spec_version: 5.0.0
+# Type
+type: docker
+
+# Info
+name: kafka
+title: Kafka Broker
+description: Single-node Apache Kafka broker (KRaft) with optional SASL/PLAIN authentication and TLS.
+version: 1.0.0
+
+# Capabilities
+flags:
+  enable_runtime_update:
+    # Broker settings require a restart; configuration changes apply on redeploy
+    configuration: false
+
+# UI JSON schemas (Optional)
+ui_schemas:
+  # Application Configuration Schema
+  configuration: "ui_schemas/configuration.json"
+
+# Defaults (Runtime/Deployment)
+defaults:
+  # Application Configuration Default Values
+  configuration: {}
+
+  # System Settings
+  system:
+    volumes:
+      # Topic data and KRaft metadata; must survive restarts
+      - name: kafka-data
+        type: persistent
+        target: /var/lib/kafka/data
+    ports:
+      # Cluster service: other workloads reach the broker at <workload-name>:9092.
+      # For clients outside the cluster, add a host-type port on the deployment
+      # together with the BROKER_EXTERNAL_* variables (see README.md):
+      #   - name: kafka-external
+      #     type: host
+      #     host:
+      #       port: 9094
+      - name: kafka-internal
+        type: service
+        service:
+          port: 9092
+    environment_vars:
+      - name: BROKER_PORT
+        value: "9092"
+      - name: KAFKA_HEAP_OPTS
+        value: "-Xmx512m -Xms512m"
+      # Optional settings (add on the deployment as needed):
+      #
+      # External access (advertised address must be reachable by external clients):
+      #   - name: BROKER_EXTERNAL_PORT
+      #     value: "9094"
+      #   - name: BROKER_EXTERNAL_ADVERTISED_HOST
+      #     value: "<node address>"
+      #
+      # SASL/PLAIN authentication:
+      #   - name: BROKER_USER
+      #     value: "<% secrets.kafka-user %>"
+      #   - name: BROKER_PASSWORD
+      #     value: "<% secrets.kafka-password %>"
+      #
+      # TLS (PEM content; private key in PKCS#8 format):
+      #   - name: BROKER_SSL_CA_CRT
+      #     value: "<% secrets.kafka-ssl-ca-crt %>"
+      #   - name: BROKER_SSL_TLS_CRT
+      #     value: "<% secrets.kafka-ssl-tls-crt %>"
+      #   - name: BROKER_SSL_TLS_KEY
+      #     value: "<% secrets.kafka-ssl-tls-key %>"
+      #
+      # Any KAFKA_<PROPERTY> variable maps directly to a broker property, e.g.:
+      #   - name: KAFKA_LOG_RETENTION_HOURS
+      #     value: "48"
