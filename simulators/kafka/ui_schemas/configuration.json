@@ -1,0 +1,276 @@
+{
+  "title": "Kafka Simulator Configuration",
+  "description": "Broker connection, publishing, and the simulated asset fleet.",
+  "type": "object",
+  "properties": {
+    "kafka": {
+      "type": "object",
+      "title": "Kafka Broker",
+      "description": "Broker connection, security, and publishing.",
+      "properties": {
+        "bootstrap_servers": {
+          "type": "string",
+          "title": "Bootstrap Servers",
+          "description": "Comma-separated host:port list.",
+          "default": "my-kafka:9092",
+          "minLength": 1
+        },
+        "security": {
+          "type": "object",
+          "title": "Security",
+          "description": "Protocol and credentials for the broker connection.",
+          "properties": {
+            "protocol": {
+              "type": "string",
+              "title": "Protocol",
+              "description": "SASL_* enables SASL; *_SSL enables TLS.",
+              "enum": [
+                "PLAINTEXT",
+                "SSL",
+                "SASL_PLAINTEXT",
+                "SASL_SSL"
+              ],
+              "default": "PLAINTEXT"
+            },
+            "sasl": {
+              "type": "object",
+              "title": "SASL",
+              "description": "Required for SASL_* protocols; leave empty otherwise.",
+              "properties": {
+                "mechanism": {
+                  "type": "string",
+                  "title": "Mechanism",
+                  "description": "Set with username and password.",
+                  "enum": [
+                    "PLAIN",
+                    "SCRAM-SHA-256",
+                    "SCRAM-SHA-512"
+                  ]
+                },
+                "username": {
+                  "type": "string",
+                  "title": "Username",
+                  "description": "SASL username."
+                },
+                "password": {
+                  "type": "string",
+                  "title": "Password",
+                  "description": "SASL password. Wire to a secret."
+                }
+              },
+              "x-kelvin-ui": {
+                "password": {
+                  "ui:widget": "password"
+                },
+                "ui:order": [
+                  "mechanism",
+                  "username",
+                  "password"
+                ]
+              }
+            },
+            "tls": {
+              "type": "object",
+              "title": "TLS",
+              "description": "PEM content. ca_cert replaces the system trust store; client_cert+client_key enable mTLS.",
+              "properties": {
+                "ca_cert": {
+                  "type": "string",
+                  "title": "CA Certificate",
+                  "description": "PEM CA bundle; empty uses the system CAs."
+                },
+                "client_cert": {
+                  "type": "string",
+                  "title": "Client Certificate",
+                  "description": "PEM client certificate for mTLS."
+                },
+                "client_key": {
+                  "type": "string",
+                  "title": "Client Key",
+                  "description": "PEM client key for mTLS. Wire to a secret."
+                }
+              },
+              "x-kelvin-ui": {
+                "client_key": {
+                  "ui:widget": "password"
+                },
+                "ui:order": [
+                  "ca_cert",
+                  "client_cert",
+                  "client_key"
+                ]
+              }
+            }
+          }
+        },
+        "publish": {
+          "type": "object",
+          "title": "Publishing",
+          "description": "Topic, key, and payload shape of published messages.",
+          "properties": {
+            "topic": {
+              "type": "string",
+              "title": "Topic",
+              "default": "sim.{asset}",
+              "description": "{asset}/{tag} placeholders; {tag} is invalid with payload=json_bundle.",
+              "minLength": 1
+            },
+            "key": {
+              "type": "string",
+              "title": "Record Key",
+              "default": "{tag}",
+              "description": "{asset}/{tag} placeholders; the importer filters/demuxes on it.",
+              "minLength": 1
+            },
+            "payload": {
+              "type": "string",
+              "title": "Payload",
+              "enum": [
+                "raw",
+                "json",
+                "json_bundle"
+              ],
+              "default": "json",
+              "description": "raw = scalar; json = one tag; json_bundle = all of an asset's tags per record."
+            },
+            "timestamp": {
+              "type": "string",
+              "title": "Timestamp",
+              "description": "Timestamp format in the payload.",
+              "enum": [
+                "iso",
+                "epoch_ms",
+                "none"
+              ],
+              "default": "iso"
+            }
+          }
+        }
+      }
+    },
+    "simulation": {
+      "type": "object",
+      "title": "Simulation",
+      "description": "Tick rate and seed for value generation.",
+      "properties": {
+        "tick": {
+          "type": "number",
+          "title": "Tick (s)",
+          "exclusiveMinimum": 0,
+          "default": 1.0,
+          "description": "Seconds between value updates."
+        },
+        "seed": {
+          "type": "integer",
+          "title": "Seed",
+          "default": 42,
+          "description": "Base random seed; runs are reproducible for a given seed."
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "title": "Assets",
+      "description": "Each entry creates <count> asset instances with identical tag sets. At least one group is required.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "title": "Asset group",
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "minLength": 1,
+            "description": "Asset type / prefix; instances are named <Name>01..NN."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "minimum": 1,
+            "default": 1
+          },
+          "tags": {
+            "type": "object",
+            "title": "Tags",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "object",
+              "title": "Tag",
+              "properties": {
+                "waveform": {
+                  "type": "string",
+                  "title": "Waveform",
+                  "default": "constant",
+                  "enum": [
+                    "sine",
+                    "ramp",
+                    "square",
+                    "random_walk",
+                    "random",
+                    "constant"
+                  ]
+                },
+                "type": {
+                  "type": "string",
+                  "title": "Type",
+                  "enum": [
+                    "float",
+                    "int",
+                    "bool"
+                  ],
+                  "default": "float"
+                },
+                "min": {
+                  "type": "number",
+                  "title": "Min",
+                  "default": 0
+                },
+                "max": {
+                  "type": "number",
+                  "title": "Max",
+                  "default": 100
+                },
+                "period": {
+                  "type": "number",
+                  "title": "Period (s)",
+                  "exclusiveMinimum": 0,
+                  "default": 60
+                },
+                "noise": {
+                  "type": "number",
+                  "title": "Noise",
+                  "minimum": 0,
+                  "default": 0
+                },
+                "initial": {
+                  "title": "Initial value"
+                },
+                "writable": {
+                  "type": "boolean",
+                  "title": "Writable",
+                  "default": false,
+                  "description": "Setpoints/commands: published at their initial value (publishers have no inbound path)."
+                },
+                "unit": {
+                  "type": "string",
+                  "title": "Unit"
+                },
+                "description": {
+                  "type": "string",
+                  "title": "Description"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "name",
+          "tags"
+        ]
+      }
+    }
+  },
+  "required": [
+    "assets"
+  ]
+}

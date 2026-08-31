@@ -1,0 +1,24 @@
+# general
+.DS_Store
+.git/
+Dockerfile
+build/
+*.swp
+*.swo
+
+# python
+**/*.pyc
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+.venv/
+venv/
+
+# app
+README.md
+tests/
+pytest.ini
+pyrightconfig.json
+
+# retain ignore files
+!.*ignore

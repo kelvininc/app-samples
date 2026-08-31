@@ -1,0 +1,177 @@
+{
+  "title": "OPC-UA Simulator Configuration",
+  "description": "Server endpoint, authentication, and the simulated asset fleet.",
+  "type": "object",
+  "properties": {
+    "opcua": {
+      "type": "object",
+      "title": "OPC-UA Server",
+      "description": "Server endpoint and authentication.",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "title": "Port",
+          "description": "Port the OPC-UA server listens on.",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 50000
+        },
+        "advertised_host": {
+          "type": "string",
+          "title": "Advertised Host",
+          "description": "Hostname advertised to clients; leave empty to use the workload name."
+        },
+        "auth": {
+          "type": "object",
+          "title": "Authentication",
+          "description": "Leave empty to allow anonymous access.",
+          "properties": {
+            "username": {
+              "type": "string",
+              "title": "Username",
+              "description": "Empty with the password allows anonymous access."
+            },
+            "password": {
+              "type": "string",
+              "title": "Password",
+              "description": "Wire to a secret; empty allows anonymous access."
+            }
+          },
+          "x-kelvin-ui": {
+            "password": {
+              "ui:widget": "password"
+            },
+            "ui:order": [
+              "username",
+              "password"
+            ]
+          }
+        }
+      }
+    },
+    "simulation": {
+      "type": "object",
+      "title": "Simulation",
+      "description": "Tick rate and seed for value generation.",
+      "properties": {
+        "tick": {
+          "type": "number",
+          "title": "Tick (s)",
+          "exclusiveMinimum": 0,
+          "default": 1.0,
+          "description": "Seconds between value updates."
+        },
+        "seed": {
+          "type": "integer",
+          "title": "Seed",
+          "default": 42,
+          "description": "Base random seed; runs are reproducible for a given seed."
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "title": "Assets",
+      "description": "Each entry creates <count> asset instances with identical tag sets. At least one group is required.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "title": "Asset group",
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "minLength": 1,
+            "description": "Asset type / prefix; instances are named <Name>01..NN."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "minimum": 1,
+            "default": 1
+          },
+          "tags": {
+            "type": "object",
+            "title": "Tags",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "object",
+              "title": "Tag",
+              "properties": {
+                "waveform": {
+                  "type": "string",
+                  "title": "Waveform",
+                  "default": "constant",
+                  "enum": [
+                    "sine",
+                    "ramp",
+                    "square",
+                    "random_walk",
+                    "random",
+                    "constant"
+                  ]
+                },
+                "type": {
+                  "type": "string",
+                  "title": "Type",
+                  "enum": [
+                    "float",
+                    "int",
+                    "bool"
+                  ],
+                  "default": "float"
+                },
+                "min": {
+                  "type": "number",
+                  "title": "Min",
+                  "default": 0
+                },
+                "max": {
+                  "type": "number",
+                  "title": "Max",
+                  "default": 100
+                },
+                "period": {
+                  "type": "number",
+                  "title": "Period (s)",
+                  "exclusiveMinimum": 0,
+                  "default": 60
+                },
+                "noise": {
+                  "type": "number",
+                  "title": "Noise",
+                  "minimum": 0,
+                  "default": 0
+                },
+                "initial": {
+                  "title": "Initial value"
+                },
+                "writable": {
+                  "type": "boolean",
+                  "title": "Writable",
+                  "default": false,
+                  "description": "The simulator never updates writable tags; clients write them (setpoints, commands)."
+                },
+                "unit": {
+                  "type": "string",
+                  "title": "Unit"
+                },
+                "description": {
+                  "type": "string",
+                  "title": "Description"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "name",
+          "tags"
+        ]
+      }
+    }
+  },
+  "required": [
+    "assets"
+  ]
+}
