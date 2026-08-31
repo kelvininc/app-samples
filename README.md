@@ -30,11 +30,6 @@ Start with the official [Kelvin Documentation](https://docs.kelvin.ai).
 | [Azure Data Lake Gen2 Uploader](exporters/azure-data-lake-uploader/)          | Intermediate  | Uploads streaming data to Azure Data Lake Storage Gen2. |
 | [Databricks Delta Table Uploader](exporters/databricks-delta-table-uploader/) | Intermediate  | Uploads streaming data to Databricks Delta Table.       |
 | [Databricks Volume Uploader](exporters/databricks-volume-uploader/)           | Intermediate  | Uploads streaming data to a Databricks Volume.          |
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-| [Databricks Volume Uploader](exporters/databricks-volume-uploader/)           | Intermediate  | Uploads streaming data to a Databricks Volume.          |
-| [Databricks Volume Uploader](exporters/databricks-volume-uploader/)           | Intermediate  | Uploads streaming data to a Databricks Volume.          |
 | [Microsoft Teams Sender](exporters/microsoft-teams-sender/)                   | Intermediate  | Sends Microsoft Teams messages to a given channel.      |
 | [Resnet Custom Actions](exporters/resnet-custom-actions/)                     | Intermediate  | Creates issues in the Resnet system.                    |
 | [Slack Custom Actions](exporters/slack-custom-actions/)                       | Intermediate  | Sends slack messages to a given channel.                |
