@@ -1,0 +1,30 @@
+spec_version: 5.0.0
+type: importer
+
+name: image-feed-importer
+title: Image Feed Importer
+description: This importer replays a folder of images and publishes them to Kelvin as a camera feed.
+version: 2.0.0
+
+# Runtime update is on: the importer re-reads its stream mapping every cycle, so configuration
+# changes take effect without a redeploy.
+flags:
+  enable_runtime_update:
+    configuration: true
+
+importer_io:
+  - name: default
+    data_types:
+      - camera-image
+    control: false
+
+ui_schemas:
+  configuration: "ui_schemas/configuration.json"
+  io_configuration:
+    default: "ui_schemas/io_default.json"
+
+defaults:
+  configuration:
+    camera:
+      images_dir: images
+      publish_interval: 30

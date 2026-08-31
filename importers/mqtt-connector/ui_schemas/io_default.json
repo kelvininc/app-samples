@@ -1,9 +1,0 @@
-{
-    "type": "object",
-    "properties": {
-        "topic": {
-            "title": "Topic",
-            "type": "string"
-        }
-    }
-}

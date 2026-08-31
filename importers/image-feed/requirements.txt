@@ -1,0 +1,4 @@
+kelvin-python-sdk
+pillow
+pydantic
+pydantic-settings

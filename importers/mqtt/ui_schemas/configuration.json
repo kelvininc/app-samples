@@ -1,0 +1,86 @@
+{
+  "title": "MQTT Importer Configuration",
+  "description": "Broker connection, credentials, and inbound subscription settings.",
+  "type": "object",
+  "properties": {
+    "mqtt": {
+      "type": "object",
+      "title": "MQTT Broker",
+      "description": "Broker connection and credentials.",
+      "properties": {
+        "host": {
+          "type": "string",
+          "title": "Broker Host",
+          "description": "Broker hostname.",
+          "default": "test.mosquitto.org",
+          "minLength": 1
+        },
+        "port": {
+          "type": "integer",
+          "title": "Broker Port",
+          "description": "Broker port; pair with use_tls for the secure port.",
+          "default": 1883,
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "client_id": {
+          "type": "string",
+          "title": "Client ID",
+          "description": "Client id presented to the broker.",
+          "default": "kelvin-mqtt-importer"
+        },
+        "use_tls": {
+          "type": "boolean",
+          "title": "Use TLS",
+          "description": "Connect with TLS using the default SSL context.",
+          "default": false
+        },
+        "auth": {
+          "type": "object",
+          "title": "Authentication",
+          "description": "Leave empty for an anonymous broker.",
+          "properties": {
+            "username": {
+              "type": "string",
+              "title": "Username",
+              "description": "Set with the password; both empty allows anonymous access."
+            },
+            "password": {
+              "type": "string",
+              "title": "Password",
+              "description": "Set with the username. Wire to a secret."
+            }
+          },
+          "x-kelvin-ui": {
+            "password": {
+              "ui:widget": "password"
+            },
+            "ui:order": [
+              "username",
+              "password"
+            ]
+          }
+        }
+      }
+    },
+    "reconnect_interval": {
+      "type": "integer",
+      "title": "Reconnect Interval (s)",
+      "description": "Seconds before retrying a dropped connection.",
+      "default": 5,
+      "minimum": 1,
+      "maximum": 300
+    },
+    "qos": {
+      "type": "string",
+      "title": "Subscribe QoS",
+      "default": "0",
+      "enum": [
+        "0",
+        "1",
+        "2"
+      ],
+      "description": "MQTT quality of service for inbound subscriptions: 0 at-most-once, 1 at-least-once, 2 exactly-once."
+    }
+  }
+}
