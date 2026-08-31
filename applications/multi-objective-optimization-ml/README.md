@@ -1,11 +1,9 @@
 # Multi-Objective Optimization with Machine Learning
-This application demonstrates the usage of the Kelvin SDK to implement a multi-objective optimization problem using machine learning. 
+This application demonstrates the use of the Kelvin SDK for multi-objective optimization with machine learning.
 
-The code dynamically processes incoming data streams and appends the data points to rolling window represented by a Pandas DataFrame for each asset. The window can be configured to have a fixed size (number of data points) or a fixed time window. 
+It keeps a rolling window of each asset's data (the SDK's count-based `app.rolling_window`, which rounds same-second readings into one dense row), fits a scikit-learn random forest regression model for each of the four desired outputs, and treats those four models as objective functions. A genetic algorithm (NSGA-II) then searches for the Pareto front, and the selected input set points are published as control changes inside a `Recommendation` for the operator to accept or reject.
 
-It leverages the scikit-learn library to fit a random forest regression model to the window of data. There are 4 desired outputs and 4 regression models are fit to map the inputs on each of the outputs. Therefore we will end up with 4 objective functions, one per output. Here are the desired outputs and the inputs that are used to fit the regression models:
-
-**Desired Outputs:**
+**Desired outputs:**
 - paper_substance_weight
 - paper_brightness_top_side
 - luminance_value_top_side
@@ -26,24 +24,52 @@ It leverages the scikit-learn library to fit a random forest regression model to
 - top_dryers_steam_pressure_set_point
 - spray_starch_standby_pump_rate_set_point
 
+## How It Works
+- An `@app.task` rolls a per-asset window over the 17 streams with `app.rolling_window(round_to=timedelta(seconds=1))`, which merges same-second readings into dense rows and yields the columns in `INPUTS` order (the 13 controllable inputs first, then the 4 measured targets, the order `run_model` splits on).
+- `run_model` (`multi_objective_optimization.py`) fits the regression models and runs NSGA-II once the window holds enough aligned rows (100 rows across the 17 streams); with less data it returns nothing and no recommendation is published.
+- The recommended set points are filtered to the controllable inputs and published as one `Recommendation` carrying a `ControlChange` per set point, so an operator reviews the full change set together.
 
-After obtaining the objective functions, we implemented a genetic algorithm (Non-dominated Sorting Genetic Algorithm, (NSGA II)) to find the pareto front.
+## Configuration
+Window behavior is app configuration (`app.app_configuration`, validated by `settings.Window`). Set it on the deployment, or in a local `config.yaml` next to `main.py`:
 
-The Pareto front comprises a collection of input variables, identified and suggested by the algorithm. This collection is packaged as a list of Control Changes that are Recommended to the operator. The operator can then choose to accept or reject the recommended changes.
+```yaml
+window:
+  rows: 100                 # rows of history the models fit on (must be >= 100; the model needs it to train)
+  retrain_every_rows: 1     # re-run the optimizer every N new rows (raise it to retrain less often)
+  round_seconds: 1          # merge readings within this interval into one row
+```
 
-# Jupyter Notebook
-A Jupyter notebook `jupyter/notebook.ipynb` is provided to demonstrate the usage of the algorithm.
+`rows` and `retrain_every_rows` map to the SDK window's `count_size` and `slide` in message terms (`rows * 17` and `retrain_every_rows * 17`), and `round_seconds` maps to `round_to`. The window is built when the app starts, so changing these requires a redeploy.
+
+## Jupyter Notebook
+`jupyter/notebook.ipynb` walks through the algorithm on its own.
 
 ![Info](assets/jupyter.png)
 
-# Requirements
-1. Python 3.8 or higher
-2. Install Kelvin SDK: `pip3 install kelvin-sdk`
-3. Install project dependencies: `pip3 install -r requirements.txt`
-4. Docker (optional) for upload the application to a Kelvin Instance.
+## Prerequisites
+1. Python 3.13 (the version the app is built and tested on; see the `Dockerfile`).
+2. Install the Kelvin CLI (needed for `kelvin app upload`): `pip3 install kelvin-sdk`.
+3. Install project dependencies: `pip3 install -r requirements.txt`.
+4. Docker (optional) to upload the application to Kelvin Cloud.
 
-# Usage
-1. Run the application: `python3 main.py`
-2. Open a new terminal and test with the provided CSV file: `kelvin app test csv --csv csv/data.csv --asset-count 1 --publish-rate 0 --offset-timestamps`
+## Run Locally
+1. **Run** the application: `python3 main.py`
+2. Open a new terminal and replay the bundled dataset (it carries enough rows for the model to fire):
+    ```
+    kelvin app test csv --csv csv/data.csv --asset-count 1 --publish-rate 0 --offset-timestamps
+    ```
 
-https://github.com/kelvininc/app-samples/assets/5788338/eb8b6a6d-1f45-4d98-a0a7-70fac7934931
+## Test Locally
+### Unit Tests
+```bash
+pip install 'kelvin-python-sdk[testing]'        # harness deps
+pytest                                           # fast, no Docker
+```
+- **Unit** (`tests/test_main.py`): the window and handler via `KelvinAppTest` with `run_model` stubbed, covering the model-ordered columns and controllable-only control changes, no output below the window size, a configured window size changing the trigger, and a model error that doesn't stop the stream; plus `settings.Window` validation (`rows` floored at 100).
+
+## Kelvin Cloud Deployment
+1. **Upload** the application (builds and registers the image; needs Docker):
+    ```
+    kelvin app upload
+    ```
+2. **Deploy** it and map the input streams and set-point control changes to each asset. This app needs no secrets.

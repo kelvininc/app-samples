@@ -71,7 +71,7 @@ def evaluation(pop, target_ls, reg_ls):
     fitness_values = np.zeros((pop.shape[0], 4))
     for i, x in enumerate(pop):
         for j in range(4):
-            fitness_values[i, j] = reg_ls[j].predict(pop[None, i, :]) - target_ls[j]
+            fitness_values[i, j] = reg_ls[j].predict(pop[None, i, :])[0] - target_ls[j]
 
     return fitness_values
 
@@ -82,7 +82,7 @@ def crowding_calculation(fitness_values):
     matrix_for_crowding = np.zeros((pop_size, fitness_value_number))
     normalized_fitness_values = (
         fitness_values - fitness_values.min(0)
-    ) / fitness_values.ptp(0)
+    ) / np.ptp(fitness_values, 0)
 
     for i in range(fitness_value_number):
         crowding_results = np.zeros(pop_size)
@@ -167,7 +167,7 @@ def selection(pop, fitness_values, pop_size):
         remaining_index = set(pop_index) - set(pareto_front_index)
         pop_index_0 = np.array(list(remaining_index))
 
-    selected_pop = pop[pareto_front_index.astype(int)]
+    selected_pop = pop[np.asarray(pareto_front_index).astype(int)]
 
     return selected_pop
 
@@ -179,7 +179,7 @@ def train_random_forest_models(df, shuffle, random_state=1):
     for kpov_col in kpov_df.columns:
         combined_df = feature_df.copy()
         combined_df["y"] = kpov_df[kpov_col].values
-        if shuffle == True:
+        if shuffle:
             combined_df = combined_df.sample(frac=1, random_state=1)
         train_X = combined_df.iloc[:, :-1]
         train_Y = combined_df["y"]
@@ -192,7 +192,7 @@ def train_random_forest_models(df, shuffle, random_state=1):
             min_samples_leaf=1,
             n_estimators=100,
             random_state=1,
-            max_features="sqrt",
+            max_features="sqrt",  # pyright: ignore[reportArgumentType]  # valid sklearn option; stub types it as float
         )
         reg.fit(train_X, train_Y)
         reg_ls.append(reg)
