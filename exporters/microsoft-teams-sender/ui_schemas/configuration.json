@@ -1,0 +1,44 @@
+{
+  "type": "object",
+  "properties": {
+    "webhooks": {
+      "type": "array",
+      "title": "Channel Webhooks",
+      "description": "Microsoft Teams incoming-webhook URL for each channel this exporter can post to",
+      "items": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "title": "Channel",
+            "description": "Channel name used in the Teams Message action payload (e.g. engineering-alerts)"
+          },
+          "url": {
+            "type": "string",
+            "title": "Webhook URL",
+            "description": "Incoming-webhook (Power Automate workflow) URL that posts to this channel"
+          }
+        },
+        "required": [
+          "channel",
+          "url"
+        ]
+      }
+    }
+  },
+  "required": [
+    "webhooks"
+  ],
+  "x-kelvin-ui": {
+    "webhooks": {
+      "items": {
+        "url": {
+          "ui:widget": "password"
+        }
+      }
+    },
+    "ui:order": [
+      "webhooks"
+    ]
+  }
+}

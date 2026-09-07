@@ -1,0 +1,31 @@
+{
+  "title": "Teams Message",
+  "description": "Payload schema for the Teams Message custom action.",
+  "type": "object",
+  "properties": {
+    "channel": {
+      "type": "string",
+      "title": "Channel",
+      "description": "Teams channel to send the message to (must match a configured webhook channel)"
+    },
+    "message": {
+      "type": "object",
+      "title": "Message",
+      "properties": {
+        "text": {
+          "type": "string",
+          "title": "Text",
+          "description": "Message text to send to the channel"
+        }
+      },
+      "required": [
+        "text"
+      ]
+    }
+  },
+  "required": [
+    "channel",
+    "message"
+  ],
+  "additionalProperties": false
+}

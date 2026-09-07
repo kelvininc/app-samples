@@ -1,0 +1,4 @@
+kelvin-python-sdk
+aiohttp
+pydantic
+pydantic-settings
