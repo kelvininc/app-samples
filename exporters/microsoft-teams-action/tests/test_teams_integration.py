@@ -9,6 +9,11 @@ from settings import Teams
 from teams_integration import TeamsIntegration, TeamsSendError, build_card
 
 URL = "https://example.webhook.office.com/webhookb2/abc/IncomingWebhook/def"
+OTHER_URL = "https://example.webhook.office.com/webhookb2/ghi/IncomingWebhook/jkl"
+
+
+def _config(*webhooks: dict) -> Teams:
+    return Teams(webhooks=list(webhooks) or [{"channel": "alerts", "url": URL}])
 
 
 class _FakeResp:
@@ -78,46 +83,72 @@ class TestSendMessage:
     async def test_success_posts_card_to_unwrapped_url(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """A 2xx response succeeds (returns None); the card is POSTed to the unwrapped webhook URL."""
         session = _patch(monkeypatch, status=202)
-        result = await TeamsIntegration(Teams(webhook_url=URL)).send_message(text="hi", title="T")
+        result = await TeamsIntegration(_config()).send_message(channel="alerts", text="hi", title="T")
         assert result is None
         url, payload = session.calls[0]
         assert url == URL and payload["attachments"][0]["content"]["body"][-1]["text"] == "hi"
 
+    async def test_routes_each_channel_to_its_own_webhook(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The channel selects which of the configured URLs receives the card."""
+        session = _patch(monkeypatch, status=202)
+        integration = TeamsIntegration(
+            _config({"channel": "alerts", "url": URL}, {"channel": "ops", "url": OTHER_URL})
+        )
+
+        await integration.send_message(channel="ops", text="hi")
+        await integration.send_message(channel="alerts", text="hi")
+
+        assert [url for url, _ in session.calls] == [OTHER_URL, URL]
+
+    async def test_channel_match_ignores_case_and_whitespace(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """An operator's casing in the action payload doesn't decide whether the message lands."""
+        session = _patch(monkeypatch, status=202)
+        await TeamsIntegration(_config()).send_message(channel="  ALERTS ", text="hi")
+        assert [url for url, _ in session.calls] == [URL]
+
+    async def test_unknown_channel_fails_without_posting(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A channel with no configured webhook fails locally; nothing is sent to Teams."""
+        session = _patch(monkeypatch, status=202)
+        with pytest.raises(TeamsSendError, match="No webhook configured for Teams channel 'random'"):
+            await TeamsIntegration(_config()).send_message(channel="random", text="hi")
+        assert session.calls == []
+
     async def test_session_has_10s_total_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """The pooled session caps requests at 10 seconds total."""
         session = _patch(monkeypatch)
-        TeamsIntegration(Teams(webhook_url=URL))
+        TeamsIntegration(_config())
         assert session.init_kwargs["timeout"] == aiohttp.ClientTimeout(total=10)
 
     async def test_close_closes_the_session(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """close() shuts down the pooled session (called from on_disconnect)."""
         session = _patch(monkeypatch)
-        await TeamsIntegration(Teams(webhook_url=URL)).close()
+        await TeamsIntegration(_config()).close()
         assert session.closed is True
 
     async def test_non_2xx_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """A 4xx/5xx response raises TeamsSendError carrying the status."""
         _patch(monkeypatch, status=400)
         with pytest.raises(TeamsSendError, match="400"):
-            await TeamsIntegration(Teams(webhook_url=URL)).send_message(text="hi")
+            await TeamsIntegration(_config()).send_message(channel="alerts", text="hi")
 
     async def test_network_error_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """An aiohttp client error is wrapped in TeamsSendError."""
         _patch(monkeypatch, raise_exc=aiohttp.ClientConnectionError("boom"))
         with pytest.raises(TeamsSendError, match="Failed to reach"):
-            await TeamsIntegration(Teams(webhook_url=URL)).send_message(text="hi")
+            await TeamsIntegration(_config()).send_message(channel="alerts", text="hi")
 
     async def test_timeout_raises_teams_send_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """asyncio.TimeoutError is not an aiohttp.ClientError; it must still become TeamsSendError."""
         _patch(monkeypatch, raise_exc=asyncio.TimeoutError())
         with pytest.raises(TeamsSendError, match="Failed to reach"):
-            await TeamsIntegration(Teams(webhook_url=URL)).send_message(text="hi")
+            await TeamsIntegration(_config()).send_message(channel="alerts", text="hi")
 
     async def test_network_error_never_leaks_the_webhook_url(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """A network error whose string embeds the token must not leak it into the ack or the log.
 
         Some aiohttp errors (e.g. InvalidURL) stringify the full URL, and the URL path holds
-        the webhook secret; the operator-visible message and the log must be token-free.
+        the webhook secret; the operator-visible message and the log must be token-free. The
+        channel label is fine to log: it's operator-chosen and never part of the URL.
         """
         # An exception whose str() carries the full webhook URL (as aiohttp.InvalidURL does).
         _patch(monkeypatch, raise_exc=aiohttp.InvalidURL(URL))
@@ -126,10 +157,15 @@ class TestSendMessage:
         monkeypatch.setattr(ti.logger, "error", lambda *a, **k: logged.append((a, k)))
 
         with pytest.raises(TeamsSendError) as excinfo:
-            await TeamsIntegration(Teams(webhook_url=URL)).send_message(text="hi")
+            await TeamsIntegration(_config()).send_message(channel="alerts", text="hi")
 
         # The ack (str of the raised error) is a fixed operator message, token-free.
         assert str(excinfo.value) == "Failed to reach Teams webhook (network error)"
 
-        # The log carries only the exception type name, never the URL/token.
-        assert logged == [(("Failed to reach Teams webhook (network error)",), {"error_type": "InvalidURL"})]
+        # The log carries only the exception type name and the channel, never the URL/token.
+        assert logged == [
+            (
+                ("Failed to reach Teams webhook (network error)",),
+                {"channel": "alerts", "error_type": "InvalidURL"},
+            )
+        ]

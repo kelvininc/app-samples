@@ -37,7 +37,6 @@ Start with the official [Kelvin Documentation](https://docs.kelvin.ai).
 | [Email Exporter](exporters/email-action/)                              | Intermediate | Sends email notifications via a custom action (SMTP).                               |
 | [Slack Exporter](exporters/slack-action/)                              | Intermediate | Posts Slack messages via a custom action.                                            |
 | [Microsoft Teams Exporter](exporters/microsoft-teams-action/)          | Intermediate | Posts Microsoft Teams messages via a custom action.                                  |
-| [Microsoft Teams Sender](exporters/microsoft-teams-sender/)            | Intermediate | Sends Microsoft Teams messages to a given channel.                                   |
 
 ## 🤖 Docker
 

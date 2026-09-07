@@ -1,4 +1,3 @@
-# generator.py
 import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import AsyncGenerator
@@ -26,7 +25,8 @@ class CustomActionGenerator(DataGenerator):
                     "message": {
                         "text": "Test message from Kelvin Teams Message Action Generator",
                     },
-                    "channel": "test",
+                    # Must match a channel in your config.yaml webhooks (see README).
+                    "channel": "alerts",
                 },
             )
             await asyncio.sleep(10)

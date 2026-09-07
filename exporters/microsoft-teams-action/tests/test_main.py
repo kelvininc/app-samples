@@ -14,6 +14,7 @@ from teams_integration import TeamsSendError
 pytestmark = pytest.mark.asyncio
 
 URL = "https://example.webhook.office.com/webhookb2/abc/IncomingWebhook/def"
+WEBHOOKS = [{"channel": "alerts", "url": URL}]
 
 
 class FakeIntegration:
@@ -25,8 +26,8 @@ class FakeIntegration:
     def __init__(self, cfg: object) -> None:
         self.cfg = cfg
 
-    async def send_message(self, text: str, title=None) -> None:
-        FakeIntegration.calls.append((text, title))
+    async def send_message(self, channel: str, text: str, title=None) -> None:
+        FakeIntegration.calls.append((channel, text, title))
         if FakeIntegration.raise_exc:
             raise FakeIntegration.raise_exc
 
@@ -40,9 +41,10 @@ def _reset() -> None:
     FakeIntegration.raise_exc = None
 
 
-def _manifest(webhook_url: str | None = URL):
+def _manifest(webhooks: list[dict] | None = None):
     builder = ManifestBuilder.from_app_yaml().add_custom_action_input("Teams Message")
-    return builder.set_configuration({"teams": {"webhook_url": webhook_url}} if webhook_url else {"teams": {}}).build()
+    webhooks = WEBHOOKS if webhooks is None else webhooks
+    return builder.set_configuration({"teams": {"webhooks": webhooks}} if webhooks else {"teams": {}}).build()
 
 
 def _action(payload: dict) -> CustomAction:
@@ -66,10 +68,10 @@ async def test_action_posts_and_acks_success(monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.setattr(main, "TeamsIntegration", FakeIntegration)
 
     async with KelvinAppTest(main.app, manifest=_manifest()) as harness:
-        await harness.publish(_action({"title": "Pump 3", "message": {"text": "temp high"}}))
+        await harness.publish(_action({"channel": "alerts", "title": "Pump 3", "message": {"text": "temp high"}}))
         await harness.run_until_idle(timeout=5.0)
 
-        assert FakeIntegration.calls == [("temp high", "Pump 3")]
+        assert FakeIntegration.calls == [("alerts", "temp high", "Pump 3")]
         assert len(harness.outputs) == 1
         result = harness.outputs[0].payload
         assert result.success is True and result.message == "Teams message sent"
@@ -81,7 +83,7 @@ async def test_malformed_message_acks_failure(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setattr(main, "TeamsIntegration", FakeIntegration)
 
     async with KelvinAppTest(main.app, manifest=_manifest()) as harness:
-        await harness.publish(_action({"message": "a string"}))
+        await harness.publish(_action({"channel": "alerts", "message": "a string"}))
         await harness.run_until_idle(timeout=5.0)
 
         assert FakeIntegration.calls == []
@@ -96,13 +98,28 @@ async def test_missing_text_acks_failure(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setattr(main, "TeamsIntegration", FakeIntegration)
 
     async with KelvinAppTest(main.app, manifest=_manifest()) as harness:
-        await harness.publish(_action({"title": "no body"}))
+        await harness.publish(_action({"channel": "alerts", "title": "no body"}))
         await harness.run_until_idle(timeout=5.0)
 
         assert FakeIntegration.calls == []
         assert len(harness.outputs) == 1
         result = harness.outputs[0].payload
         assert result.success is False and result.message.startswith("Invalid payload:")
+
+
+async def test_missing_channel_acks_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A payload with no channel can't select a webhook, so it acks failure without sending."""
+    _reset()
+    monkeypatch.setattr(main, "TeamsIntegration", FakeIntegration)
+
+    async with KelvinAppTest(main.app, manifest=_manifest()) as harness:
+        await harness.publish(_action({"message": {"text": "temp high"}}))
+        await harness.run_until_idle(timeout=5.0)
+
+        assert FakeIntegration.calls == []
+        assert len(harness.outputs) == 1
+        result = harness.outputs[0].payload
+        assert result.success is False and "channel" in result.message
 
 
 async def test_send_failure_acks_failure(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -112,7 +129,7 @@ async def test_send_failure_acks_failure(monkeypatch: pytest.MonkeyPatch) -> Non
     FakeIntegration.raise_exc = TeamsSendError("Teams webhook returned 500")
 
     async with KelvinAppTest(main.app, manifest=_manifest()) as harness:
-        await harness.publish(_action({"message": {"text": "temp high"}}))
+        await harness.publish(_action({"channel": "alerts", "message": {"text": "temp high"}}))
         await harness.run_until_idle(timeout=5.0)
 
         assert len(harness.outputs) == 1
@@ -129,7 +146,7 @@ async def test_action_before_startup_acks_failure(monkeypatch: pytest.MonkeyPatc
         # Simulate the startup race: the SDK's read loop can dispatch an action buffered
         # alongside the manifest before on_connect has built the integration.
         main._integration = None
-        await harness.publish(_action({"message": {"text": "temp high"}}))
+        await harness.publish(_action({"channel": "alerts", "message": {"text": "temp high"}}))
         await harness.run_until_idle(timeout=5.0)
 
         assert FakeIntegration.calls == []
@@ -149,11 +166,11 @@ async def test_unexpected_action_type_is_ignored() -> None:
 
 
 async def test_invalid_configuration_is_fatal(monkeypatch: pytest.MonkeyPatch) -> None:
-    """A missing webhook URL terminates the app (SystemExit) instead of starting half-configured."""
+    """An empty webhook list terminates the app (SystemExit) instead of starting half-configured."""
     _reset()
     monkeypatch.setattr(main, "TeamsIntegration", FakeIntegration)
 
-    harness = KelvinAppTest(main.app, manifest=_manifest(webhook_url=None))
+    harness = KelvinAppTest(main.app, manifest=_manifest(webhooks=[]))
     try:
         with pytest.raises(SystemExit) as excinfo:
             await harness.connect()
@@ -166,8 +183,9 @@ async def test_invalid_configuration_is_fatal(monkeypatch: pytest.MonkeyPatch) -
 
 
 @pytest.mark.parametrize("payload", [
-    {"message": {"text": "   "}},
-    {"title": "t", "message": {"text": "\t\n"}},
+    {"channel": "alerts", "message": {"text": "   "}},
+    {"channel": "alerts", "title": "t", "message": {"text": "\t\n"}},
+    {"channel": "  ", "message": {"text": "temp high"}},
 ])
 async def test_whitespace_only_fields_rejected(payload: dict) -> None:
     """Whitespace is stripped before min_length, so a blank message text fails validation."""

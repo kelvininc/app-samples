@@ -22,10 +22,15 @@ class _MessageBody(BaseModel):
 
 
 class TeamsPayload(BaseModel):
-    """The 'Teams Message' action payload: a required message body and an optional card title."""
+    """The 'Teams Message' action payload: the destination channel, a message body, an optional title.
+
+    `channel` selects one of the webhooks in the app configuration. It's a local label, so an
+    unconfigured name fails the action here rather than reaching Teams.
+    """
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
+    channel: str = Field(min_length=1)
     message: _MessageBody
     title: Optional[str] = None
 
@@ -86,7 +91,9 @@ async def on_custom_action(action: CustomAction) -> None:
         return
 
     try:
-        await _integration.send_message(text=payload.message.text, title=payload.title)
+        await _integration.send_message(
+            channel=payload.channel, text=payload.message.text, title=payload.title
+        )
     except TeamsSendError as e:
         await app.publish(action.result(success=False, message=str(e)))
         logger.info("Finished handling Teams Message Action", success=False)
