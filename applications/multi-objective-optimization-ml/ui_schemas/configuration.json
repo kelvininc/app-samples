@@ -1,0 +1,35 @@
+{
+  "title": "Multi-Objective Optimization Configuration",
+  "description": "Sizing of the history window the models fit on.",
+  "type": "object",
+  "properties": {
+    "window": {
+      "type": "object",
+      "title": "Window",
+      "description": "History size, retrain cadence, and row aggregation for the optimizer.",
+      "properties": {
+        "rows": {
+          "type": "integer",
+          "title": "Window Rows",
+          "minimum": 100,
+          "default": 100,
+          "description": "Rows of history the models fit on (at least 100)."
+        },
+        "retrain_every_rows": {
+          "type": "integer",
+          "title": "Retrain Every (rows)",
+          "minimum": 1,
+          "default": 1,
+          "description": "Re-run the optimizer every N new rows."
+        },
+        "round_seconds": {
+          "type": "number",
+          "title": "Round Interval (s)",
+          "exclusiveMinimum": 0,
+          "default": 1,
+          "description": "Merge readings within this interval into one row."
+        }
+      }
+    }
+  }
+}

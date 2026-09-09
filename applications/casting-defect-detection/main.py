@@ -1,88 +1,69 @@
 import asyncio
-import base64
 import io
-import json
 
-import numpy as np
-import tensorflow
-from kelvin.application import KelvinApp, filters
-from kelvin.message import Recommendation, Message
-from kelvin.message.krn import KRNAsset
-from PIL import Image
+from kelvin.application import KelvinApp
+from kelvin.krn import KRNAsset
+from kelvin.logs import logger
+from kelvin.message import AssetDataMessage, Recommendation
+
+app = KelvinApp()
+
+_MODEL_PATH = "model/inspection_of_casting_products.h5"
+_model = None                                    # loaded once in on_connect
 
 
-def predict_image(model, image_base64: str):
-    # Decode the base64 string
-    image_data = base64.b64decode(image_base64)
-    image = Image.open(io.BytesIO(image_data))
+def load_model():
+    """Load the Keras model. TensorFlow is imported here, not at module scope, so the app
+    stays importable (and testable) without the heavy dependency loaded."""
+    import tensorflow
 
-    # Convert the image to grayscale
-    image = image.convert("L")  # Convert to grayscale
+    return tensorflow.keras.models.load_model(_MODEL_PATH)
 
-    # Resize the image to the target size
-    target_size = (300, 300)  # Adjust this to your model's expected input size
-    image = image.resize(target_size)
 
-    # Convert the image to a numpy array and preprocess
-    img_array = tensorflow.keras.preprocessing.image.img_to_array(image)
-    img_array = np.expand_dims(img_array, axis=0)  # Create a batch
-    img_array /= 255.0  # Scale image values to [0,1]
+def predict_image(model, image_base64: str) -> str:
+    """Classify a base64-encoded casting image; return "ok" or "not_ok"."""
+    import base64
 
-    # Make a prediction
+    import numpy as np
+    import tensorflow
+    from PIL import Image
+
+    image = Image.open(io.BytesIO(base64.b64decode(image_base64))).convert("L").resize((300, 300))
+    img_array = np.expand_dims(tensorflow.keras.preprocessing.image.img_to_array(image), axis=0) / 255.0
     prediction = model.predict(img_array)
-
-    # Model outputs a binary classification with a sigmoid activation function in the last layer
-    if prediction[0][0] > 0.5:
-        return "ok"
-    else:
-        return "not_ok"
+    # Binary classifier with a sigmoid output layer: > 0.5 is a good part.
+    return "ok" if prediction[0][0] > 0.5 else "not_ok"
 
 
-async def main() -> None:
+@app.on_connect
+async def on_connect() -> None:
+    """Load the model once, off the event loop, before any frames arrive."""
+    global _model
+    logger.info("Loading computer vision model", path=_MODEL_PATH)
+    _model = await asyncio.to_thread(load_model)
+    logger.info("Computer vision model loaded")
 
-    # Load the computer vision model
-    print("Loading computer vision model")
-    model = tensorflow.keras.models.load_model("model/inspection_of_casting_products.h5")
-    print("Computer vision model loaded")
 
-    # Creating instance of Kelvin App Client
-    app = KelvinApp()
+@app.stream(inputs=["camera-feed"])
+async def on_camera_feed(msg: AssetDataMessage) -> None:
+    """Classify each incoming casting image; recommend a fault when a defect is found."""
+    asset = msg.resource.asset
+    image = msg.payload                          # camera-image object: {image_filename, image_base64, ...}
+    filename = image["image_filename"]
 
-    # Connect the App Client
-    await app.connect()
+    # Inference is blocking, so run it in a thread to keep the event loop responsive.
+    result = await asyncio.to_thread(predict_image, _model, image["image_base64"])
+    logger.info("Prediction result", asset=asset, image=filename, result=result)
 
-    # Create a queue to receive the data
-    queue: asyncio.Queue[Message] = app.filter(filters.input_equals("camera-feed"))
-
-    while True:
-        # Get the message from the queue
-        msg = await queue.get()
-
-        try:
-            # Parse the message
-            image_info = json.loads(msg.payload)
-            image_filename = image_info["image_filename"]
-            image_base64 = image_info["image_base64"]
-
-            # Predict
-            print(f"Predicting image: '{image_filename}'")
-            result = predict_image(model, image_base64)
-            print(f"Prediction result for image 'image_filename': {result}")
-
-            # Send recommendation if need
-            if result == "not_ok":
-                await app.publish(
-                    Recommendation(
-                        resource=KRNAsset(msg.resource.asset),
-                        type="fault_detected",
-                        description=f"Defect detected in the casting product with image: {image_filename}",
-                    )
-                )
-        except Exception as e:
-            print(f"Error: {e}")
-
-        await asyncio.sleep(1)
+    if result == "not_ok":
+        await app.publish(
+            Recommendation(
+                resource=KRNAsset(asset),
+                type="fault_detected",
+                description=f"Defect detected in the casting product with image: {filename}",
+            )
+        )
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    app.run()

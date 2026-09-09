@@ -1,32 +1,49 @@
-# Casting Defect Detection using Computer Vision
-This application demonstrates the usage of the Kelvin SDK to implement a solution to detect manufacturing defects using computer vision and machine learning. 
+# Casting Defect Detection
+This application demonstrates the use of the Kelvin SDK for detecting casting defects with a computer-vision model.
 
 ![Example](./assets/example.png)
 
-The solution consists of two main components:
+The solution has two parts:
 
-1. **Camera Connector ( ../../importers/camera-connector ):** Simulates image capture from a camera and publishes the image in base64 format to the Kelvin Platform. In production environments, it would interface directly with live camera feeds to acquire real-time images.
+1. **Image Feed (`../../importers/image-feed`):** simulates a camera and publishes each frame to Kelvin as a `camera-image` object. In production it would read a live camera feed.
+2. **Casting Defect Detection:** classifies each image with a pre-trained TensorFlow model and recommends a fault back to Kelvin when it finds a defect.
 
-2. **Casting Defect Detection:** Processes the acquired images to identify casting defects using a pre-trained TensorFlow machine learning model. It evaluates the images for any anomalies and reports the findings back to the Kelvin Platform for further analysis.
-
-# Architecture Diagram
-The following diagram illustrates the architecture of the solution:
-
+## Architecture Diagram
 ![Architecture](./assets/architecture-diagram.jpg)
 
-# Additional Resources
+## How It Works
+- `@app.on_connect` loads the Keras model once, off the event loop via `asyncio.to_thread`.
+- `@app.stream(inputs=["camera-feed"])` receives each `camera-image` object (`image_filename`, `image_base64`, ...).
+- Inference runs in a thread (`asyncio.to_thread`) so the blocking `model.predict` call doesn't stall the event loop.
+- A `not_ok` classification publishes a `fault_detected` `Recommendation` for the asset; a good part publishes nothing.
 
-- **Dataset:** The dataset employed for training the model is hosted on Kaggle and can be accessed [here](https://www.kaggle.com/datasets/ravirajsinh45/real-life-industrial-dataset-of-casting-product/data).
+## Additional Resources
+- **Dataset:** the training dataset is on Kaggle, [here](https://www.kaggle.com/datasets/ravirajsinh45/real-life-industrial-dataset-of-casting-product/data).
+- **Pre-trained model:** the TensorFlow model is on Kaggle, [here](https://www.kaggle.com/code/ravirajsinh45/simple-model-for-casting-product-classification/notebook). Place it at `model/inspection_of_casting_products.h5`.
 
-- **Pre-trained Model:** The Tensorflow machine learning model used for defect detection is also available on Kaggle. It can be found [here](https://www.kaggle.com/code/ravirajsinh45/simple-model-for-casting-product-classification/notebook).
+## Prerequisites
+1. Python 3.13 (the version the app is built and tested on; see the `Dockerfile`).
+2. Install the Kelvin CLI (needed for `kelvin app upload`): `pip3 install kelvin-sdk`.
+3. Install project dependencies: `pip3 install -r requirements.txt`.
+4. Docker (optional) to upload the application to Kelvin Cloud.
 
-# Requirements
-1. Python 3.8 or higher
-2. Install Kelvin SDK: `pip3 install kelvin-sdk`
-3. Install project dependencies: `pip3 install -r requirements.txt`
-4. Docker (optional) for upload the application to a Kelvin Instance.
+## Run Locally
+The model file must be present at `model/inspection_of_casting_products.h5` (see Additional Resources).
 
-# Usage
-1. Upload both applications to a Kelvin Instance: `kelvin app upload`
-2. Deploy the Camera Connector application
-3. Deploy the Casting Defect Detection application
+1. **Run** the application: `python3 main.py`
+2. Feed it `camera-image` frames on `camera-feed`. The simplest source is the [image-feed importer](../../importers/image-feed) publishing to the same stream.
+
+## Test Locally
+### Unit Tests
+```bash
+pip install 'kelvin-python-sdk[testing]'        # harness deps
+pytest                                           # fast, no Docker
+```
+- **Unit** (`tests/test_main.py`): the camera-feed handler via `KelvinAppTest` with the model and inference stubbed, so it covers the decision logic (a `fault_detected` recommendation on a defect, nothing on a good part) without loading TensorFlow.
+
+## Kelvin Cloud Deployment
+1. **Upload** both applications (builds and registers the images; needs Docker):
+    ```
+    kelvin app upload
+    ```
+2. **Deploy** the image-feed importer and this app, and map the importer's `camera-image` output to this app's `camera-feed` input. This app needs no secrets.

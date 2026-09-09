@@ -1,6 +1,19 @@
+# Never ship local dev artifacts or credentials in the image
+config.yaml
+*.db
+*.wal
+.venv/
+venv/
+tests/
+pytest.ini
+pyrightconfig.json
+**/__pycache__/
+**/.pytest_cache/
+.git/
+.gitignore
+
 # general
 .DS_Store
-.git/
 .travis.yml
 Dockerfile
 Jenkinsfile
@@ -14,8 +27,6 @@ build/
 **/.coverage
 **/.ipynb_checkpoints/
 **/.mypy_cache/
-**/.pytest_cache/
-**/__pycache__/
 *.egg-info/
 .eggs/
 .idea/
@@ -24,10 +35,8 @@ dist/
 docs/_build/
 htmlcov/
 pip-wheel-metadata/
-venv/
 *.whl
 
-# retain ignore files
-!.*ignore
+# retain packaged build outputs
 !build/datatype/
 !build/app.yaml
