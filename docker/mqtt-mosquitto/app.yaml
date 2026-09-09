@@ -9,7 +9,7 @@ type: docker
 name: mqtt-mosquitto
 title: MQTT Mosquitto Broker
 description: This Docker application runs an MQTT Mosquitto broker, configurable via the application configuration.
-version: 2.0.1
+version: 2.1.0
 
 # Capabilities
 flags:
@@ -36,19 +36,15 @@ defaults:
           #   username: "<% secrets.mqtt-user %>"
           #   password: "<% secrets.mqtt-password %>"
       secure:
-        auth:
-          mode: ANONYMOUS                 # seeds the oneOf discriminator so the UI form can
-                                          # switch branches; the listener stays off until you
-                                          # also set secure.port below
-      # The secure listener is off unless you set its port. Add the matching service port
-      # in system.ports (28883 is already declared below). Certificates are required;
-      # without all three the broker will refuse to start rather than listen unencrypted.
+        mode: DISABLED                    # DISABLED | ANON_TLS | AUTH_TLS
+      # To enable the TLS listener, set mode to ANON_TLS (or AUTH_TLS for
+      # credentials) and supply the port plus all three certificates. Add the
+      # matching service port in system.ports; 28883 is already declared below.
       #   secure:
+      #     mode: AUTH_TLS
       #     port: 28883
-      #     auth:
-      #       mode: ANONYMOUS             # ANONYMOUS | PASSWORD
-      #       # username: "<% secrets.mqtt-ssl-user %>"
-      #       # password: "<% secrets.mqtt-ssl-password %>"
+      #     username: "<% secrets.mqtt-ssl-user %>"
+      #     password: "<% secrets.mqtt-ssl-password %>"
       #     tls:
       #       ca_crt: "<% secrets.mqtt-ssl-ca-crt %>"
       #       tls_crt: "<% secrets.mqtt-ssl-tls-crt %>"

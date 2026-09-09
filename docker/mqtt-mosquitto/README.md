@@ -68,7 +68,7 @@ listeners:
 - Enable at least one listener. With no port on either, the broker exits with an error.
 - A listener with no `port` is disabled. A `port` that is not a number is an error, not a silently dropped listener.
 - `auth.mode` defaults to `ANONYMOUS`. With `PASSWORD`, both `username` and `password` are required.
-- Setting `listeners.secure.port` requires all three certificates. The broker refuses to start if any is missing; it never falls back to an unencrypted secure listener.
+- `listeners.secure.mode` is `DISABLED` (default), `ANON_TLS` or `AUTH_TLS`. Either enabled mode requires the port and all three certificates. The broker refuses to start if any is missing; it never falls back to an unencrypted secure listener.
 - Credentials are broker-wide. Mosquitto's `per_listener_settings` is deprecated in 2.1 and removed in 3.0, so accounts from both listeners share one password file and each listener only decides whether anonymous clients are accepted. A user configured on one listener can authenticate on the other.
 - Keep the ports in sync with the `service` (and any `host`) ports declared under `system.ports`.
 
@@ -92,9 +92,9 @@ To upgrade, drop `environment_vars` from the deployment and move each value into
 | `MQTT_PORT` | `listeners.plain.port` |
 | `MQTT_USER` | `listeners.plain.auth.username` (with `auth.mode: PASSWORD`) |
 | `MQTT_PASSWORD` | `listeners.plain.auth.password` (with `auth.mode: PASSWORD`) |
-| `MQTT_SSL_PORT` | `listeners.secure.port` |
-| `MQTT_SSL_USER` | `listeners.secure.auth.username` (with `auth.mode: PASSWORD`) |
-| `MQTT_SSL_PASSWORD` | `listeners.secure.auth.password` (with `auth.mode: PASSWORD`) |
+| `MQTT_SSL_PORT` | `listeners.secure.port` (with `mode: ANON_TLS` or `AUTH_TLS`) |
+| `MQTT_SSL_USER` | `listeners.secure.username` (with `mode: AUTH_TLS`) |
+| `MQTT_SSL_PASSWORD` | `listeners.secure.password` (with `mode: AUTH_TLS`) |
 | `MQTT_SSL_CA_CRT` | `listeners.secure.tls.ca_crt` |
 | `MQTT_SSL_TLS_CRT` | `listeners.secure.tls.tls_crt` |
 | `MQTT_SSL_TLS_KEY` | `listeners.secure.tls.tls_key` |

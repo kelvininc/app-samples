@@ -10,13 +10,13 @@
 #   listeners.plain.auth.mode       ANONYMOUS (default) | PASSWORD
 #   listeners.plain.auth.username   required when mode is PASSWORD
 #   listeners.plain.auth.password   required when mode is PASSWORD
-#   listeners.secure.port           TLS listener port; empty disables the listener
-#   listeners.secure.auth.mode      ANONYMOUS (default) | PASSWORD
-#   listeners.secure.auth.username  required when mode is PASSWORD
-#   listeners.secure.auth.password  required when mode is PASSWORD
-#   listeners.secure.tls.ca_crt     PEM CA bundle, required with listeners.secure.port
-#   listeners.secure.tls.tls_crt    PEM server certificate, required with listeners.secure.port
-#   listeners.secure.tls.tls_key    PEM server key, required with listeners.secure.port
+#   listeners.secure.mode           DISABLED (default) | ANON_TLS | AUTH_TLS
+#   listeners.secure.port           TLS listener port; required unless mode is DISABLED
+#   listeners.secure.username       required when mode is AUTH_TLS
+#   listeners.secure.password       required when mode is AUTH_TLS
+#   listeners.secure.tls.ca_crt     PEM CA bundle, required unless mode is DISABLED
+#   listeners.secure.tls.tls_crt    PEM server certificate, required unless mode is DISABLED
+#   listeners.secure.tls.tls_key    PEM server key, required unless mode is DISABLED
 #
 # Nothing is merged into the configuration server-side, so every default below
 # is applied here: a listener with no port is disabled, and a listener with no
@@ -55,11 +55,11 @@ PLAIN_AUTH_MODE=${PLAIN_AUTH_MODE:-ANONYMOUS}
 PLAIN_USERNAME=$(cfg listeners.plain.auth.username)
 PLAIN_PASSWORD=$(cfg listeners.plain.auth.password)
 
+SECURE_MODE=$(cfg listeners.secure.mode)
+SECURE_MODE=${SECURE_MODE:-DISABLED}
 SECURE_PORT=$(cfg listeners.secure.port)
-SECURE_AUTH_MODE=$(cfg listeners.secure.auth.mode)
-SECURE_AUTH_MODE=${SECURE_AUTH_MODE:-ANONYMOUS}
-SECURE_USERNAME=$(cfg listeners.secure.auth.username)
-SECURE_PASSWORD=$(cfg listeners.secure.auth.password)
+SECURE_USERNAME=$(cfg listeners.secure.username)
+SECURE_PASSWORD=$(cfg listeners.secure.password)
 SECURE_CA_CRT=$(cfg listeners.secure.tls.ca_crt)
 SECURE_TLS_CRT=$(cfg listeners.secure.tls.tls_crt)
 SECURE_TLS_KEY=$(cfg listeners.secure.tls.tls_key)
@@ -103,19 +103,25 @@ if [ -n "$PLAIN_PORT" ]; then
     PLAIN_LISTENER_ENABLED="true"
 fi
 
-if [ -n "$SECURE_PORT" ]; then
-    check_port "listeners.secure.port" "$SECURE_PORT"
-    check_auth_mode "listeners.secure.auth.mode" "$SECURE_AUTH_MODE"
-    if [ "$SECURE_AUTH_MODE" = "PASSWORD" ]; then
-        check_credentials "listeners.secure.auth.mode" "$SECURE_USERNAME" "$SECURE_PASSWORD"
-    fi
-    # Refuse to start rather than expose the secure listener unencrypted.
-    if [ -z "$SECURE_CA_CRT" ] || [ -z "$SECURE_TLS_CRT" ] || [ -z "$SECURE_TLS_KEY" ]; then
-        echo "$TIMESTAMP: Error: listeners.secure.port is set but listeners.secure.tls is incomplete. All of ca_crt, tls_crt and tls_key are required."
+case "$SECURE_MODE" in
+    DISABLED) ;;
+    ANON_TLS|AUTH_TLS)
+        check_port "listeners.secure.port" "$SECURE_PORT"
+        if [ "$SECURE_MODE" = "AUTH_TLS" ]; then
+            check_credentials "listeners.secure.mode" "$SECURE_USERNAME" "$SECURE_PASSWORD"
+        fi
+        # Refuse to start rather than expose the secure listener unencrypted.
+        if [ -z "$SECURE_CA_CRT" ] || [ -z "$SECURE_TLS_CRT" ] || [ -z "$SECURE_TLS_KEY" ]; then
+            echo "$TIMESTAMP: Error: listeners.secure.mode is $SECURE_MODE but listeners.secure.tls is incomplete. All of ca_crt, tls_crt and tls_key are required."
+            exit 1
+        fi
+        SECURE_LISTENER_ENABLED="true"
+        ;;
+    *)
+        echo "$TIMESTAMP: Error: listeners.secure.mode must be DISABLED, ANON_TLS or AUTH_TLS, got '$SECURE_MODE'."
         exit 1
-    fi
-    SECURE_LISTENER_ENABLED="true"
-fi
+        ;;
+esac
 
 # Log configuration
 echo "$TIMESTAMP: Plain listener enabled: $PLAIN_LISTENER_ENABLED"
@@ -128,12 +134,12 @@ echo "$TIMESTAMP: Secure listener enabled: $SECURE_LISTENER_ENABLED"
 if [ "$SECURE_LISTENER_ENABLED" = "true" ]; then
     echo "$TIMESTAMP: Secure listener on port: $SECURE_PORT"
     echo "$TIMESTAMP: Secure listener with SSL: true"
-    echo "$TIMESTAMP: Secure listener auth mode: $SECURE_AUTH_MODE"
+    echo "$TIMESTAMP: Secure listener mode: $SECURE_MODE"
 fi
 
 # If neither plain nor secure listener is enabled, exit with error
 if [ "$PLAIN_LISTENER_ENABLED" = "false" ] && [ "$SECURE_LISTENER_ENABLED" = "false" ]; then
-    echo "$TIMESTAMP: Error: No MQTT listener enabled. Set listeners.plain.port, listeners.secure.port, or both."
+    echo "$TIMESTAMP: Error: No MQTT listener enabled. Set listeners.plain.port, or listeners.secure.mode to ANON_TLS/AUTH_TLS, or both."
     exit 1
 fi
 
@@ -157,7 +163,7 @@ add_user(){
 if [ "$PLAIN_LISTENER_ENABLED" = "true" ] && [ "$PLAIN_AUTH_MODE" = "PASSWORD" ]; then
     add_user "$PLAIN_USERNAME" "$PLAIN_PASSWORD"
 fi
-if [ "$SECURE_LISTENER_ENABLED" = "true" ] && [ "$SECURE_AUTH_MODE" = "PASSWORD" ]; then
+if [ "$SECURE_LISTENER_ENABLED" = "true" ] && [ "$SECURE_MODE" = "AUTH_TLS" ]; then
     add_user "$SECURE_USERNAME" "$SECURE_PASSWORD"
 fi
 if [ "$PASSWORD_FILE_ENABLED" = "true" ]; then
@@ -183,8 +189,12 @@ password_file $PASSWORD_FILE
 EOF
 fi
 
+# Plain uses PASSWORD; secure uses AUTH_TLS. Both mean "credentials required".
 anonymous_flag(){
-    if [ "$1" = "PASSWORD" ]; then echo "false"; else echo "true"; fi
+    case "$1" in
+        PASSWORD|AUTH_TLS) echo "false" ;;
+        *)                 echo "true"  ;;
+    esac
 }
 
 # Plain configuration section
@@ -211,7 +221,7 @@ if [ "$SECURE_LISTENER_ENABLED" = "true" ]; then
     cat >> $DST_CONFIG_FILE << EOF
 listener $SECURE_PORT 0.0.0.0
 max_keepalive 0
-listener_allow_anonymous $(anonymous_flag "$SECURE_AUTH_MODE")
+listener_allow_anonymous $(anonymous_flag "$SECURE_MODE")
 cafile $SSL_FOLDER/ca.crt
 certfile $SSL_FOLDER/tls.crt
 keyfile $SSL_FOLDER/tls.key

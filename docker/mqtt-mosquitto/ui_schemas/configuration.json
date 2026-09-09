@@ -79,102 +79,157 @@
         "secure": {
           "type": "object",
           "title": "Secure Listener",
-          "description": "TLS MQTT. Leave the port empty to disable this listener; set it and all three certificates are required.",
-          "properties": {
-            "port": {
-              "type": "integer",
-              "title": "Port",
-              "description": "TLS MQTT port; keep it in sync with the service port.",
-              "minimum": 1,
-              "maximum": 65535
-            },
-            "auth": {
-              "type": "object",
-              "title": "Authentication",
-              "description": "Who may connect on the secure listener.",
-              "oneOf": [
-                {
-                  "title": "Anonymous",
-                  "properties": {
-                    "mode": {
-                      "type": "string",
-                      "title": "Mode",
-                      "description": "ANONYMOUS accepts any client; PASSWORD requires credentials.",
-                      "const": "ANONYMOUS",
-                      "default": "ANONYMOUS"
-                    }
-                  },
-                  "required": [
-                    "mode"
-                  ]
-                },
-                {
-                  "title": "Username and password",
-                  "properties": {
-                    "mode": {
-                      "type": "string",
-                      "title": "Mode",
-                      "description": "ANONYMOUS accepts any client; PASSWORD requires credentials.",
-                      "const": "PASSWORD",
-                      "default": "PASSWORD"
-                    },
-                    "username": {
-                      "type": "string",
-                      "title": "Username",
-                      "description": "MQTT username for the secure listener. Wire to a secret.",
-                      "minLength": 1,
-                      "default": "<% secrets.mqtt-ssl-user %>"
-                    },
-                    "password": {
-                      "type": "string",
-                      "title": "Password",
-                      "description": "MQTT password for the secure listener. Wire to a secret.",
-                      "minLength": 1,
-                      "default": "<% secrets.mqtt-ssl-password %>"
-                    }
-                  },
-                  "required": [
-                    "mode",
-                    "username",
-                    "password"
-                  ]
+          "description": "TLS MQTT on its own port. Pick Disabled to turn it off; either enabled option requires all three certificates.",
+          "oneOf": [
+            {
+              "title": "Disabled",
+              "description": "No TLS listener. The plain listener must then be enabled or the broker exits.",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "title": "Mode",
+                  "description": "Whether the secure listener runs, and how clients authenticate on it.",
+                  "const": "DISABLED",
+                  "default": "DISABLED"
                 }
+              },
+              "required": [
+                "mode"
               ]
             },
-            "tls": {
-              "type": "object",
-              "title": "TLS",
-              "description": "PEM content for the secure listener. All three are required; the broker refuses to start rather than listen unencrypted.",
+            {
+              "title": "Enabled, anonymous",
+              "description": "TLS listener accepting any client.",
               "properties": {
-                "ca_crt": {
+                "mode": {
                   "type": "string",
-                  "title": "CA Certificate",
-                  "description": "PEM CA bundle that signed the server certificate. Wire to a secret.",
-                  "minLength": 1,
-                  "default": "<% secrets.mqtt-ssl-ca-crt %>"
+                  "title": "Mode",
+                  "description": "Whether the secure listener runs, and how clients authenticate on it.",
+                  "const": "ANON_TLS",
+                  "default": "ANON_TLS"
                 },
-                "tls_crt": {
-                  "type": "string",
-                  "title": "Server Certificate",
-                  "description": "PEM server certificate presented to clients. Wire to a secret.",
-                  "minLength": 1,
-                  "default": "<% secrets.mqtt-ssl-tls-crt %>"
+                "port": {
+                  "type": "integer",
+                  "title": "Port",
+                  "description": "TLS MQTT port; keep it in sync with the service port.",
+                  "minimum": 1,
+                  "maximum": 65535
                 },
-                "tls_key": {
-                  "type": "string",
-                  "title": "Server Key",
-                  "description": "PEM private key for the server certificate. Wire to a secret.",
-                  "minLength": 1,
-                  "default": "<% secrets.mqtt-ssl-tls-key %>"
+                "tls": {
+                  "type": "object",
+                  "title": "TLS",
+                  "description": "PEM content for the secure listener. All three are required; the broker refuses to start rather than listen unencrypted.",
+                  "properties": {
+                    "ca_crt": {
+                      "type": "string",
+                      "title": "CA Certificate",
+                      "description": "PEM CA bundle that signed the server certificate. Wire to a secret.",
+                      "minLength": 1,
+                      "default": "<% secrets.mqtt-ssl-ca-crt %>"
+                    },
+                    "tls_crt": {
+                      "type": "string",
+                      "title": "Server Certificate",
+                      "description": "PEM server certificate presented to clients. Wire to a secret.",
+                      "minLength": 1,
+                      "default": "<% secrets.mqtt-ssl-tls-crt %>"
+                    },
+                    "tls_key": {
+                      "type": "string",
+                      "title": "Server Key",
+                      "description": "PEM private key for the server certificate. Wire to a secret.",
+                      "minLength": 1,
+                      "default": "<% secrets.mqtt-ssl-tls-key %>"
+                    }
+                  },
+                  "required": [
+                    "ca_crt",
+                    "tls_crt",
+                    "tls_key"
+                  ]
                 }
-              }
+              },
+              "required": [
+                "mode",
+                "port",
+                "tls"
+              ]
+            },
+            {
+              "title": "Enabled, username and password",
+              "description": "TLS listener requiring credentials.",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "title": "Mode",
+                  "description": "Whether the secure listener runs, and how clients authenticate on it.",
+                  "const": "AUTH_TLS",
+                  "default": "AUTH_TLS"
+                },
+                "port": {
+                  "type": "integer",
+                  "title": "Port",
+                  "description": "TLS MQTT port; keep it in sync with the service port.",
+                  "minimum": 1,
+                  "maximum": 65535
+                },
+                "username": {
+                  "type": "string",
+                  "title": "Username",
+                  "description": "MQTT username for the secure listener. Wire to a secret.",
+                  "minLength": 1,
+                  "default": "<% secrets.mqtt-ssl-user %>"
+                },
+                "password": {
+                  "type": "string",
+                  "title": "Password",
+                  "description": "MQTT password for the secure listener. Wire to a secret.",
+                  "minLength": 1,
+                  "default": "<% secrets.mqtt-ssl-password %>"
+                },
+                "tls": {
+                  "type": "object",
+                  "title": "TLS",
+                  "description": "PEM content for the secure listener. All three are required; the broker refuses to start rather than listen unencrypted.",
+                  "properties": {
+                    "ca_crt": {
+                      "type": "string",
+                      "title": "CA Certificate",
+                      "description": "PEM CA bundle that signed the server certificate. Wire to a secret.",
+                      "minLength": 1,
+                      "default": "<% secrets.mqtt-ssl-ca-crt %>"
+                    },
+                    "tls_crt": {
+                      "type": "string",
+                      "title": "Server Certificate",
+                      "description": "PEM server certificate presented to clients. Wire to a secret.",
+                      "minLength": 1,
+                      "default": "<% secrets.mqtt-ssl-tls-crt %>"
+                    },
+                    "tls_key": {
+                      "type": "string",
+                      "title": "Server Key",
+                      "description": "PEM private key for the server certificate. Wire to a secret.",
+                      "minLength": 1,
+                      "default": "<% secrets.mqtt-ssl-tls-key %>"
+                    }
+                  },
+                  "required": [
+                    "ca_crt",
+                    "tls_crt",
+                    "tls_key"
+                  ]
+                }
+              },
+              "required": [
+                "mode",
+                "port",
+                "username",
+                "password",
+                "tls"
+              ]
             }
-          },
-          "dependentRequired": {
-            "port": [
-              "tls"
-            ]
-          }
+          ]
         }
       }
     }
@@ -210,22 +265,17 @@
       },
       "secure": {
         "ui:order": [
+          "mode",
           "port",
-          "auth",
+          "username",
+          "password",
           "tls"
         ],
-        "auth": {
-          "ui:order": [
-            "mode",
-            "username",
-            "password"
-          ],
-          "mode": {
-            "ui:widget": "hidden"
-          },
-          "password": {
-            "ui:widget": "password"
-          }
+        "mode": {
+          "ui:widget": "hidden"
+        },
+        "password": {
+          "ui:widget": "password"
         },
         "tls": {
           "ui:order": [

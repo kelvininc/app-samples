@@ -18,14 +18,16 @@ listeners:
       # username: mqtt-client
       # password: change-me
 
-  # Encrypted listener. Uncomment and paste real PEM content to try it;
-  # all three certificates are required or the broker refuses to start.
+  # Encrypted listener. mode is DISABLED | ANON_TLS | AUTH_TLS. Uncomment and
+  # paste real PEM content to try it; all three certificates are required or
+  # the broker refuses to start.
+  secure:
+    mode: DISABLED
   # secure:
+  #   mode: AUTH_TLS
   #   port: 28883
-  #   auth:
-  #     mode: PASSWORD
-  #     username: mqtt-client
-  #     password: change-me
+  #   username: mqtt-client
+  #   password: change-me
   #   tls:
   #     ca_crt: |
   #       -----BEGIN CERTIFICATE-----
