@@ -27,6 +27,12 @@ pip-wheel-metadata/
 venv/
 *.whl
 
+# app (build context needs only the entrypoint)
+README.md
+app.yaml
+ui_schemas/
+example-config.yaml
+
 # retain ignore files
 !.*ignore
 !build/datatype/

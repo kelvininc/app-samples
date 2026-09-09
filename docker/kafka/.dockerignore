@@ -1,0 +1,16 @@
+# general
+.DS_Store
+.git/
+Dockerfile
+build/
+*.swp
+*.swo
+
+# app
+README.md
+app.yaml
+ui_schemas/
+example-config.yaml
+
+# retain ignore files
+!.*ignore

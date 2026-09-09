@@ -1,0 +1,48 @@
+# Example application configuration for local testing.
+#
+#   docker build -t mqtt-mosquitto:local .
+#   docker run --rm -p 21883:21883 \
+#     -v "$PWD/example-config.yaml:/opt/kelvin/share/config.yaml" \
+#     mqtt-mosquitto:local
+#
+# On Kelvin this file is the deployment configuration; the YAML root mapping is
+# the configuration itself, with no wrapper key.
+#
+# Each listener is one flat block keyed by mode. To switch a listener, delete
+# its active lines and uncomment the alternative directly below them; every
+# alternative is a drop-in replacement at the same indentation.
+#
+# Accounts are broker-wide, so the two listeners must not share a username.
+
+listeners:
+  # Unencrypted listener. mode is DISABLED | ANONYMOUS | PASSWORD.
+  plain:
+    mode: ANONYMOUS
+    port: 21883
+    # mode: PASSWORD
+    # port: 21883
+    # username: mqtt-plain-client
+    # password: change-me
+
+  # Encrypted listener. mode is DISABLED | ANON_TLS | AUTH_TLS. Paste real PEM
+  # content to try it; all three certificates are required or the broker refuses
+  # to start. Use ANON_TLS instead of AUTH_TLS to drop username and password.
+  secure:
+    mode: DISABLED
+    # mode: AUTH_TLS
+    # port: 28883
+    # username: mqtt-secure-client
+    # password: change-me
+    # tls:
+    #   ca_crt: |
+    #     -----BEGIN CERTIFICATE-----
+    #     ...
+    #     -----END CERTIFICATE-----
+    #   tls_crt: |
+    #     -----BEGIN CERTIFICATE-----
+    #     ...
+    #     -----END CERTIFICATE-----
+    #   tls_key: |
+    #     -----BEGIN PRIVATE KEY-----
+    #     ...
+    #     -----END PRIVATE KEY-----

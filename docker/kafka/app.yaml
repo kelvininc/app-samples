@@ -1,0 +1,72 @@
+# yaml-language-server: $schema=https://apps.kelvininc.com/schemas/kelvin/5.0.0/docker.json
+
+# YAML (Structure) Spec Version
+spec_version: 5.0.0
+# Type
+type: docker
+
+# Info
+name: kafka
+title: Kafka Broker
+description: Single-node Apache Kafka broker (KRaft) with optional SASL/PLAIN authentication and TLS.
+version: 1.1.3
+
+# Capabilities
+flags:
+  enable_runtime_update:
+    # Broker settings require a restart; configuration changes apply on redeploy
+    configuration: false
+
+# UI JSON schemas (Optional)
+ui_schemas:
+  # Application Configuration Schema
+  configuration: "ui_schemas/configuration.json"
+
+# Defaults (Runtime/Deployment)
+defaults:
+  configuration:
+    listener:
+      port: 9092                          # keep in sync with the service port in system.ports
+      advertised_host: ""                 # empty = the workload name (correct for in-cluster clients)
+    # External access is off unless you add a host-type port in system.ports AND set both
+    # fields below. The port must match the host port; the address must be the node address,
+    # which you can find under Cluster -> Services after the host port is deployed.
+    #   external:
+    #     port: 9094
+    #     advertised_host: "10.0.0.10"
+    security:
+      protocol: PLAINTEXT                 # PLAINTEXT | SSL | SASL_PLAINTEXT | SASL_SSL
+      # To require authentication, pick a SASL_* protocol and add the matching sasl block:
+      #   sasl:
+      #     username: "<% secrets.kafka-user %>"
+      #     password: "<% secrets.kafka-password %>"
+      # For TLS, pick SSL or SASL_SSL and wire all three PEMs to secrets. The private key
+      # must be PKCS#8 (-----BEGIN PRIVATE KEY-----); see README.md for the conversion.
+      #   tls:
+      #     ca_crt: "<% secrets.kafka-ssl-ca-crt %>"
+      #     tls_crt: "<% secrets.kafka-ssl-tls-crt %>"
+      #     tls_key: "<% secrets.kafka-ssl-tls-key %>"
+    jvm:
+      heap_opts: "-Xmx512m -Xms512m"      # size the workload memory limit above this; 1 GB floor
+    # Any broker property this app does not wrap, applied verbatim to server.properties.
+    # Do not set log.dirs; it is pinned to the persistent volume.
+    #   extra_properties:
+    #     log.retention.hours: "48"
+    extra_properties: {}
+  system:
+    volumes:
+      - name: kafka-data
+        type: persistent
+        target: /var/lib/kafka/data
+    ports:
+      # Other workloads reach the broker at <workload-name>:9092.
+      # For clients outside the cluster, add a host-type port on the
+      # deployment and set the external.* keys above (see README.md):
+      #   - name: kafka-external
+      #     type: host
+      #     host:
+      #       port: 9094
+      - name: kafka-internal
+        type: service
+        service:
+          port: 9092

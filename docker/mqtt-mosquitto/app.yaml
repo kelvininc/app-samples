@@ -7,9 +7,9 @@ type: docker
 
 # Info
 name: mqtt-mosquitto
-title: MQTT Mosquitto
-description: Run MQTT Mosquitto broker and configure it using multiple environment variables.
-version: 1.0.0
+title: MQTT Mosquitto Broker
+description: This Docker application runs an MQTT Mosquitto broker, configurable via the application configuration.
+version: 2.2.0
 
 # Capabilities
 flags:
@@ -25,7 +25,32 @@ ui_schemas:
 # Defaults (Runtime/Deployment)
 defaults:
   # Application Configuration Default Values
-  configuration: {}
+  configuration:
+    # At least one listener must be enabled or the broker exits. Both modes are
+    # seeded here: a oneOf branch selector only writes its discriminator when the
+    # containing object is already present in the defaults.
+    listeners:
+      plain:
+        mode: ANONYMOUS                   # DISABLED | ANONYMOUS | PASSWORD
+        port: 21883                       # keep in sync with the service port in system.ports
+        # To require authentication, set mode: PASSWORD and add:
+        #   username: "<% secrets.mqtt-user %>"
+        #   password: "<% secrets.mqtt-password %>"
+      secure:
+        mode: DISABLED                    # DISABLED | ANON_TLS | AUTH_TLS
+      # To enable the TLS listener, set mode to ANON_TLS (or AUTH_TLS for
+      # credentials) and supply the port plus all three certificates. Add the
+      # matching service port in system.ports; 28883 is already declared below.
+      # Accounts are broker-wide, so the two listeners need distinct usernames.
+      #   secure:
+      #     mode: AUTH_TLS
+      #     port: 28883
+      #     username: "<% secrets.mqtt-ssl-user %>"
+      #     password: "<% secrets.mqtt-ssl-password %>"
+      #     tls:
+      #       ca_crt: "<% secrets.mqtt-ssl-ca-crt %>"
+      #       tls_crt: "<% secrets.mqtt-ssl-tls-crt %>"
+      #       tls_key: "<% secrets.mqtt-ssl-tls-key %>"
 
   # System Settings
   system:
@@ -34,6 +59,13 @@ defaults:
         type: persistent
         target: /mosquitto/data
     ports:
+      # Other workloads reach the broker at <workload-name>:<port>.
+      # For clients outside the cluster, add host-type ports on the
+      # deployment (see README.md):
+      #   - name: mqtt-insecure
+      #     type: host
+      #     host:
+      #       port: 21883
       - name: cluster-mqtt-insecure
         type: service
         service:
@@ -42,30 +74,3 @@ defaults:
         type: service
         service:
           port: 28883
-      - name: mqtt-insecure
-        type: host
-        host:
-          port: 21883
-      - name: mqtt-secure
-        type: host
-        host:
-          port: 28883
-    environment_vars:
-      - name: MQTT_PORT
-        value: "21883"
-      - name: MQTT_USER
-        value: "<% secrets.mqttssl-user %>"
-      - name: MQTT_PASSWORD
-        value: "<% secrets.mqttssl-password %>"
-      - name: MQTT_SSL_PORT
-        value: "28883"
-      - name: MQTT_SSL_USER
-        value: "<% secrets.mqttssl-ssl-user %>"
-      - name: MQTT_SSL_PASSWORD
-        value: "<% secrets.mqttssl-ssl-password %>"
-      - name: MQTT_SSL_CA_CRT
-        value: "<% secrets.mqttssl-ssl-ca-crt %>"
-      - name: "MQTT_SSL_TLS_CRT"
-        value: "<% secrets.mqttssl-ssl-tls-crt %>"
-      - name: "MQTT_SSL_TLS_KEY"
-        value: "<% secrets.mqttssl-ssl-tls-key %>"

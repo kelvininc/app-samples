@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=https://apps.kelvininc.com/schemas/kelvin/5.0.0/docker.json
+
+# YAML (Structure) Spec Version
+spec_version: 5.0.0
+# Type
+type: docker
+
+# Info
+name: redis
+title: Redis Server
+description: Single-node Redis server with optional authentication and TLS.
+version: 1.2.0
+
+# Capabilities
+flags:
+  enable_runtime_update:
+    # Server settings require a restart; configuration changes apply on redeploy
+    configuration: false
+
+# UI JSON schemas (Optional)
+ui_schemas:
+  # Application Configuration Schema
+  configuration: "ui_schemas/configuration.json"
+
+# Defaults (Runtime/Deployment)
+defaults:
+  # Application Configuration Default Values
+  configuration:
+    port: 6379                            # keep in sync with the service port in system.ports
+    memory:
+      maxmemory: 256mb                    # keep below the workload memory limit; Redis needs
+                                          # headroom during snapshots
+      maxmemory_policy: noeviction        # noeviction | allkeys-lru | allkeys-lfu
+                                          # | volatile-lru | volatile-ttl
+    persistence:
+      appendonly: false                   # true adds AOF on top of the default RDB snapshots
+    security:
+      mode: PLAINTEXT                     # PLAINTEXT | PASSWORD | TLS | PASSWORD_TLS
+      # To require authentication, pick PASSWORD or PASSWORD_TLS and add:
+      #   password: "<% secrets.redis-password %>"
+      # For TLS, pick TLS or PASSWORD_TLS and wire all three PEMs to secrets. TLS is
+      # exclusive: the plaintext listener is disabled and `port` becomes the TLS port.
+      #   tls:
+      #     ca_crt: "<% secrets.redis-ssl-ca-crt %>"
+      #     tls_crt: "<% secrets.redis-ssl-tls-crt %>"
+      #     tls_key: "<% secrets.redis-ssl-tls-key %>"
+    extra_args: ""
+
+  # System Settings
+  system:
+    volumes:
+      # RDB snapshots (and AOF when enabled); must survive restarts
+      - name: redis-data
+        type: persistent
+        target: /data
+    ports:
+      # Other workloads reach the server at <workload-name>:6379.
+      # For clients outside the cluster, add a host-type port on the
+      # deployment (see README.md):
+      #   - name: redis-external
+      #     type: host
+      #     host:
+      #       port: 6379
+      - name: redis
+        type: service
+        service:
+          port: 6379

@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Redis Configuration",
+  "description": "Listener, memory, persistence and security settings for the single-node server.",
+  "type": "object",
+  "properties": {
+    "port": {
+      "type": "integer",
+      "title": "Port",
+      "description": "Listener port. Keep in sync with the service port on the deployment.",
+      "minimum": 1,
+      "maximum": 65535,
+      "default": 6379
+    },
+    "memory": {
+      "type": "object",
+      "title": "Memory",
+      "description": "Data memory cap and what the server does when it is reached.",
+      "properties": {
+        "maxmemory": {
+          "type": "string",
+          "title": "Max Memory",
+          "description": "Cap for data, e.g. 256mb or 1gb. Keep below the workload memory limit; Redis needs headroom during snapshots.",
+          "minLength": 1,
+          "default": "256mb"
+        },
+        "maxmemory_policy": {
+          "type": "string",
+          "title": "Max Memory Policy",
+          "description": "Behaviour at the cap. noeviction fails writes; allkeys-lru suits cache-style usage.",
+          "enum": [
+            "noeviction",
+            "allkeys-lru",
+            "allkeys-lfu",
+            "volatile-lru",
+            "volatile-ttl"
+          ],
+          "default": "noeviction"
+        }
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "title": "Persistence",
+      "description": "On-disk durability on the redis-data volume.",
+      "properties": {
+        "appendonly": {
+          "type": "boolean",
+          "title": "Append-Only File (AOF)",
+          "description": "Adds AOF on top of the default RDB snapshots: better durability, more disk and I/O.",
+          "default": false
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "title": "Security",
+      "description": "Authentication and transport encryption. TLS is exclusive: it disables the plaintext listener and Port becomes the TLS port.",
+      "oneOf": [
+        {
+          "title": "Plaintext",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "title": "Mode",
+              "description": "PASSWORD requires AUTH; TLS encrypts the listener.",
+              "const": "PLAINTEXT",
+              "default": "PLAINTEXT"
+            }
+          },
+          "required": [
+            "mode"
+          ]
+        },
+        {
+          "title": "Password",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "title": "Mode",
+              "description": "PASSWORD requires AUTH; TLS encrypts the listener.",
+              "const": "PASSWORD",
+              "default": "PASSWORD"
+            },
+            "password": {
+              "type": "string",
+              "title": "Password",
+              "description": "Clients must send AUTH with this value. Wire it to a secret.",
+              "minLength": 1,
+              "default": "<% secrets.redis-password %>"
+            }
+          },
+          "required": [
+            "mode",
+            "password"
+          ]
+        },
+        {
+          "title": "TLS",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "title": "Mode",
+              "description": "PASSWORD requires AUTH; TLS encrypts the listener.",
+              "const": "TLS",
+              "default": "TLS"
+            },
+            "tls": {
+              "type": "object",
+              "title": "TLS",
+              "description": "PEM content for the TLS listener. All three are required; wire them to secrets.",
+              "properties": {
+                "ca_crt": {
+                  "type": "string",
+                  "title": "CA Certificate",
+                  "description": "PEM CA bundle that signed the server certificate.",
+                  "minLength": 1,
+                  "default": "<% secrets.redis-ssl-ca-crt %>"
+                },
+                "tls_crt": {
+                  "type": "string",
+                  "title": "Server Certificate",
+                  "description": "PEM server certificate presented to clients.",
+                  "minLength": 1,
+                  "default": "<% secrets.redis-ssl-tls-crt %>"
+                },
+                "tls_key": {
+                  "type": "string",
+                  "title": "Server Key",
+                  "description": "PEM private key for the server certificate.",
+                  "minLength": 1,
+                  "default": "<% secrets.redis-ssl-tls-key %>"
+                }
+              },
+              "required": [
+                "ca_crt",
+                "tls_crt",
+                "tls_key"
+              ]
+            }
+          },
+          "required": [
+            "mode",
+            "tls"
+          ]
+        },
+        {
+          "title": "Password over TLS",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "title": "Mode",
+              "description": "PASSWORD requires AUTH; TLS encrypts the listener.",
+              "const": "PASSWORD_TLS",
+              "default": "PASSWORD_TLS"
+            },
+            "password": {
+              "type": "string",
+              "title": "Password",
+              "description": "Clients must send AUTH with this value. Wire it to a secret.",
+              "minLength": 1,
+              "default": "<% secrets.redis-password %>"
+            },
+            "tls": {
+              "type": "object",
+              "title": "TLS",
+              "description": "PEM content for the TLS listener. All three are required; wire them to secrets.",
+              "properties": {
+                "ca_crt": {
+                  "type": "string",
+                  "title": "CA Certificate",
+                  "description": "PEM CA bundle that signed the server certificate.",
+                  "minLength": 1,
+                  "default": "<% secrets.redis-ssl-ca-crt %>"
+                },
+                "tls_crt": {
+                  "type": "string",
+                  "title": "Server Certificate",
+                  "description": "PEM server certificate presented to clients.",
+                  "minLength": 1,
+                  "default": "<% secrets.redis-ssl-tls-crt %>"
+                },
+                "tls_key": {
+                  "type": "string",
+                  "title": "Server Key",
+                  "description": "PEM private key for the server certificate.",
+                  "minLength": 1,
+                  "default": "<% secrets.redis-ssl-tls-key %>"
+                }
+              },
+              "required": [
+                "ca_crt",
+                "tls_crt",
+                "tls_key"
+              ]
+            }
+          },
+          "required": [
+            "mode",
+            "password",
+            "tls"
+          ]
+        }
+      ]
+    },
+    "extra_args": {
+      "type": "string",
+      "title": "Extra Arguments",
+      "description": "Extra redis-server arguments appended verbatim, e.g. --loglevel debug. They are appended last and therefore override the managed settings above (that is how --tls-auth-clients yes works, but it also means --requirepass '' or --port disables the security settings). Split on whitespace only: quotes are kept as literal characters, so arguments containing spaces or empty-string values such as --save '' cannot be expressed here. Do not set --dir; it is pinned to the persistent volume.",
+      "default": ""
+    }
+  },
+  "required": [],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "port",
+      "memory",
+      "persistence",
+      "security",
+      "extra_args"
+    ],
+    "memory": {
+      "ui:order": [
+        "maxmemory",
+        "maxmemory_policy"
+      ]
+    },
+    "persistence": {
+      "ui:order": [
+        "appendonly"
+      ]
+    },
+    "security": {
+      "ui:order": [
+        "mode",
+        "password",
+        "tls"
+      ],
+      "mode": {
+        "ui:widget": "hidden"
+      },
+      "password": {
+        "ui:widget": "password"
+      },
+      "tls": {
+        "ui:order": [
+          "ca_crt",
+          "tls_crt",
+          "tls_key"
+        ],
+        "ca_crt": {
+          "ui:widget": "textarea"
+        },
+        "tls_crt": {
+          "ui:widget": "textarea"
+        },
+        "tls_key": {
+          "ui:widget": "textarea"
+        }
+      }
+    }
+  }
+}

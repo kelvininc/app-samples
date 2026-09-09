@@ -1,0 +1,18 @@
+# general
+.DS_Store
+.git/
+Dockerfile
+build/
+*.swp
+*.swo
+
+# app
+README.md
+app.yaml
+ui_schemas/
+
+# retain ignore files
+!.*ignore
+
+# local testing only
+example-config.yaml

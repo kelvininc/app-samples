@@ -1,0 +1,338 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Kafka Broker Configuration",
+  "description": "Listener addressing, security, and broker settings for the single-node broker.",
+  "type": "object",
+  "properties": {
+    "listener": {
+      "type": "object",
+      "title": "Internal Listener",
+      "description": "The always-on listener other workloads in the cluster connect to.",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "title": "Port",
+          "description": "Client listener port. Keep in sync with the service port under System Settings.",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 9092
+        },
+        "advertised_host": {
+          "type": "string",
+          "title": "Advertised Host",
+          "description": "Address advertised to in-cluster clients. Empty uses the workload name, which is the service DNS name and the right answer for in-cluster clients."
+        }
+      }
+    },
+    "external": {
+      "type": "object",
+      "title": "External Access",
+      "description": "Optional second listener for clients outside the cluster. Needs a host-type port under System Settings; set both fields or neither. The advertised host is the node address, which you can find under Cluster -> Services once the host port is deployed.",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "title": "External Port",
+          "description": "Port for clients outside the cluster. Must match the host port declared under System Settings.",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "advertised_host": {
+          "type": "string",
+          "title": "External Advertised Host",
+          "description": "Node address external clients can reach. Find it under Cluster -> Services after the host port is deployed.",
+          "minLength": 1
+        }
+      },
+      "dependentRequired": {
+        "port": [
+          "advertised_host"
+        ],
+        "advertised_host": [
+          "port"
+        ]
+      }
+    },
+    "security": {
+      "type": "object",
+      "title": "Security",
+      "description": "Authentication and encryption applied to every client listener. SSL and SASL_SSL encrypt the connection but do not require a client certificate; the broker accepts any client unless you also set extra_properties: {\"ssl.client.auth\": \"required\"} for mTLS.",
+      "oneOf": [
+        {
+          "title": "Plaintext",
+          "properties": {
+            "protocol": {
+              "type": "string",
+              "title": "Protocol",
+              "description": "SASL_* enables SASL/PLAIN; *_SSL enables TLS.",
+              "const": "PLAINTEXT",
+              "default": "PLAINTEXT"
+            }
+          },
+          "required": [
+            "protocol"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "title": "TLS",
+          "properties": {
+            "protocol": {
+              "type": "string",
+              "title": "Protocol",
+              "description": "SASL_* enables SASL/PLAIN; *_SSL enables TLS.",
+              "const": "SSL",
+              "default": "SSL"
+            },
+            "tls": {
+              "type": "object",
+              "title": "TLS",
+              "description": "PEM content, wired to secrets on deployment. All three are required. TLS encrypts the connection; it does not authenticate the client. Client certificates are not required by default; add extra_properties: {\"ssl.client.auth\": \"required\"} for mTLS.",
+              "properties": {
+                "ca_crt": {
+                  "type": "string",
+                  "title": "CA Certificate",
+                  "description": "CA certificate that signed the server certificate (PEM).",
+                  "default": "<% secrets.kafka-ssl-ca-crt %>",
+                  "minLength": 1
+                },
+                "tls_crt": {
+                  "type": "string",
+                  "title": "Server Certificate",
+                  "description": "Broker server certificate (PEM).",
+                  "default": "<% secrets.kafka-ssl-tls-crt %>",
+                  "minLength": 1
+                },
+                "tls_key": {
+                  "type": "string",
+                  "title": "Server Private Key",
+                  "description": "Broker private key in PKCS#8 PEM format (-----BEGIN PRIVATE KEY-----).",
+                  "default": "<% secrets.kafka-ssl-tls-key %>",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "ca_crt",
+                "tls_crt",
+                "tls_key"
+              ]
+            }
+          },
+          "required": [
+            "protocol",
+            "tls"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "title": "SASL",
+          "properties": {
+            "protocol": {
+              "type": "string",
+              "title": "Protocol",
+              "description": "SASL_* enables SASL/PLAIN; *_SSL enables TLS.",
+              "const": "SASL_PLAINTEXT",
+              "default": "SASL_PLAINTEXT"
+            },
+            "sasl": {
+              "type": "object",
+              "title": "SASL Authentication",
+              "description": "SASL/PLAIN credentials the broker accepts. Wire both to secrets.",
+              "properties": {
+                "username": {
+                  "type": "string",
+                  "title": "Username",
+                  "description": "The single username clients authenticate with. Letters, digits, '.', '_', '@' and '-' only: it is used verbatim as a JAAS option name in the broker's login configuration. Either a secret reference or a literal limited to letters, digits, dot, underscore, @ and hyphen \u2014 it is also used unquoted as the JAAS user_<name> option, so other characters would corrupt the broker config.",
+                  "default": "<% secrets.kafka-user %>",
+                  "minLength": 1,
+                  "pattern": "^(<%\\s*secrets\\.[A-Za-z0-9._-]+\\s*%>|[A-Za-z0-9._@-]+)$"
+                },
+                "password": {
+                  "type": "string",
+                  "title": "Password",
+                  "description": "Password for that username. It goes into a quoted JAAS string, so it cannot contain a double quote, a backslash or a newline.",
+                  "default": "<% secrets.kafka-password %>",
+                  "minLength": 1,
+                  "pattern": "^[^\"\\\\\\r\\n]+$"
+                }
+              },
+              "required": [
+                "username",
+                "password"
+              ]
+            }
+          },
+          "required": [
+            "protocol",
+            "sasl"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "title": "SASL over TLS",
+          "properties": {
+            "protocol": {
+              "type": "string",
+              "title": "Protocol",
+              "description": "SASL_* enables SASL/PLAIN; *_SSL enables TLS.",
+              "const": "SASL_SSL",
+              "default": "SASL_SSL"
+            },
+            "sasl": {
+              "type": "object",
+              "title": "SASL Authentication",
+              "description": "SASL/PLAIN credentials the broker accepts. Wire both to secrets.",
+              "properties": {
+                "username": {
+                  "type": "string",
+                  "title": "Username",
+                  "description": "The single username clients authenticate with. Letters, digits, '.', '_', '@' and '-' only: it is used verbatim as a JAAS option name in the broker's login configuration. Either a secret reference or a literal limited to letters, digits, dot, underscore, @ and hyphen \u2014 it is also used unquoted as the JAAS user_<name> option, so other characters would corrupt the broker config.",
+                  "default": "<% secrets.kafka-user %>",
+                  "minLength": 1,
+                  "pattern": "^(<%\\s*secrets\\.[A-Za-z0-9._-]+\\s*%>|[A-Za-z0-9._@-]+)$"
+                },
+                "password": {
+                  "type": "string",
+                  "title": "Password",
+                  "description": "Password for that username. It goes into a quoted JAAS string, so it cannot contain a double quote, a backslash or a newline.",
+                  "default": "<% secrets.kafka-password %>",
+                  "minLength": 1,
+                  "pattern": "^[^\"\\\\\\r\\n]+$"
+                }
+              },
+              "required": [
+                "username",
+                "password"
+              ]
+            },
+            "tls": {
+              "type": "object",
+              "title": "TLS",
+              "description": "PEM content, wired to secrets on deployment. All three are required. TLS encrypts the connection; it does not authenticate the client. Client certificates are not required by default; add extra_properties: {\"ssl.client.auth\": \"required\"} for mTLS.",
+              "properties": {
+                "ca_crt": {
+                  "type": "string",
+                  "title": "CA Certificate",
+                  "description": "CA certificate that signed the server certificate (PEM).",
+                  "default": "<% secrets.kafka-ssl-ca-crt %>",
+                  "minLength": 1
+                },
+                "tls_crt": {
+                  "type": "string",
+                  "title": "Server Certificate",
+                  "description": "Broker server certificate (PEM).",
+                  "default": "<% secrets.kafka-ssl-tls-crt %>",
+                  "minLength": 1
+                },
+                "tls_key": {
+                  "type": "string",
+                  "title": "Server Private Key",
+                  "description": "Broker private key in PKCS#8 PEM format (-----BEGIN PRIVATE KEY-----).",
+                  "default": "<% secrets.kafka-ssl-tls-key %>",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "ca_crt",
+                "tls_crt",
+                "tls_key"
+              ]
+            }
+          },
+          "required": [
+            "protocol",
+            "sasl",
+            "tls"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "jvm": {
+      "type": "object",
+      "title": "JVM",
+      "description": "Java runtime sizing for the broker process.",
+      "properties": {
+        "heap_opts": {
+          "type": "string",
+          "title": "Heap Options",
+          "description": "JVM heap flags. Size the workload memory limit above the heap; 1 GB is a comfortable floor.",
+          "default": "-Xmx512m -Xms512m"
+        }
+      }
+    },
+    "extra_properties": {
+      "type": "object",
+      "title": "Extra Broker Properties",
+      "description": "Any server.properties entry this app does not wrap, applied verbatim (e.g. log.retention.hours = 48). Managed settings win on conflict; do not set log.dirs, it is pinned to the persistent volume. Names take letters, digits, '.' and '_'; values are single-line strings.",
+      "propertyNames": {
+        "pattern": "^[A-Za-z0-9._]+$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[^\\r\\n]*$"
+      }
+    }
+  },
+  "required": [],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "listener",
+      "external",
+      "security",
+      "jvm",
+      "extra_properties"
+    ],
+    "listener": {
+      "ui:order": [
+        "port",
+        "advertised_host"
+      ]
+    },
+    "external": {
+      "ui:order": [
+        "port",
+        "advertised_host"
+      ]
+    },
+    "security": {
+      "ui:order": [
+        "protocol",
+        "sasl",
+        "tls"
+      ],
+      "protocol": {
+        "ui:widget": "hidden"
+      },
+      "sasl": {
+        "ui:order": [
+          "username",
+          "password"
+        ],
+        "password": {
+          "ui:widget": "password"
+        }
+      },
+      "tls": {
+        "ui:order": [
+          "ca_crt",
+          "tls_crt",
+          "tls_key"
+        ],
+        "ca_crt": {
+          "ui:widget": "textarea"
+        },
+        "tls_crt": {
+          "ui:widget": "textarea"
+        },
+        "tls_key": {
+          "ui:widget": "textarea"
+        }
+      }
+    },
+    "jvm": {
+      "ui:order": [
+        "heap_opts"
+      ]
+    }
+  }
+}
