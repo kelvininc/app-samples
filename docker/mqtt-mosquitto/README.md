@@ -1,7 +1,7 @@
 # MQTT Mosquitto with optional SSL
 This is a Docker application that runs an MQTT Mosquitto broker with SSL (optional).
 
-By default the app deploys with a single insecure listener on port **21883** and anonymous access; no secrets or extra configuration required. Authentication and the SSL listener are opt-in: add the corresponding environment variables on the deployment (commented examples in `app.yaml`, reference below).
+By default the app deploys with a single plain listener on port **21883** and anonymous access; no secrets or extra configuration required. Authentication and the SSL listener are opt-in through the application configuration (commented examples in `app.yaml`, reference below).
 
 ## Connecting
 Other workloads on the same cluster reach the broker at `<workload-name>:21883` (the cluster service declared in `app.yaml`). The broker is not reachable from outside the cluster by default.
@@ -29,44 +29,82 @@ This is a Docker application (a Mosquitto broker plus an `entrypoint.sh`); it ha
     ```
     kelvin app upload
     ```
-2. **Deploy** it. The default deployment needs nothing else. To enable authentication or SSL, store the sensitive values as Secrets and reference them as environment variables on the deployment.
+2. **Deploy** it. The default deployment needs nothing else. To enable authentication or SSL, store the sensitive values as Secrets and reference them from the configuration.
 
 ```
-kelvin secret create mqttssl-user --value "<username>"
-kelvin secret create mqttssl-password --value "<password>"
-kelvin secret create mqttssl-ssl-user --value "<ssl_username>"
-kelvin secret create mqttssl-ssl-password --value "<ssl_password>"
-kelvin secret create mqttssl-ssl-ca-crt --value "$(cat ca.crt)"
-kelvin secret create mqttssl-ssl-tls-crt --value "$(cat tls.crt)"
-kelvin secret create mqttssl-ssl-tls-key --value "$(cat tls.key)"
+kelvin secret create mqtt-user --value "<username>"
+kelvin secret create mqtt-password --value "<password>"
+kelvin secret create mqtt-ssl-user --value "<ssl_username>"
+kelvin secret create mqtt-ssl-password --value "<ssl_password>"
+kelvin secret create mqtt-ssl-ca-crt --value "$(cat ca.crt)"
+kelvin secret create mqtt-ssl-tls-crt --value "$(cat tls.crt)"
+kelvin secret create mqtt-ssl-tls-key --value "$(cat tls.key)"
 ```
 
-## How to setup the MQTT Mosquitto broker using environment variables
-You can configure the MQTT Mosquitto broker using the following environment variables:
+## Configuration
+Kelvin mounts the deployment configuration at `/opt/kelvin/share/config.yaml`; the YAML root mapping is the configuration. The deploy UI renders it from `ui_schemas/configuration.json`.
 
-### Insecure MQTT (without SSL):
-- `MQTT_PORT`: The port for the MQTT broker (default: **21883**).
-- `MQTT_USER`: The username for the MQTT broker.
-- `MQTT_PASSWORD`: The password for the MQTT broker.
+```yaml
+listeners:
+  plain:                                        # plain (unencrypted) listener
+    port: 21883                                 # omit to disable this listener
+    auth:
+      mode: PASSWORD                            # ANONYMOUS (default) | PASSWORD
+      username: "<% secrets.mqtt-user %>"       # required when mode is PASSWORD
+      password: "<% secrets.mqtt-password %>"   # required when mode is PASSWORD
+  secure:                                       # TLS listener
+    port: 28883                                 # omit to disable this listener
+    auth:
+      mode: PASSWORD                            # ANONYMOUS (default) | PASSWORD
+      username: "<% secrets.mqtt-ssl-user %>"
+      password: "<% secrets.mqtt-ssl-password %>"
+    tls:                                        # all three required with secure.port
+      ca_crt: "<% secrets.mqtt-ssl-ca-crt %>"
+      tls_crt: "<% secrets.mqtt-ssl-tls-crt %>"
+      tls_key: "<% secrets.mqtt-ssl-tls-key %>"
+```
 
 **Notes:**
-- If `MQTT_PORT` is not defined or invalid, the broker will not start the insecure MQTT listener.
-- If you set the `MQTT_USER` and `MQTT_PASSWORD` environment variables, the broker will require authentication for connections. Otherwise, it will allow anonymous connections.
+- Enable at least one listener. With no port on either, the broker exits with an error.
+- A listener with no `port` is disabled. A `port` that is not a number is an error, not a silently dropped listener.
+- `auth.mode` defaults to `ANONYMOUS`. With `PASSWORD`, both `username` and `password` are required.
+- Setting `listeners.secure.port` requires all three certificates. The broker refuses to start if any is missing; it never falls back to an unencrypted secure listener.
+- Credentials are broker-wide. Mosquitto's `per_listener_settings` is deprecated in 2.1 and removed in 3.0, so accounts from both listeners share one password file and each listener only decides whether anonymous clients are accepted. A user configured on one listener can authenticate on the other.
+- Keep the ports in sync with the `service` (and any `host`) ports declared under `system.ports`.
 
-### Secure MQTT (with SSL):
-- `MQTT_SSL_PORT`: The SSL port for the MQTT broker (not set by default; use **28883** to match the port exposed in `app.yaml`).
-- `MQTT_SSL_USER`: The username for the MQTT broker with SSL.
-- `MQTT_SSL_PASSWORD`: The password for the MQTT broker with SSL.
-- `MQTT_SSL_CA_CRT`: The CA certificate for SSL.
-- `MQTT_SSL_TLS_CRT`: The TLS certificate for SSL.
-- `MQTT_SSL_TLS_KEY`: The TLS key for SSL.
+## Local testing
+```
+docker build -t mqtt-mosquitto:local .
+docker run --rm -p 21883:21883 \
+  -v "$PWD/example-config.yaml:/opt/kelvin/share/config.yaml" \
+  mqtt-mosquitto:local
+```
 
-**Notes:**
-- If `MQTT_SSL_PORT` is not defined or invalid, the broker will not start the secure (SSL) MQTT listener.
-- If you set the `MQTT_SSL_USER` and `MQTT_SSL_PASSWORD` environment variables, the broker will require authentication for SSL connections. Otherwise, it will allow anonymous SSL connections.
-- The `MQTT_SSL_CA_CRT`, `MQTT_SSL_TLS_CRT`, and `MQTT_SSL_TLS_KEY` environment variables are required for SSL to work. Otherwise, the broker will listen without SSL.
+`example-config.yaml` starts an anonymous plain listener on 21883 and carries commented blocks for password auth and TLS.
+
+## Upgrading from 1.x
+Version 2.0.0 replaces the `MQTT_*` environment variables with the application configuration. There is no fallback: if any of `MQTT_PORT`, `MQTT_USER`, `MQTT_PASSWORD`, `MQTT_SSL_PORT`, `MQTT_SSL_USER`, `MQTT_SSL_PASSWORD`, `MQTT_SSL_CA_CRT`, `MQTT_SSL_TLS_CRT` or `MQTT_SSL_TLS_KEY` is still set, the container names it and exits non-zero rather than starting a broker that quietly lost its authentication.
+
+To upgrade, drop `environment_vars` from the deployment and move each value into `configuration`:
+
+| 1.x environment variable | 2.0.0 configuration key |
+| --- | --- |
+| `MQTT_PORT` | `listeners.plain.port` |
+| `MQTT_USER` | `listeners.plain.auth.username` (with `auth.mode: PASSWORD`) |
+| `MQTT_PASSWORD` | `listeners.plain.auth.password` (with `auth.mode: PASSWORD`) |
+| `MQTT_SSL_PORT` | `listeners.secure.port` |
+| `MQTT_SSL_USER` | `listeners.secure.auth.username` (with `auth.mode: PASSWORD`) |
+| `MQTT_SSL_PASSWORD` | `listeners.secure.auth.password` (with `auth.mode: PASSWORD`) |
+| `MQTT_SSL_CA_CRT` | `listeners.secure.tls.ca_crt` |
+| `MQTT_SSL_TLS_CRT` | `listeners.secure.tls.tls_crt` |
+| `MQTT_SSL_TLS_KEY` | `listeners.secure.tls.tls_key` |
+
+Also in 2.0.0:
+- The example secret names lose the `mqttssl-` prefix: `mqttssl-user` becomes `mqtt-user`, `mqttssl-ssl-ca-crt` becomes `mqtt-ssl-ca-crt`, and so on. Existing secrets keep working; only the names in `app.yaml` and this README changed.
+- A secure listener with incomplete certificates is an error. In 1.x it started unencrypted.
+- The generated `mosquitto.conf` uses `listener_allow_anonymous` instead of `per_listener_settings` plus `allow_anonymous`, so the deprecation warnings on every start are gone.
 
 ### `entrypoint.sh` script
-The `entrypoint.sh` script is responsible for generating the Mosquitto configuration file based on the provided environment variables and starting the Mosquitto broker. It checks for the presence of the necessary environment variables and configures the broker accordingly. If neither insecure nor secure MQTT is configured, the script will exit with an error message.
+The `entrypoint.sh` script reads the configuration with `yq`, generates the Mosquitto configuration file, and starts the broker. It validates the configuration first and exits with an error message when a listener is misconfigured or when no listener is enabled.
 
 The script can be changed to fit your needs.

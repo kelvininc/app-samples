@@ -1,0 +1,41 @@
+# Example application configuration for local testing.
+#
+#   docker build -t mqtt-mosquitto:local .
+#   docker run --rm -p 21883:21883 \
+#     -v "$PWD/example-config.yaml:/opt/kelvin/share/config.yaml" \
+#     mqtt-mosquitto:local
+#
+# On Kelvin this file is the deployment configuration; the YAML root mapping is
+# the configuration itself, with no wrapper key.
+
+listeners:
+  # Unencrypted listener. Remove this block to run TLS only.
+  plain:
+    port: 21883
+    auth:
+      mode: ANONYMOUS
+      # mode: PASSWORD
+      # username: mqtt-client
+      # password: change-me
+
+  # Encrypted listener. Uncomment and paste real PEM content to try it;
+  # all three certificates are required or the broker refuses to start.
+  # secure:
+  #   port: 28883
+  #   auth:
+  #     mode: PASSWORD
+  #     username: mqtt-client
+  #     password: change-me
+  #   tls:
+  #     ca_crt: |
+  #       -----BEGIN CERTIFICATE-----
+  #       ...
+  #       -----END CERTIFICATE-----
+  #     tls_crt: |
+  #       -----BEGIN CERTIFICATE-----
+  #       ...
+  #       -----END CERTIFICATE-----
+  #     tls_key: |
+  #       -----BEGIN PRIVATE KEY-----
+  #       ...
+  #       -----END PRIVATE KEY-----

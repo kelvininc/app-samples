@@ -8,8 +8,8 @@ type: docker
 # Info
 name: mqtt-mosquitto
 title: MQTT Mosquitto Broker
-description: This Docker application runs an MQTT Mosquitto broker, configurable via environment variables.
-version: 1.1.0
+description: This Docker application runs an MQTT Mosquitto broker, configurable via the application configuration.
+version: 2.0.1
 
 # Capabilities
 flags:
@@ -25,7 +25,34 @@ ui_schemas:
 # Defaults (Runtime/Deployment)
 defaults:
   # Application Configuration Default Values
-  configuration: {}
+  configuration:
+    # At least one listener must be enabled or the broker exits.
+    listeners:
+      plain:
+        port: 21883                       # keep in sync with the service port in system.ports
+        auth:
+          mode: ANONYMOUS                 # ANONYMOUS | PASSWORD
+          # To require authentication, set mode: PASSWORD and add:
+          #   username: "<% secrets.mqtt-user %>"
+          #   password: "<% secrets.mqtt-password %>"
+      secure:
+        auth:
+          mode: ANONYMOUS                 # seeds the oneOf discriminator so the UI form can
+                                          # switch branches; the listener stays off until you
+                                          # also set secure.port below
+      # The secure listener is off unless you set its port. Add the matching service port
+      # in system.ports (28883 is already declared below). Certificates are required;
+      # without all three the broker will refuse to start rather than listen unencrypted.
+      #   secure:
+      #     port: 28883
+      #     auth:
+      #       mode: ANONYMOUS             # ANONYMOUS | PASSWORD
+      #       # username: "<% secrets.mqtt-ssl-user %>"
+      #       # password: "<% secrets.mqtt-ssl-password %>"
+      #     tls:
+      #       ca_crt: "<% secrets.mqtt-ssl-ca-crt %>"
+      #       tls_crt: "<% secrets.mqtt-ssl-tls-crt %>"
+      #       tls_key: "<% secrets.mqtt-ssl-tls-key %>"
 
   # System Settings
   system:
@@ -49,27 +76,3 @@ defaults:
         type: service
         service:
           port: 28883
-    environment_vars:
-      - name: MQTT_PORT
-        value: "21883"
-      # Optional settings (add on the deployment as needed, see README.md):
-      #
-      # Authentication for the insecure listener:
-      #   - name: MQTT_USER
-      #     value: "<% secrets.mqttssl-user %>"
-      #   - name: MQTT_PASSWORD
-      #     value: "<% secrets.mqttssl-password %>"
-      #
-      # Secure (SSL) listener:
-      #   - name: MQTT_SSL_PORT
-      #     value: "28883"
-      #   - name: MQTT_SSL_USER
-      #     value: "<% secrets.mqttssl-ssl-user %>"
-      #   - name: MQTT_SSL_PASSWORD
-      #     value: "<% secrets.mqttssl-ssl-password %>"
-      #   - name: MQTT_SSL_CA_CRT
-      #     value: "<% secrets.mqttssl-ssl-ca-crt %>"
-      #   - name: MQTT_SSL_TLS_CRT
-      #     value: "<% secrets.mqttssl-ssl-tls-crt %>"
-      #   - name: MQTT_SSL_TLS_KEY
-      #     value: "<% secrets.mqttssl-ssl-tls-key %>"

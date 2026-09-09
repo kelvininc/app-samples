@@ -1,5 +1,249 @@
 {
-    "type": "object",
-    "properties": {},
-    "required": []
+  "title": "MQTT Mosquitto Configuration",
+  "description": "Listener ports, authentication and TLS for the broker.",
+  "type": "object",
+  "properties": {
+    "listeners": {
+      "type": "object",
+      "title": "Listeners",
+      "description": "Enable at least one listener; the broker exits if both ports are empty.",
+      "properties": {
+        "plain": {
+          "type": "object",
+          "title": "Plain Listener",
+          "description": "Unencrypted MQTT. Leave the port empty to disable this listener.",
+          "properties": {
+            "port": {
+              "type": "integer",
+              "title": "Port",
+              "description": "Plain MQTT port; keep it in sync with the service port.",
+              "minimum": 1,
+              "maximum": 65535,
+              "default": 21883
+            },
+            "auth": {
+              "type": "object",
+              "title": "Authentication",
+              "description": "Who may connect on the plain listener.",
+              "oneOf": [
+                {
+                  "title": "Anonymous",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "title": "Mode",
+                      "description": "ANONYMOUS accepts any client; PASSWORD requires credentials.",
+                      "const": "ANONYMOUS",
+                      "default": "ANONYMOUS"
+                    }
+                  },
+                  "required": [
+                    "mode"
+                  ]
+                },
+                {
+                  "title": "Username and password",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "title": "Mode",
+                      "description": "ANONYMOUS accepts any client; PASSWORD requires credentials.",
+                      "const": "PASSWORD",
+                      "default": "PASSWORD"
+                    },
+                    "username": {
+                      "type": "string",
+                      "title": "Username",
+                      "description": "MQTT username. Wire to a secret.",
+                      "minLength": 1,
+                      "default": "<% secrets.mqtt-user %>"
+                    },
+                    "password": {
+                      "type": "string",
+                      "title": "Password",
+                      "description": "MQTT password. Wire to a secret.",
+                      "minLength": 1,
+                      "default": "<% secrets.mqtt-password %>"
+                    }
+                  },
+                  "required": [
+                    "mode",
+                    "username",
+                    "password"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "secure": {
+          "type": "object",
+          "title": "Secure Listener",
+          "description": "TLS MQTT. Leave the port empty to disable this listener; set it and all three certificates are required.",
+          "properties": {
+            "port": {
+              "type": "integer",
+              "title": "Port",
+              "description": "TLS MQTT port; keep it in sync with the service port.",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "auth": {
+              "type": "object",
+              "title": "Authentication",
+              "description": "Who may connect on the secure listener.",
+              "oneOf": [
+                {
+                  "title": "Anonymous",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "title": "Mode",
+                      "description": "ANONYMOUS accepts any client; PASSWORD requires credentials.",
+                      "const": "ANONYMOUS",
+                      "default": "ANONYMOUS"
+                    }
+                  },
+                  "required": [
+                    "mode"
+                  ]
+                },
+                {
+                  "title": "Username and password",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "title": "Mode",
+                      "description": "ANONYMOUS accepts any client; PASSWORD requires credentials.",
+                      "const": "PASSWORD",
+                      "default": "PASSWORD"
+                    },
+                    "username": {
+                      "type": "string",
+                      "title": "Username",
+                      "description": "MQTT username for the secure listener. Wire to a secret.",
+                      "minLength": 1,
+                      "default": "<% secrets.mqtt-ssl-user %>"
+                    },
+                    "password": {
+                      "type": "string",
+                      "title": "Password",
+                      "description": "MQTT password for the secure listener. Wire to a secret.",
+                      "minLength": 1,
+                      "default": "<% secrets.mqtt-ssl-password %>"
+                    }
+                  },
+                  "required": [
+                    "mode",
+                    "username",
+                    "password"
+                  ]
+                }
+              ]
+            },
+            "tls": {
+              "type": "object",
+              "title": "TLS",
+              "description": "PEM content for the secure listener. All three are required; the broker refuses to start rather than listen unencrypted.",
+              "properties": {
+                "ca_crt": {
+                  "type": "string",
+                  "title": "CA Certificate",
+                  "description": "PEM CA bundle that signed the server certificate. Wire to a secret.",
+                  "minLength": 1,
+                  "default": "<% secrets.mqtt-ssl-ca-crt %>"
+                },
+                "tls_crt": {
+                  "type": "string",
+                  "title": "Server Certificate",
+                  "description": "PEM server certificate presented to clients. Wire to a secret.",
+                  "minLength": 1,
+                  "default": "<% secrets.mqtt-ssl-tls-crt %>"
+                },
+                "tls_key": {
+                  "type": "string",
+                  "title": "Server Key",
+                  "description": "PEM private key for the server certificate. Wire to a secret.",
+                  "minLength": 1,
+                  "default": "<% secrets.mqtt-ssl-tls-key %>"
+                }
+              }
+            }
+          },
+          "dependentRequired": {
+            "port": [
+              "tls"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "required": [],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "listeners"
+    ],
+    "listeners": {
+      "ui:order": [
+        "plain",
+        "secure"
+      ],
+      "plain": {
+        "ui:order": [
+          "port",
+          "auth"
+        ],
+        "auth": {
+          "ui:order": [
+            "mode",
+            "username",
+            "password"
+          ],
+          "mode": {
+            "ui:widget": "hidden"
+          },
+          "password": {
+            "ui:widget": "password"
+          }
+        }
+      },
+      "secure": {
+        "ui:order": [
+          "port",
+          "auth",
+          "tls"
+        ],
+        "auth": {
+          "ui:order": [
+            "mode",
+            "username",
+            "password"
+          ],
+          "mode": {
+            "ui:widget": "hidden"
+          },
+          "password": {
+            "ui:widget": "password"
+          }
+        },
+        "tls": {
+          "ui:order": [
+            "ca_crt",
+            "tls_crt",
+            "tls_key"
+          ],
+          "ca_crt": {
+            "ui:widget": "textarea"
+          },
+          "tls_crt": {
+            "ui:widget": "textarea"
+          },
+          "tls_key": {
+            "ui:widget": "textarea"
+          }
+        }
+      }
+    }
+  }
 }
