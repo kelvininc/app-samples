@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Kafka Broker Configuration",
   "description": "Listener addressing, security, and broker settings for the single-node broker.",
   "type": "object",
@@ -54,7 +55,7 @@
     "security": {
       "type": "object",
       "title": "Security",
-      "description": "Authentication and encryption applied to every client listener.",
+      "description": "Authentication and encryption applied to every client listener. SSL and SASL_SSL encrypt the connection but do not require a client certificate; the broker accepts any client unless you also set extra_properties: {\"ssl.client.auth\": \"required\"} for mTLS.",
       "oneOf": [
         {
           "title": "Plaintext",
@@ -69,7 +70,8 @@
           },
           "required": [
             "protocol"
-          ]
+          ],
+          "additionalProperties": false
         },
         {
           "title": "TLS",
@@ -84,7 +86,7 @@
             "tls": {
               "type": "object",
               "title": "TLS",
-              "description": "PEM content, wired to secrets on deployment. All three are required.",
+              "description": "PEM content, wired to secrets on deployment. All three are required. TLS encrypts the connection; it does not authenticate the client. Client certificates are not required by default; add extra_properties: {\"ssl.client.auth\": \"required\"} for mTLS.",
               "properties": {
                 "ca_crt": {
                   "type": "string",
@@ -118,7 +120,8 @@
           "required": [
             "protocol",
             "tls"
-          ]
+          ],
+          "additionalProperties": false
         },
         {
           "title": "SASL",
@@ -138,16 +141,18 @@
                 "username": {
                   "type": "string",
                   "title": "Username",
-                  "description": "The single username clients authenticate with.",
+                  "description": "The single username clients authenticate with. Letters, digits, '.', '_', '@' and '-' only: it is used verbatim as a JAAS option name in the broker's login configuration. Either a secret reference or a literal limited to letters, digits, dot, underscore, @ and hyphen \u2014 it is also used unquoted as the JAAS user_<name> option, so other characters would corrupt the broker config.",
                   "default": "<% secrets.kafka-user %>",
-                  "minLength": 1
+                  "minLength": 1,
+                  "pattern": "^(<%\\s*secrets\\.[A-Za-z0-9._-]+\\s*%>|[A-Za-z0-9._@-]+)$"
                 },
                 "password": {
                   "type": "string",
                   "title": "Password",
-                  "description": "Password for that username.",
+                  "description": "Password for that username. It goes into a quoted JAAS string, so it cannot contain a double quote, a backslash or a newline.",
                   "default": "<% secrets.kafka-password %>",
-                  "minLength": 1
+                  "minLength": 1,
+                  "pattern": "^[^\"\\\\\\r\\n]+$"
                 }
               },
               "required": [
@@ -159,7 +164,8 @@
           "required": [
             "protocol",
             "sasl"
-          ]
+          ],
+          "additionalProperties": false
         },
         {
           "title": "SASL over TLS",
@@ -179,16 +185,18 @@
                 "username": {
                   "type": "string",
                   "title": "Username",
-                  "description": "The single username clients authenticate with.",
+                  "description": "The single username clients authenticate with. Letters, digits, '.', '_', '@' and '-' only: it is used verbatim as a JAAS option name in the broker's login configuration. Either a secret reference or a literal limited to letters, digits, dot, underscore, @ and hyphen \u2014 it is also used unquoted as the JAAS user_<name> option, so other characters would corrupt the broker config.",
                   "default": "<% secrets.kafka-user %>",
-                  "minLength": 1
+                  "minLength": 1,
+                  "pattern": "^(<%\\s*secrets\\.[A-Za-z0-9._-]+\\s*%>|[A-Za-z0-9._@-]+)$"
                 },
                 "password": {
                   "type": "string",
                   "title": "Password",
-                  "description": "Password for that username.",
+                  "description": "Password for that username. It goes into a quoted JAAS string, so it cannot contain a double quote, a backslash or a newline.",
                   "default": "<% secrets.kafka-password %>",
-                  "minLength": 1
+                  "minLength": 1,
+                  "pattern": "^[^\"\\\\\\r\\n]+$"
                 }
               },
               "required": [
@@ -199,7 +207,7 @@
             "tls": {
               "type": "object",
               "title": "TLS",
-              "description": "PEM content, wired to secrets on deployment. All three are required.",
+              "description": "PEM content, wired to secrets on deployment. All three are required. TLS encrypts the connection; it does not authenticate the client. Client certificates are not required by default; add extra_properties: {\"ssl.client.auth\": \"required\"} for mTLS.",
               "properties": {
                 "ca_crt": {
                   "type": "string",
@@ -234,7 +242,8 @@
             "protocol",
             "sasl",
             "tls"
-          ]
+          ],
+          "additionalProperties": false
         }
       ]
     },
@@ -254,9 +263,13 @@
     "extra_properties": {
       "type": "object",
       "title": "Extra Broker Properties",
-      "description": "Any server.properties entry this app does not wrap, applied verbatim (e.g. log.retention.hours = 48). Managed settings win on conflict; do not set log.dirs, it is pinned to the persistent volume.",
+      "description": "Any server.properties entry this app does not wrap, applied verbatim (e.g. log.retention.hours = 48). Managed settings win on conflict; do not set log.dirs, it is pinned to the persistent volume. Names take letters, digits, '.' and '_'; values are single-line strings.",
+      "propertyNames": {
+        "pattern": "^[A-Za-z0-9._]+$"
+      },
       "additionalProperties": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^[^\\r\\n]*$"
       }
     }
   },

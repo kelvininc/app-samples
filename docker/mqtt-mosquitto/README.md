@@ -44,32 +44,33 @@ kelvin secret create mqtt-ssl-tls-key --value "$(cat tls.key)"
 ## Configuration
 Kelvin mounts the deployment configuration at `/opt/kelvin/share/config.yaml`; the YAML root mapping is the configuration. The deploy UI renders it from `ui_schemas/configuration.json`.
 
+Both listeners are one flat block keyed by `mode`; there is no `auth` sub-object.
+
 ```yaml
 listeners:
-  plain:                                        # plain (unencrypted) listener
-    port: 21883                                 # omit to disable this listener
-    auth:
-      mode: PASSWORD                            # ANONYMOUS (default) | PASSWORD
-      username: "<% secrets.mqtt-user %>"       # required when mode is PASSWORD
-      password: "<% secrets.mqtt-password %>"   # required when mode is PASSWORD
-  secure:                                       # TLS listener
-    port: 28883                                 # omit to disable this listener
-    auth:
-      mode: PASSWORD                            # ANONYMOUS (default) | PASSWORD
-      username: "<% secrets.mqtt-ssl-user %>"
-      password: "<% secrets.mqtt-ssl-password %>"
-    tls:                                        # all three required with secure.port
+  plain:                                          # plain (unencrypted) listener
+    mode: PASSWORD                                # DISABLED (default) | ANONYMOUS | PASSWORD
+    port: 21883                                   # required unless mode is DISABLED
+    username: "<% secrets.mqtt-user %>"           # required when mode is PASSWORD
+    password: "<% secrets.mqtt-password %>"       # required when mode is PASSWORD
+  secure:                                         # TLS listener
+    mode: AUTH_TLS                                # DISABLED (default) | ANON_TLS | AUTH_TLS
+    port: 28883                                   # required unless mode is DISABLED
+    username: "<% secrets.mqtt-ssl-user %>"       # required when mode is AUTH_TLS
+    password: "<% secrets.mqtt-ssl-password %>"   # required when mode is AUTH_TLS
+    tls:                                          # all three required unless mode is DISABLED
       ca_crt: "<% secrets.mqtt-ssl-ca-crt %>"
       tls_crt: "<% secrets.mqtt-ssl-tls-crt %>"
       tls_key: "<% secrets.mqtt-ssl-tls-key %>"
 ```
 
 **Notes:**
-- Enable at least one listener. With no port on either, the broker exits with an error.
-- A listener with no `port` is disabled. A `port` that is not a number is an error, not a silently dropped listener.
-- `auth.mode` defaults to `ANONYMOUS`. With `PASSWORD`, both `username` and `password` are required.
-- `listeners.secure.mode` is `DISABLED` (default), `ANON_TLS` or `AUTH_TLS`. Either enabled mode requires the port and all three certificates. The broker refuses to start if any is missing; it never falls back to an unencrypted secure listener.
-- Credentials are broker-wide. Mosquitto's `per_listener_settings` is deprecated in 2.1 and removed in 3.0, so accounts from both listeners share one password file and each listener only decides whether anonymous clients are accepted. A user configured on one listener can authenticate on the other.
+- Both `mode` keys default to `DISABLED`, and the broker exits with an error when both listeners end up disabled. The shipped `app.yaml` seeds `listeners.plain.mode: ANONYMOUS` so a default deploy has one listener.
+- An enabled listener needs a `port`. There is no "leave the port empty to disable" idiom: a missing or non-numeric port on an enabled listener is an error, not a silently dropped listener.
+- `PASSWORD` (plain) and `AUTH_TLS` (secure) require both `username` and `password`. Either enabled `secure` mode additionally requires all three certificates; the broker refuses to start if any is missing rather than falling back to an unencrypted secure listener.
+- Settings the selected mode ignores are an error. `mode: DISABLED` with a `port`, `tls` block or credentials still present, or `ANON_TLS`/`ANONYMOUS` with credentials, names the offending keys and exits rather than starting with them silently inert.
+- Credentials are broker-wide. Mosquitto's `per_listener_settings` is deprecated in 2.1 and removed in 3.0, so accounts from both listeners share one password file and each listener only decides whether anonymous clients are accepted. A user configured on one listener can authenticate on the other, and the two listeners must use **distinct usernames**: one password file means the second account would replace the first. The broker rejects equal usernames instead.
+- The two listeners must use distinct ports.
 - Keep the ports in sync with the `service` (and any `host`) ports declared under `system.ports`.
 
 ## Local testing
@@ -80,7 +81,7 @@ docker run --rm -p 21883:21883 \
   mqtt-mosquitto:local
 ```
 
-`example-config.yaml` starts an anonymous plain listener on 21883 and carries commented blocks for password auth and TLS.
+`example-config.yaml` starts an anonymous plain listener on 21883 and carries commented drop-in replacements for password auth and TLS.
 
 ## Upgrading from 1.x
 Version 2.0.0 replaces the `MQTT_*` environment variables with the application configuration. There is no fallback: if any of `MQTT_PORT`, `MQTT_USER`, `MQTT_PASSWORD`, `MQTT_SSL_PORT`, `MQTT_SSL_USER`, `MQTT_SSL_PASSWORD`, `MQTT_SSL_CA_CRT`, `MQTT_SSL_TLS_CRT` or `MQTT_SSL_TLS_KEY` is still set, the container names it and exits non-zero rather than starting a broker that quietly lost its authentication.
@@ -89,9 +90,9 @@ To upgrade, drop `environment_vars` from the deployment and move each value into
 
 | 1.x environment variable | 2.0.0 configuration key |
 | --- | --- |
-| `MQTT_PORT` | `listeners.plain.port` |
-| `MQTT_USER` | `listeners.plain.auth.username` (with `auth.mode: PASSWORD`) |
-| `MQTT_PASSWORD` | `listeners.plain.auth.password` (with `auth.mode: PASSWORD`) |
+| `MQTT_PORT` | `listeners.plain.port` (with `mode: ANONYMOUS` or `PASSWORD`) |
+| `MQTT_USER` | `listeners.plain.username` (with `mode: PASSWORD`) |
+| `MQTT_PASSWORD` | `listeners.plain.password` (with `mode: PASSWORD`) |
 | `MQTT_SSL_PORT` | `listeners.secure.port` (with `mode: ANON_TLS` or `AUTH_TLS`) |
 | `MQTT_SSL_USER` | `listeners.secure.username` (with `mode: AUTH_TLS`) |
 | `MQTT_SSL_PASSWORD` | `listeners.secure.password` (with `mode: AUTH_TLS`) |

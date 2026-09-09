@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "MQTT Mosquitto Configuration",
   "description": "Listener ports, authentication and TLS for the broker.",
   "type": "object",
@@ -6,75 +7,96 @@
     "listeners": {
       "type": "object",
       "title": "Listeners",
-      "description": "Enable at least one listener; the broker exits if both ports are empty.",
+      "description": "Enable at least one listener; the broker exits if both are DISABLED.",
       "properties": {
         "plain": {
           "type": "object",
           "title": "Plain Listener",
-          "description": "Unencrypted MQTT. Leave the port empty to disable this listener.",
-          "properties": {
-            "port": {
-              "type": "integer",
-              "title": "Port",
-              "description": "Plain MQTT port; keep it in sync with the service port.",
-              "minimum": 1,
-              "maximum": 65535,
-              "default": 21883
-            },
-            "auth": {
-              "type": "object",
-              "title": "Authentication",
-              "description": "Who may connect on the plain listener.",
-              "oneOf": [
-                {
-                  "title": "Anonymous",
-                  "properties": {
-                    "mode": {
-                      "type": "string",
-                      "title": "Mode",
-                      "description": "ANONYMOUS accepts any client; PASSWORD requires credentials.",
-                      "const": "ANONYMOUS",
-                      "default": "ANONYMOUS"
-                    }
-                  },
-                  "required": [
-                    "mode"
-                  ]
-                },
-                {
-                  "title": "Username and password",
-                  "properties": {
-                    "mode": {
-                      "type": "string",
-                      "title": "Mode",
-                      "description": "ANONYMOUS accepts any client; PASSWORD requires credentials.",
-                      "const": "PASSWORD",
-                      "default": "PASSWORD"
-                    },
-                    "username": {
-                      "type": "string",
-                      "title": "Username",
-                      "description": "MQTT username. Wire to a secret.",
-                      "minLength": 1,
-                      "default": "<% secrets.mqtt-user %>"
-                    },
-                    "password": {
-                      "type": "string",
-                      "title": "Password",
-                      "description": "MQTT password. Wire to a secret.",
-                      "minLength": 1,
-                      "default": "<% secrets.mqtt-password %>"
-                    }
-                  },
-                  "required": [
-                    "mode",
-                    "username",
-                    "password"
-                  ]
+          "description": "Unencrypted MQTT on its own port. Pick Disabled to turn it off; the secure listener must then be enabled or the broker exits.",
+          "oneOf": [
+            {
+              "title": "Disabled",
+              "description": "No plain listener. The secure listener must then be enabled or the broker exits.",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "title": "Mode",
+                  "description": "Whether the plain listener runs, and how clients authenticate on it.",
+                  "const": "DISABLED",
+                  "default": "DISABLED"
                 }
+              },
+              "required": [
+                "mode"
+              ]
+            },
+            {
+              "title": "Anonymous",
+              "description": "Plain listener accepting any client.",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "title": "Mode",
+                  "description": "Whether the plain listener runs, and how clients authenticate on it.",
+                  "const": "ANONYMOUS",
+                  "default": "ANONYMOUS"
+                },
+                "port": {
+                  "type": "integer",
+                  "title": "Port",
+                  "description": "Plain MQTT port; keep it in sync with the service port.",
+                  "minimum": 1,
+                  "maximum": 65535,
+                  "default": 21883
+                }
+              },
+              "required": [
+                "mode",
+                "port"
+              ]
+            },
+            {
+              "title": "Username and password",
+              "description": "Plain listener requiring credentials.",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "title": "Mode",
+                  "description": "Whether the plain listener runs, and how clients authenticate on it.",
+                  "const": "PASSWORD",
+                  "default": "PASSWORD"
+                },
+                "port": {
+                  "type": "integer",
+                  "title": "Port",
+                  "description": "Plain MQTT port; keep it in sync with the service port.",
+                  "minimum": 1,
+                  "maximum": 65535,
+                  "default": 21883
+                },
+                "username": {
+                  "type": "string",
+                  "title": "Username",
+                  "description": "MQTT username for the plain listener. Wire to a secret. Accounts are broker-wide, so it must differ from the secure listener's username.",
+                  "minLength": 1,
+                  "default": "<% secrets.mqtt-user %>"
+                },
+                "password": {
+                  "type": "string",
+                  "title": "Password",
+                  "description": "MQTT password for the plain listener. Wire to a secret.",
+                  "minLength": 1,
+                  "default": "<% secrets.mqtt-password %>"
+                }
+              },
+              "required": [
+                "mode",
+                "port",
+                "username",
+                "password"
               ]
             }
-          }
+          ]
         },
         "secure": {
           "type": "object",
@@ -176,7 +198,7 @@
                 "username": {
                   "type": "string",
                   "title": "Username",
-                  "description": "MQTT username for the secure listener. Wire to a secret.",
+                  "description": "MQTT username for the secure listener. Wire to a secret. Accounts are broker-wide, so it must differ from the plain listener's username.",
                   "minLength": 1,
                   "default": "<% secrets.mqtt-ssl-user %>"
                 },
@@ -246,21 +268,16 @@
       ],
       "plain": {
         "ui:order": [
+          "mode",
           "port",
-          "auth"
+          "username",
+          "password"
         ],
-        "auth": {
-          "ui:order": [
-            "mode",
-            "username",
-            "password"
-          ],
-          "mode": {
-            "ui:widget": "hidden"
-          },
-          "password": {
-            "ui:widget": "password"
-          }
+        "mode": {
+          "ui:widget": "hidden"
+        },
+        "password": {
+          "ui:widget": "password"
         }
       },
       "secure": {

@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Redis Configuration",
   "description": "Listener, memory, persistence and security settings for the single-node server.",
   "type": "object",
@@ -205,7 +206,7 @@
     "extra_args": {
       "type": "string",
       "title": "Extra Arguments",
-      "description": "Extra redis-server arguments appended verbatim, e.g. --loglevel debug. Do not set --dir; it is pinned to the persistent volume.",
+      "description": "Extra redis-server arguments appended verbatim, e.g. --loglevel debug. They are appended last and therefore override the managed settings above (that is how --tls-auth-clients yes works, but it also means --requirepass '' or --port disables the security settings). Split on whitespace only: quotes are kept as literal characters, so arguments containing spaces or empty-string values such as --save '' cannot be expressed here. Do not set --dir; it is pinned to the persistent volume.",
       "default": ""
     }
   },

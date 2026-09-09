@@ -6,12 +6,12 @@
 # Configuration is mounted at /opt/kelvin/share/config.yaml. The YAML root
 # mapping is the configuration; see example-config.yaml and README.md.
 #
-#   listeners.plain.port            plain listener port; empty disables the listener
-#   listeners.plain.auth.mode       ANONYMOUS (default) | PASSWORD
-#   listeners.plain.auth.username   required when mode is PASSWORD
-#   listeners.plain.auth.password   required when mode is PASSWORD
+#   listeners.plain.mode            DISABLED (default) | ANONYMOUS | PASSWORD
+#   listeners.plain.port            required unless mode is DISABLED
+#   listeners.plain.username        required when mode is PASSWORD
+#   listeners.plain.password        required when mode is PASSWORD
 #   listeners.secure.mode           DISABLED (default) | ANON_TLS | AUTH_TLS
-#   listeners.secure.port           TLS listener port; required unless mode is DISABLED
+#   listeners.secure.port           required unless mode is DISABLED
 #   listeners.secure.username       required when mode is AUTH_TLS
 #   listeners.secure.password       required when mode is AUTH_TLS
 #   listeners.secure.tls.ca_crt     PEM CA bundle, required unless mode is DISABLED
@@ -19,41 +19,63 @@
 #   listeners.secure.tls.tls_key    PEM server key, required unless mode is DISABLED
 #
 # Nothing is merged into the configuration server-side, so every default below
-# is applied here: a listener with no port is disabled, and a listener with no
-# auth.mode is anonymous.
+# is applied here: both listeners default to DISABLED, and at least one of them
+# must be enabled or the broker exits. Settings the selected mode ignores are an
+# error, not a no-op.
 #
 # The script can be changed to fit your needs.
 
 # Abort on any error
 set -e
 
+log() { echo "$(date +%s): $*"; }
+die() { log "Error: $*"; exit 1; }
+
+# Certificates and password files are written below. Create them owner-only
+# rather than chmod-ing after the fact, which leaves a readable window.
+umask 077
+
 # Configuration replaced the MQTT_* environment variables in 2.0.0.
 for v in MQTT_PORT MQTT_USER MQTT_PASSWORD MQTT_SSL_PORT MQTT_SSL_USER MQTT_SSL_PASSWORD \
          MQTT_SSL_CA_CRT MQTT_SSL_TLS_CRT MQTT_SSL_TLS_KEY; do
     eval "legacy_value=\${$v:-}"
     if [ -n "$legacy_value" ]; then
-        echo "Error: $v is set but is no longer supported in 2.0.0. Move this setting to the app configuration (see README.md)."
-        exit 1
+        die "$v is set but is no longer supported in 2.0.0. Move this setting to the app configuration (see README.md)."
     fi
 done
 unset legacy_value
 
 CFG="${KELVIN_CONFIG:-/opt/kelvin/share/config.yaml}"
-cfg(){ [ -f "$CFG" ] && yq -r ".$1 // \"\"" "$CFG" 2>/dev/null || true; }
+
+# Two unrelated programs are called yq. Alpine's is mikefarah/yq (Go), Debian's
+# is python-yq (a jq wrapper). `yq -r '.a.b'` behaves identically on both, so
+# this invocation style is deliberate — do not "modernise" it to `yq e`.
+cfg() { [ -f "$CFG" ] && yq -r ".$1 // \"\"" "$CFG" 2>/dev/null || true; }
+
+# A config the parser chokes on would silently read as all-defaults, which for
+# the security settings means an open broker. Refuse to start instead.
+#
+# `yq -r .` is deliberate: a deployment that supplies no configuration gets a
+# zero-byte config.yaml from the platform, which is legitimate and must fall
+# through to the defaults below. `yq -r .` returns 0 for an empty document and
+# non-zero only for a malformed one, on both yq implementations. `yq -e .`
+# rejects the empty document too, which would break every default deployment.
+if [ -f "$CFG" ] && ! yq -r '.' "$CFG" >/dev/null 2>&1; then
+    die "$CFG is not valid YAML."
+fi
 
 CONFIG_FOLDER="/mosquitto/config"
+DATA_FOLDER="/mosquitto/data"
 SSL_FOLDER="/mosquitto/certs"
 DST_CONFIG_FILE="$CONFIG_FOLDER/mosquitto.conf"
 PASSWORD_FILE="$CONFIG_FOLDER/passwordfile"
 
-TIMESTAMP=$(date +%s)
-
 # Read the configuration, applying a default to every setting.
+PLAIN_MODE=$(cfg listeners.plain.mode)
+PLAIN_MODE=${PLAIN_MODE:-DISABLED}
 PLAIN_PORT=$(cfg listeners.plain.port)
-PLAIN_AUTH_MODE=$(cfg listeners.plain.auth.mode)
-PLAIN_AUTH_MODE=${PLAIN_AUTH_MODE:-ANONYMOUS}
-PLAIN_USERNAME=$(cfg listeners.plain.auth.username)
-PLAIN_PASSWORD=$(cfg listeners.plain.auth.password)
+PLAIN_USERNAME=$(cfg listeners.plain.username)
+PLAIN_PASSWORD=$(cfg listeners.plain.password)
 
 SECURE_MODE=$(cfg listeners.secure.mode)
 SECURE_MODE=${SECURE_MODE:-DISABLED}
@@ -67,91 +89,142 @@ SECURE_TLS_KEY=$(cfg listeners.secure.tls.tls_key)
 PLAIN_LISTENER_ENABLED="false"
 SECURE_LISTENER_ENABLED="false"
 
-# A port must be a plain number; a typo disables nothing silently.
-check_port(){
+check_port() {  # $1 = setting name, $2 = value
     case "$2" in
-        *[!0-9]*|'')
-            echo "$TIMESTAMP: Error: $1 is not a valid port number: '$2'."
-            exit 1
-            ;;
+        ''|*[!0-9]*) die "$1 is not a valid port number: '$2'." ;;
     esac
+    [ "$2" -ge 1 ] && [ "$2" -le 65535 ] || die "$1 must be 1-65535, got '$2'."
 }
 
-check_auth_mode(){
-    case "$2" in
-        ANONYMOUS|PASSWORD) ;;
-        *)
-            echo "$TIMESTAMP: Error: $1 must be ANONYMOUS or PASSWORD, got '$2'."
-            exit 1
-            ;;
-    esac
+# Security material the selected mode ignores is a configuration error: starting
+# anyway would silently drop the protection the operator asked for.
+UNUSED=""
+note_unused() {  # $1 = setting name, $2 = value
+    [ -n "$2" ] && UNUSED="$UNUSED $1"
+    return 0
 }
 
-check_credentials(){
-    if [ -z "$2" ] || [ -z "$3" ]; then
-        echo "$TIMESTAMP: Error: $1 is PASSWORD but username or password is empty."
-        exit 1
-    fi
+MISSING=""
+note_missing() {  # $1 = setting name, $2 = value
+    [ -z "$2" ] && MISSING="$MISSING $1"
+    return 0
 }
 
-if [ -n "$PLAIN_PORT" ]; then
-    check_port "listeners.plain.port" "$PLAIN_PORT"
-    check_auth_mode "listeners.plain.auth.mode" "$PLAIN_AUTH_MODE"
-    if [ "$PLAIN_AUTH_MODE" = "PASSWORD" ]; then
-        check_credentials "listeners.plain.auth.mode" "$PLAIN_USERNAME" "$PLAIN_PASSWORD"
-    fi
-    PLAIN_LISTENER_ENABLED="true"
-fi
-
-case "$SECURE_MODE" in
-    DISABLED) ;;
-    ANON_TLS|AUTH_TLS)
-        check_port "listeners.secure.port" "$SECURE_PORT"
-        if [ "$SECURE_MODE" = "AUTH_TLS" ]; then
-            check_credentials "listeners.secure.mode" "$SECURE_USERNAME" "$SECURE_PASSWORD"
-        fi
-        # Refuse to start rather than expose the secure listener unencrypted.
-        if [ -z "$SECURE_CA_CRT" ] || [ -z "$SECURE_TLS_CRT" ] || [ -z "$SECURE_TLS_KEY" ]; then
-            echo "$TIMESTAMP: Error: listeners.secure.mode is $SECURE_MODE but listeners.secure.tls is incomplete. All of ca_crt, tls_crt and tls_key are required."
-            exit 1
-        fi
-        SECURE_LISTENER_ENABLED="true"
+case "$PLAIN_MODE" in
+    DISABLED)
+        UNUSED=""
+        note_unused listeners.plain.port "$PLAIN_PORT"
+        note_unused listeners.plain.username "$PLAIN_USERNAME"
+        note_unused listeners.plain.password "$PLAIN_PASSWORD"
+        [ -z "$UNUSED" ] || die "listeners.plain.mode is DISABLED but these are set:$UNUSED. Remove them or enable the listener."
+        ;;
+    ANONYMOUS)
+        check_port "listeners.plain.port" "$PLAIN_PORT"
+        UNUSED=""
+        note_unused listeners.plain.username "$PLAIN_USERNAME"
+        note_unused listeners.plain.password "$PLAIN_PASSWORD"
+        [ -z "$UNUSED" ] || die "listeners.plain.mode is ANONYMOUS but these are set:$UNUSED. Set listeners.plain.mode to PASSWORD to require them."
+        PLAIN_LISTENER_ENABLED="true"
+        ;;
+    PASSWORD)
+        check_port "listeners.plain.port" "$PLAIN_PORT"
+        MISSING=""
+        note_missing listeners.plain.username "$PLAIN_USERNAME"
+        note_missing listeners.plain.password "$PLAIN_PASSWORD"
+        [ -z "$MISSING" ] || die "listeners.plain.mode is PASSWORD but these are empty:$MISSING."
+        PLAIN_LISTENER_ENABLED="true"
         ;;
     *)
-        echo "$TIMESTAMP: Error: listeners.secure.mode must be DISABLED, ANON_TLS or AUTH_TLS, got '$SECURE_MODE'."
-        exit 1
+        die "listeners.plain.mode must be DISABLED, ANONYMOUS or PASSWORD, got '$PLAIN_MODE'."
         ;;
 esac
 
+case "$SECURE_MODE" in
+    DISABLED)
+        UNUSED=""
+        note_unused listeners.secure.port "$SECURE_PORT"
+        note_unused listeners.secure.username "$SECURE_USERNAME"
+        note_unused listeners.secure.password "$SECURE_PASSWORD"
+        note_unused listeners.secure.tls.ca_crt "$SECURE_CA_CRT"
+        note_unused listeners.secure.tls.tls_crt "$SECURE_TLS_CRT"
+        note_unused listeners.secure.tls.tls_key "$SECURE_TLS_KEY"
+        [ -z "$UNUSED" ] || die "listeners.secure.mode is DISABLED but these are set:$UNUSED. Remove them or set listeners.secure.mode to ANON_TLS or AUTH_TLS."
+        ;;
+    ANON_TLS|AUTH_TLS)
+        check_port "listeners.secure.port" "$SECURE_PORT"
+        if [ "$SECURE_MODE" = "AUTH_TLS" ]; then
+            MISSING=""
+            note_missing listeners.secure.username "$SECURE_USERNAME"
+            note_missing listeners.secure.password "$SECURE_PASSWORD"
+            [ -z "$MISSING" ] || die "listeners.secure.mode is AUTH_TLS but these are empty:$MISSING."
+        else
+            UNUSED=""
+            note_unused listeners.secure.username "$SECURE_USERNAME"
+            note_unused listeners.secure.password "$SECURE_PASSWORD"
+            [ -z "$UNUSED" ] || die "listeners.secure.mode is ANON_TLS but these are set:$UNUSED. Set listeners.secure.mode to AUTH_TLS to require them."
+        fi
+        # Refuse to start rather than expose the secure listener unencrypted.
+        MISSING=""
+        note_missing listeners.secure.tls.ca_crt "$SECURE_CA_CRT"
+        note_missing listeners.secure.tls.tls_crt "$SECURE_TLS_CRT"
+        note_missing listeners.secure.tls.tls_key "$SECURE_TLS_KEY"
+        [ -z "$MISSING" ] || die "listeners.secure.mode is $SECURE_MODE but these are empty:$MISSING. All of ca_crt, tls_crt and tls_key are required."
+        SECURE_LISTENER_ENABLED="true"
+        ;;
+    *)
+        die "listeners.secure.mode must be DISABLED, ANON_TLS or AUTH_TLS, got '$SECURE_MODE'."
+        ;;
+esac
+
+# Two listeners on one port fail at bind time with no hint at the cause.
+if [ "$PLAIN_LISTENER_ENABLED" = "true" ] && [ "$SECURE_LISTENER_ENABLED" = "true" ] \
+   && [ "$PLAIN_PORT" = "$SECURE_PORT" ]; then
+    die "listeners.plain.port and listeners.secure.port are both $PLAIN_PORT. Give each listener its own port."
+fi
+
+# One broker-wide password file means mosquitto_passwd replaces, rather than
+# adds, a second account with the same name: the plain listener's password would
+# stop working with no error.
+if [ "$PLAIN_MODE" = "PASSWORD" ] && [ "$SECURE_MODE" = "AUTH_TLS" ] \
+   && [ "$PLAIN_LISTENER_ENABLED" = "true" ] && [ "$SECURE_LISTENER_ENABLED" = "true" ] \
+   && [ "$PLAIN_USERNAME" = "$SECURE_USERNAME" ]; then
+    die "listeners.plain.username and listeners.secure.username are both '$PLAIN_USERNAME'. Accounts are broker-wide, so the two listeners need distinct usernames."
+fi
+
 # Log configuration
-echo "$TIMESTAMP: Plain listener enabled: $PLAIN_LISTENER_ENABLED"
+log "Plain listener enabled: $PLAIN_LISTENER_ENABLED"
 if [ "$PLAIN_LISTENER_ENABLED" = "true" ]; then
-    echo "$TIMESTAMP: Plain listener on port: $PLAIN_PORT"
-    echo "$TIMESTAMP: Plain listener auth mode: $PLAIN_AUTH_MODE"
+    log "Plain listener on port: $PLAIN_PORT"
+    log "Plain listener mode: $PLAIN_MODE"
 fi
 
-echo "$TIMESTAMP: Secure listener enabled: $SECURE_LISTENER_ENABLED"
+log "Secure listener enabled: $SECURE_LISTENER_ENABLED"
 if [ "$SECURE_LISTENER_ENABLED" = "true" ]; then
-    echo "$TIMESTAMP: Secure listener on port: $SECURE_PORT"
-    echo "$TIMESTAMP: Secure listener with SSL: true"
-    echo "$TIMESTAMP: Secure listener mode: $SECURE_MODE"
+    log "Secure listener on port: $SECURE_PORT"
+    log "Secure listener with SSL: true"
+    log "Secure listener mode: $SECURE_MODE"
 fi
 
-# If neither plain nor secure listener is enabled, exit with error
+# If neither plain nor secure listener is enabled, exit with error. No schema can
+# express "at least one of two sibling objects is enabled", so it is checked here.
 if [ "$PLAIN_LISTENER_ENABLED" = "false" ] && [ "$SECURE_LISTENER_ENABLED" = "false" ]; then
-    echo "$TIMESTAMP: Error: No MQTT listener enabled. Set listeners.plain.port, or listeners.secure.mode to ANON_TLS/AUTH_TLS, or both."
-    exit 1
+    die "No MQTT listener enabled. Set listeners.plain.mode to ANONYMOUS/PASSWORD, or listeners.secure.mode to ANON_TLS/AUTH_TLS, or both."
 fi
 
 # Ensure the config directory exists
 mkdir -p $CONFIG_FOLDER
 rm -f $PASSWORD_FILE
 
+# Overriding ENTRYPOINT skips the stock image's `chown -R mosquitto /mosquitto`,
+# and the broker drops to the mosquitto user before writing the persistence DB.
+mkdir -p $DATA_FOLDER
+chown -R mosquitto:mosquitto $DATA_FOLDER
+
 # Credentials are broker-wide: per_listener_settings is deprecated in mosquitto
 # 2.1 and removed in 3.0, so every account lives in one password file and each
 # listener only decides whether anonymous clients are accepted.
 PASSWORD_FILE_ENABLED="false"
-add_user(){
+add_user() {
     if [ "$PASSWORD_FILE_ENABLED" = "true" ]; then
         mosquitto_passwd -b $PASSWORD_FILE "$1" "$2"
     else
@@ -160,7 +233,7 @@ add_user(){
     fi
 }
 
-if [ "$PLAIN_LISTENER_ENABLED" = "true" ] && [ "$PLAIN_AUTH_MODE" = "PASSWORD" ]; then
+if [ "$PLAIN_LISTENER_ENABLED" = "true" ] && [ "$PLAIN_MODE" = "PASSWORD" ]; then
     add_user "$PLAIN_USERNAME" "$PLAIN_PASSWORD"
 fi
 if [ "$SECURE_LISTENER_ENABLED" = "true" ] && [ "$SECURE_MODE" = "AUTH_TLS" ]; then
@@ -168,8 +241,7 @@ if [ "$SECURE_LISTENER_ENABLED" = "true" ] && [ "$SECURE_MODE" = "AUTH_TLS" ]; t
 fi
 if [ "$PASSWORD_FILE_ENABLED" = "true" ]; then
     chown mosquitto:mosquitto $PASSWORD_FILE
-    chmod 600 $PASSWORD_FILE
-    echo "$TIMESTAMP: Password file created at $PASSWORD_FILE"
+    log "Password file created at $PASSWORD_FILE"
 fi
 
 # GENERATE MOSQUITTO CONFIGURATION FILE
@@ -177,7 +249,7 @@ fi
 cat > $DST_CONFIG_FILE << EOF
 persistence true
 autosave_interval 60
-persistence_location /mosquitto/data
+persistence_location $DATA_FOLDER
 
 EOF
 
@@ -190,7 +262,7 @@ EOF
 fi
 
 # Plain uses PASSWORD; secure uses AUTH_TLS. Both mean "credentials required".
-anonymous_flag(){
+anonymous_flag() {
     case "$1" in
         PASSWORD|AUTH_TLS) echo "false" ;;
         *)                 echo "true"  ;;
@@ -202,7 +274,7 @@ if [ "$PLAIN_LISTENER_ENABLED" = "true" ]; then
     cat >> $DST_CONFIG_FILE << EOF
 listener $PLAIN_PORT 0.0.0.0
 max_keepalive 0
-listener_allow_anonymous $(anonymous_flag "$PLAIN_AUTH_MODE")
+listener_allow_anonymous $(anonymous_flag "$PLAIN_MODE")
 
 EOF
 fi
@@ -216,7 +288,6 @@ if [ "$SECURE_LISTENER_ENABLED" = "true" ]; then
     printf '%s\n' "$SECURE_TLS_CRT" > $SSL_FOLDER/tls.crt
     printf '%s\n' "$SECURE_TLS_KEY" > $SSL_FOLDER/tls.key
     chown -R mosquitto:mosquitto $SSL_FOLDER
-    chmod 600 $SSL_FOLDER/tls.key
 
     cat >> $DST_CONFIG_FILE << EOF
 listener $SECURE_PORT 0.0.0.0

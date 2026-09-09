@@ -43,7 +43,7 @@ security:
     ca_crt: "<% secrets.redis-ssl-ca-crt %>"
     tls_crt: "<% secrets.redis-ssl-tls-crt %>"
     tls_key: "<% secrets.redis-ssl-tls-key %>"
-extra_args: ""                     # extra redis-server arguments, appended verbatim
+extra_args: ""                     # extra redis-server arguments, appended last
 ```
 
 ### Base settings
@@ -63,9 +63,13 @@ TLS is exclusive: the plaintext listener is disabled and `port` becomes the TLS 
 
 A half-configured mode is a startup error, not a warning: if the mode asks for a password or certificates and any of them is empty, the container exits with a message instead of starting an unauthenticated or unencrypted server.
 
+The password is written to an owner-only config file (`/etc/redis-auth/requirepass.conf`) and passed to `redis-server` as its first argument, so it never appears in the container's process table. Certificates land in `/etc/redis-tls`, also owner-only.
+
 ### Persistence and advanced settings
 - `persistence.appendonly`: Set to `true` to enable AOF persistence in addition to the default RDB snapshots (better durability, more disk).
-- `extra_args`: Extra `redis-server` arguments appended verbatim, e.g. `--loglevel debug --save ''`. This is the escape hatch for every setting this app doesn't wrap. Don't set `--dir`; it's pinned to the persistent volume.
+- `extra_args`: Extra `redis-server` arguments, e.g. `--loglevel debug --tls-auth-clients yes`. This is the escape hatch for every setting this app doesn't wrap. Don't set `--dir`; it's pinned to the persistent volume. Two things to know before using it:
+    - **They go last, so they override the managed settings.** That's what makes `--tls-auth-clients yes` work for mTLS, and it cuts both ways: `--requirepass ""` turns off authentication and `--port 6379` re-opens a plaintext listener under `TLS`/`PASSWORD_TLS`. (Kafka does the opposite; don't carry that assumption over.)
+    - **The string is split on whitespace, and quotes are not removed.** `--save ''` passes the two-character literal `''` to `redis-server`, which rejects it. Arguments containing spaces or empty strings can't be expressed here; use a config file mounted into the container for those.
 
 ## Kelvin Cloud Deployment
 1. **Upload** the application (builds and registers the container image; needs Docker):

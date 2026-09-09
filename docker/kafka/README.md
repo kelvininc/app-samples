@@ -1,7 +1,7 @@
 # Kafka Broker (single node)
 This is a Docker application that runs a single-node Apache Kafka broker in KRaft mode (no ZooKeeper), with optional SASL/PLAIN authentication and TLS.
 
-It wraps the official `apache/kafka` image: the entrypoint reads the Kelvin application configuration and translates it into broker settings, and everything else keeps the image's sensible single-node defaults (combined broker+controller, replication factor 1, fixed cluster id).
+It wraps the official `apache/kafka` image: the entrypoint reads the Kelvin application configuration and translates it into the `KAFKA_*` variables the image maps onto `server.properties`. The image falls back to its own `server.properties` only when it receives no configuration at all, so the entrypoint declares the whole single-node baseline itself: combined broker+controller, one KRaft voter on `localhost:9093`, replication factor 1 for the internal topics, and the log directory pinned to the persistent volume. The cluster id is the one constant the image still supplies.
 
 ## Prerequisites
 This is a Docker application; it has no Python.
@@ -52,7 +52,7 @@ The broker is not reachable from outside the cluster by default. Kafka clients b
    - `external.port`: Enables the external listener; must match the host port (**9094**).
    - `external.advertised_host`: Address external clients can reach the node on.
 
-Both or neither: the schema enforces it at deploy time and the entrypoint exits with an error if only one is set, rather than starting a broker whose external listener nobody can use.
+Both or neither: the schema enforces it at deploy time and the entrypoint exits with an error if only one is set, rather than starting a broker whose external listener nobody can use. `external.port` also has to differ from `listener.port`; sharing one would otherwise surface as a bare bind failure.
 
 To find the node address, open **Cluster -> Services** in the Kelvin UI after the host port is deployed; the service entry for `kafka-external` lists the node address the host port is published on.
 
@@ -70,12 +70,14 @@ External clients then connect to `<node-address>:9094`. Enable authentication (a
 
 The protocol applies to every client listener; the controller listener stays plaintext on localhost, where it never leaves the container.
 
-- `security.sasl.username` / `security.sasl.password`: the single SASL/PLAIN credential pair the broker accepts.
+`SSL` and `SASL_SSL` encrypt the connection; only the `SASL_*` protocols authenticate the client. Client certificates are not required by default, so a plain `SSL` broker accepts any client that trusts the CA chain. For mTLS, add `extra_properties: {ssl.client.auth: required}` (`requested` makes the certificate optional).
+
+- `security.sasl.username` / `security.sasl.password`: the single SASL/PLAIN credential pair the broker accepts. Both end up in the broker's JAAS login string, which is quoted and line-oriented, so the password can't contain `"`, `\` or a newline and the username is limited to letters, digits, `.`, `_`, `@` and `-` (it is also used verbatim as the `user_<name>` JAAS option). The schema rejects anything else at deploy time and the entrypoint refuses to start on it.
 - `security.tls.ca_crt`: CA certificate (PEM content).
 - `security.tls.tls_crt`: Server certificate (PEM content).
 - `security.tls.tls_key`: Server private key (PEM content, **PKCS#8 format**).
 
-A `*_SSL` protocol with a missing or empty certificate field makes the broker exit instead of falling back to an unencrypted listener, so a typo can't quietly leave the broker open.
+A `*_SSL` protocol with a missing or empty certificate field makes the broker exit instead of falling back to an unencrypted listener, so a typo can't quietly leave the broker open. The reverse is an error too: certificates under a non-TLS protocol, or credentials under a non-SASL one, stop the broker rather than starting it with the material silently ignored.
 
 **Note:** Kafka only accepts PEM private keys in PKCS#8 format (`-----BEGIN PRIVATE KEY-----`). Convert a PKCS#1 key (`-----BEGIN RSA PRIVATE KEY-----`) with:
 
@@ -93,7 +95,9 @@ openssl pkcs8 -topk8 -nocrypt -in tls-pkcs1.key -out tls.key
     num.partitions: "3"
   ```
 
-  This is the escape hatch for every broker setting this app doesn't wrap. The settings the entrypoint manages (listeners, protocol map, SASL, TLS, log dirs, the KRaft baseline) win on conflict; don't set `log.dirs`, it's pinned to the persistent volume.
+  This is the escape hatch for every broker setting this app doesn't wrap; `ssl.client.auth: required` for mTLS goes here. The settings the entrypoint manages (listeners, protocol map, SASL, TLS, log dirs, the KRaft baseline) win on conflict; don't set `log.dirs`, it's pinned to the persistent volume.
+
+  Property names take letters, digits, `.` and `_` (they become `KAFKA_*` environment variables), and values are single-line: `server.properties` is line-oriented. The entrypoint exits with the offending key named rather than passing either through.
 
 ## Kelvin Cloud Deployment
 1. **Upload** the application (builds and registers the container image; needs Docker):

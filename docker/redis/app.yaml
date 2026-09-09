@@ -9,7 +9,7 @@ type: docker
 name: redis
 title: Redis Server
 description: Single-node Redis server with optional authentication and TLS.
-version: 1.1.0
+version: 1.2.0
 
 # Capabilities
 flags:
