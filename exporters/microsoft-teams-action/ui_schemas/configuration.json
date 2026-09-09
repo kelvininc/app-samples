@@ -1,0 +1,70 @@
+{
+  "title": "Microsoft Teams Exporter Configuration",
+  "description": "Teams incoming webhooks, one per channel this exporter can post to.",
+  "type": "object",
+  "properties": {
+    "teams": {
+      "type": "object",
+      "title": "Microsoft Teams",
+      "description": "Webhook targets. A Teams webhook URL posts to exactly one channel.",
+      "properties": {
+        "webhooks": {
+          "type": "array",
+          "title": "Channel Webhooks",
+          "description": "One entry per channel. The Teams Message action names a channel and this exporter posts to the matching webhook.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "channel": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "title": "Channel",
+                "description": "Label the Teams Message action selects by; match it to the channel this webhook posts to. Matching ignores case."
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "title": "Webhook URL",
+                "description": "Teams Incoming Webhook / Power Automate Workflow URL for this channel; must be http(s). Wire this to a secret."
+              }
+            },
+            "required": [
+              "channel",
+              "url"
+            ]
+          }
+        }
+      },
+      "required": [
+        "webhooks"
+      ]
+    }
+  },
+  "required": [
+    "teams"
+  ],
+  "x-kelvin-ui": {
+    "ui:order": [
+      "teams"
+    ],
+    "teams": {
+      "ui:order": [
+        "webhooks"
+      ],
+      "webhooks": {
+        "items": {
+          "ui:order": [
+            "channel",
+            "url"
+          ],
+          "url": {
+            "ui:widget": "password"
+          }
+        }
+      }
+    }
+  }
+}

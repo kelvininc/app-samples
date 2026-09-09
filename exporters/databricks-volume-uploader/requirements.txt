@@ -1,4 +1,0 @@
-kelvin-python-sdk
-databricks-sdk
-aiofiles
-duckdb

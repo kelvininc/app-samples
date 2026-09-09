@@ -1,5 +1,0 @@
-kelvin-python-sdk[ai]
-slack_sdk
-aiohttp
-pydantic
-pydantic-settings

@@ -1,4 +1,0 @@
-kelvin-python-sdk[ai]
-httpx
-pydantic
-pydantic-settings

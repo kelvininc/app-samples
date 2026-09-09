@@ -1,6 +1,0 @@
-kelvin-python-sdk
-databricks-sdk
-databricks-sql-connector
-aiofiles
-duckdb
-pandas

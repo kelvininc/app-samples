@@ -1,0 +1,5 @@
+kelvin-python-sdk
+boto3
+pydantic
+pydantic-settings
+duckdb

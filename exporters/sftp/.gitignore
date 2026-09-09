@@ -1,0 +1,4 @@
+data/
+export/*
+config.yaml
+.venv

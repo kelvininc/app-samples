@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "title": "Stream IO Configuration",
+  "properties": {
+    "topic": {
+      "type": "string",
+      "title": "Kafka Topic",
+      "description": "Topic this stream's data is produced to; supports {asset}/{stream} placeholders. A stream without a topic is not exported."
+    }
+  },
+  "required": ["topic"]
+}
