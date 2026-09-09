@@ -9,7 +9,7 @@ type: docker
 name: redis
 title: Redis Server
 description: Single-node Redis server with optional authentication and TLS.
-version: 1.0.0
+version: 1.1.0
 
 # Capabilities
 flags:
@@ -25,7 +25,26 @@ ui_schemas:
 # Defaults (Runtime/Deployment)
 defaults:
   # Application Configuration Default Values
-  configuration: {}
+  configuration:
+    port: 6379                            # keep in sync with the service port in system.ports
+    memory:
+      maxmemory: 256mb                    # keep below the workload memory limit; Redis needs
+                                          # headroom during snapshots
+      maxmemory_policy: noeviction        # noeviction | allkeys-lru | allkeys-lfu
+                                          # | volatile-lru | volatile-ttl
+    persistence:
+      appendonly: false                   # true adds AOF on top of the default RDB snapshots
+    security:
+      mode: PLAINTEXT                     # PLAINTEXT | PASSWORD | TLS | PASSWORD_TLS
+      # To require authentication, pick PASSWORD or PASSWORD_TLS and add:
+      #   password: "<% secrets.redis-password %>"
+      # For TLS, pick TLS or PASSWORD_TLS and wire all three PEMs to secrets. TLS is
+      # exclusive: the plaintext listener is disabled and `port` becomes the TLS port.
+      #   tls:
+      #     ca_crt: "<% secrets.redis-ssl-ca-crt %>"
+      #     tls_crt: "<% secrets.redis-ssl-tls-crt %>"
+      #     tls_key: "<% secrets.redis-ssl-tls-key %>"
+    extra_args: ""
 
   # System Settings
   system:
@@ -46,30 +65,3 @@ defaults:
         type: service
         service:
           port: 6379
-    environment_vars:
-      - name: REDIS_PORT
-        value: "6379"
-      # Data memory cap; keep below the workload memory limit
-      - name: REDIS_MAXMEMORY
-        value: "256mb"
-      - name: REDIS_MAXMEMORY_POLICY
-        value: "noeviction"
-      # Optional settings (add on the deployment as needed, see README.md):
-      #
-      # Authentication:
-      #   - name: REDIS_PASSWORD
-      #     value: "<% secrets.redis-password %>"
-      #
-      # TLS (PEM content):
-      #   - name: REDIS_SSL_CA_CRT
-      #     value: "<% secrets.redis-ssl-ca-crt %>"
-      #   - name: REDIS_SSL_TLS_CRT
-      #     value: "<% secrets.redis-ssl-tls-crt %>"
-      #   - name: REDIS_SSL_TLS_KEY
-      #     value: "<% secrets.redis-ssl-tls-key %>"
-      #
-      # AOF persistence, extra redis-server arguments:
-      #   - name: REDIS_APPENDONLY
-      #     value: "yes"
-      #   - name: REDIS_EXTRA_ARGS
-      #     value: "--loglevel notice"

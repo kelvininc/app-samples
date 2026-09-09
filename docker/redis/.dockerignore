@@ -13,3 +13,6 @@ ui_schemas/
 
 # retain ignore files
 !.*ignore
+
+# local testing only
+example-config.yaml

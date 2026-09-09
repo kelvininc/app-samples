@@ -1,0 +1,40 @@
+# Local-testing configuration for the redis app.
+#
+#   docker build -t kelvin-redis .
+#   docker run --rm -p 6379:6379 \
+#     -v "$PWD/example-config.yaml:/opt/kelvin/share/config.yaml" kelvin-redis
+#
+# On Kelvin this file is the workload's `runtime.configuration`; the platform
+# mounts it at /opt/kelvin/share/config.yaml.
+
+port: 6379
+
+memory:
+  maxmemory: 256mb
+  maxmemory_policy: noeviction
+
+persistence:
+  appendonly: false
+
+security:
+  mode: PLAINTEXT
+  # PASSWORD / PASSWORD_TLS also need:
+  #   password: "change-me"
+  #
+  # TLS / PASSWORD_TLS also need all three PEMs. TLS is exclusive: the plaintext
+  # listener is disabled and `port` above becomes the TLS port.
+  #   tls:
+  #     ca_crt: |
+  #       -----BEGIN CERTIFICATE-----
+  #       ...
+  #       -----END CERTIFICATE-----
+  #     tls_crt: |
+  #       -----BEGIN CERTIFICATE-----
+  #       ...
+  #       -----END CERTIFICATE-----
+  #     tls_key: |
+  #       -----BEGIN PRIVATE KEY-----
+  #       ...
+  #       -----END PRIVATE KEY-----
+
+extra_args: ""
