@@ -1,0 +1,23 @@
+{
+  "title": "Stream IO Configuration",
+  "description": "Per-stream topic and payload mapping.",
+  "type": "object",
+  "properties": {
+    "topic": {
+      "type": "string",
+      "title": "MQTT Topic Filter",
+      "description": "Topic to subscribe to; supports +/# wildcards and {asset}/{stream} placeholders. Omit for a writeback-only stream (control_topic only)."
+    },
+    "payload_field": {
+      "type": "string",
+      "title": "Payload Field",
+      "description": "Optional: dotted path to a value inside a JSON payload (e.g. readings.pressure). Omit to use the whole payload."
+    },
+    "control_topic": {
+      "type": "string",
+      "title": "Control Topic",
+      "description": "Optional: control changes for this stream are published to this topic; supports {asset}/{stream} placeholders."
+    }
+  },
+  "required": []
+}

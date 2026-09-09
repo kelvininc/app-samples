@@ -1,0 +1,28 @@
+{
+  "title": "Stream IO Configuration",
+  "description": "Per-stream topic and payload mapping.",
+  "type": "object",
+  "properties": {
+    "topic": {
+      "type": "string",
+      "title": "Kafka Topic",
+      "description": "Topic to consume; supports {asset}/{stream} placeholders. Omit for a writeback-only stream (control_topic only)."
+    },
+    "payload_field": {
+      "type": "string",
+      "title": "Payload Field",
+      "description": "Optional: dotted path to a value inside a JSON record value (e.g. readings.pressure). Omit to use the whole value."
+    },
+    "key": {
+      "type": "string",
+      "title": "Record Key Filter",
+      "description": "Optional: only consume records whose key matches; supports {asset}/{stream} placeholders."
+    },
+    "control_topic": {
+      "type": "string",
+      "title": "Control Topic",
+      "description": "Optional: control changes for this stream are produced to this topic; supports {asset}/{stream} placeholders."
+    }
+  },
+  "required": []
+}

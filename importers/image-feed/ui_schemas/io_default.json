@@ -1,0 +1,12 @@
+{
+  "title": "Camera Stream IO Configuration",
+  "description": "Per-stream source directory for this camera.",
+  "type": "object",
+  "properties": {
+    "source_dir": {
+      "type": "string",
+      "title": "Image Source Directory",
+      "description": "Folder of images for this stream (jpg/jpeg/png/gif/bmp; other files are ignored); defaults to the app-level images_dir."
+    }
+  }
+}

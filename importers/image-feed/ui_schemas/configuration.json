@@ -1,0 +1,30 @@
+{
+  "title": "Image Feed Importer Configuration",
+  "description": "Local directory of images published as a camera stream.",
+  "type": "object",
+  "properties": {
+    "camera": {
+      "type": "object",
+      "title": "Camera",
+      "description": "Local image source and publish cadence.",
+      "properties": {
+        "images_dir": {
+          "type": "string",
+          "title": "Images Directory",
+          "default": "images",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Default folder of images to replay."
+        },
+        "publish_interval": {
+          "type": "integer",
+          "title": "Publish Interval (s)",
+          "description": "Seconds between published frames.",
+          "default": 30,
+          "minimum": 1,
+          "maximum": 3600
+        }
+      }
+    }
+  }
+}

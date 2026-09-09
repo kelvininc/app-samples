@@ -17,10 +17,11 @@ Start with the official [Kelvin Documentation](https://docs.kelvin.ai).
 
 ## 📥 Importers
 
-| Application                                     | Level        | Description                                          |
-|-------------------------------------------------|--------------|------------------------------------------------------|
-| [Camera Connector](importers/camera-connector/) | Intermediate | Publishes camera-feed images to the Kelvin Platform. |
-| [MQTT Connector](importers/mqtt-connector/)     | Intermediate | Publishes MQTT messages to the Kelvin Platform.      |
+| Application                                  | Level        | Description                                                                                             |
+|----------------------------------------------|--------------|---------------------------------------------------------------------------------------------------------|
+| [Kafka Importer](importers/kafka/)           | Intermediate | Bidirectional Kafka connector that consumes records into Kelvin and writes control changes back.       |
+| [MQTT Importer](importers/mqtt/)             | Intermediate | Bidirectional MQTT connector that ingests broker messages into Kelvin and writes control changes back. |
+| [Image Feed Importer](importers/image-feed/) | Intermediate | Replays a folder of images to Kelvin as a camera feed.                                                  |
 
 ## 📤 Exporters
 

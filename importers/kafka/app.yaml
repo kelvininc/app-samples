@@ -1,0 +1,50 @@
+spec_version: 5.0.0
+type: importer
+
+name: kafka-importer
+title: Kafka Importer
+description: This importer runs a bidirectional Kafka connector that consumes records into Kelvin and produces control changes back to Kafka.
+# 2.0.0: security config moved under kafka.security (protocol + sasl + tls); redeploying a 1.x
+# workload requires migrating its configuration to the new shape.
+version: 2.0.0
+
+# Runtime update is off: the consumer reads its mapping at startup and only rebuilds after a
+# broker outage, so configuration and mapping changes are applied by redeploying the workload.
+flags:
+  enable_runtime_update:
+    configuration: false
+
+importer_io:
+  - name: default
+    data_types:
+      - object
+      - number
+      - string
+      - boolean
+    control: true             # handles control changes (produced to a stream's control_topic)
+
+ui_schemas:
+  configuration: "ui_schemas/configuration.json"
+  io_configuration:
+    default: "ui_schemas/io_default.json"
+
+defaults:
+  configuration:
+    kafka:
+      bootstrap_servers: localhost:9092
+      group_id: kelvin-kafka-importer
+      auto_offset_reset: latest       # "latest" | "earliest"
+      security:
+        protocol: PLAINTEXT           # PLAINTEXT | SSL | SASL_PLAINTEXT | SASL_SSL
+        # To authenticate, set a SASL_* protocol AND the matching sasl block (the two must
+        # agree), e.g. protocol: SASL_SSL with:
+        #   sasl:
+        #     mechanism: SCRAM-SHA-256    # PLAIN | SCRAM-SHA-256 | SCRAM-SHA-512
+        #     username: kelvin-connector
+        #     password: "<% secrets.kafka-password %>"
+        # For mTLS or a private CA (SSL / SASL_SSL only), wire PEM content to secrets:
+        #   tls:
+        #     ca_cert: "<% secrets.kafka-ca-cert %>"           # optional; empty = system CAs
+        #     client_cert: "<% secrets.kafka-client-cert %>"   # both or neither
+        #     client_key: "<% secrets.kafka-client-key %>"
+    reconnect_interval: 5

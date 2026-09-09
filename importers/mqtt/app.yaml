@@ -1,0 +1,43 @@
+spec_version: 5.0.0
+type: importer
+
+name: mqtt-importer
+title: MQTT Importer
+description: This importer runs a bidirectional MQTT connector that ingests broker messages into Kelvin and writes control changes back to the broker.
+version: 1.1.0
+
+# Runtime update is off: on a healthy broker connection the loop never rebuilds its topic/command
+# maps, so configuration and mapping changes are applied by redeploying the workload.
+flags:
+  enable_runtime_update:
+    configuration: false
+
+importer_io:
+  - name: default
+    data_types:
+      - object
+      - number
+      - string
+      - boolean
+    control: true             # handles control changes (writeback to a stream's control_topic)
+
+ui_schemas:
+  configuration: "ui_schemas/configuration.json"
+  io_configuration:
+    default: "ui_schemas/io_default.json"
+
+defaults:
+  configuration:
+    mqtt:
+      host: test.mosquitto.org
+      port: 1883
+      client_id: kelvin-mqtt-importer
+      use_tls: false            # set true (with port 8883) for a TLS broker
+      auth:
+        # Optional: leave empty for an anonymous broker. Wire per deployment, e.g.:
+        #   username: kelvin-connector
+        #   password: "<% secrets.mqtt-password %>"
+        username: ""
+    reconnect_interval: 5
+    qos: "0"                    # inbound subscribe QoS: 0 at-most-once, 1 at-least-once, 2 exactly-once
+                                # (string to match the select widget, which submits enum values as strings)
