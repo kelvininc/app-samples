@@ -1,0 +1,49 @@
+# Example application configuration for local testing.
+#
+# Mount it where Kelvin mounts the real one:
+#   docker run --rm -p 9092:9092 \
+#       -v "$PWD/example-config.yaml:/opt/kelvin/share/config.yaml" kelvin-kafka
+#
+# On the platform this file is generated from the deployment's configuration;
+# the keys below are the same ones the Deploy Workload form edits.
+
+listener:
+  port: 9092
+  # Empty falls back to KELVIN_WORKLOAD_NAME, then localhost. Locally that
+  # variable is unset, so the broker advertises localhost.
+  advertised_host: ""
+
+# Uncomment to add a second listener for clients outside the cluster. Locally
+# the port must also be published with -p.
+# external:
+#   port: 9094
+#   advertised_host: "localhost"
+
+security:
+  protocol: PLAINTEXT
+  # SASL_PLAINTEXT or SASL_SSL also need:
+  # sasl:
+  #   username: "admin"
+  #   password: "secret"
+  # SSL or SASL_SSL also need all three PEMs; the key must be PKCS#8:
+  # tls:
+  #   ca_crt: |
+  #     -----BEGIN CERTIFICATE-----
+  #     ...
+  #     -----END CERTIFICATE-----
+  #   tls_crt: |
+  #     -----BEGIN CERTIFICATE-----
+  #     ...
+  #     -----END CERTIFICATE-----
+  #   tls_key: |
+  #     -----BEGIN PRIVATE KEY-----
+  #     ...
+  #     -----END PRIVATE KEY-----
+
+jvm:
+  heap_opts: "-Xmx512m -Xms512m"
+
+extra_properties: {}
+# extra_properties:
+#   log.retention.hours: "48"
+#   num.partitions: "3"

@@ -10,6 +10,7 @@ build/
 README.md
 app.yaml
 ui_schemas/
+example-config.yaml
 
 # retain ignore files
 !.*ignore

@@ -6,8 +6,9 @@ FROM apache/kafka:4.3.1
 COPY --chown=appuser:appuser entrypoint.sh /entrypoint.sh
 
 USER root
-RUN chmod +x /entrypoint.sh
+# yq reads the Kelvin application configuration (Alpine base -> mikefarah/yq)
+RUN apk add --no-cache yq && chmod +x /entrypoint.sh
 USER appuser
 
-# Translate BROKER_* env vars into Kafka settings, then start the broker
+# Translate the Kelvin configuration into Kafka settings, then start the broker
 ENTRYPOINT ["/entrypoint.sh"]
