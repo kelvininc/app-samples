@@ -1,0 +1,13 @@
+spec_version: 5.0.0
+type: app
+name: custom-action-publisher
+title: Custom Action Publisher
+description: Local SDK example for motor-temperature workflows.
+version: 1.0.0
+data_streams:
+  inputs:
+    - name: temperature_c
+      data_type: number
+custom_actions:
+  outputs:
+    - type: run_diagnostics

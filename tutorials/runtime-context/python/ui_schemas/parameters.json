@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "properties": {
+    "temperature_limit": {
+      "type": "number",
+      "title": "Temperature limit (C)",
+      "minimum": 0,
+      "maximum": 150
+    }
+  },
+  "required": [
+    "temperature_limit"
+  ]
+}

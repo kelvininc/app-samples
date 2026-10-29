@@ -1,0 +1,14 @@
+spec_version: 5.0.0
+type: exporter
+name: work-order-exporter
+title: Work Order Exporter
+description: Forwards Work Order Custom Actions to a customer-owned SAP integration endpoint.
+version: 1.0.0
+flags:
+  resources_required: false
+custom_actions:
+  inputs:
+    - type: create_work_order
+defaults:
+  configuration:
+    adapter_url: https://maintenance.example.com/work-orders

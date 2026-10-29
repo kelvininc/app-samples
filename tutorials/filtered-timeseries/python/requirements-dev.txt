@@ -1,0 +1,4 @@
+-r requirements.txt
+kelvin-python-sdk[testing]
+pytest
+pytest-asyncio

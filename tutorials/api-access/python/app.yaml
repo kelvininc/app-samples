@@ -1,0 +1,8 @@
+spec_version: 5.0.0
+type: app
+name: motor-api-reader
+title: Motor Api Reader
+description: Demonstrate the documented SDK workflow.
+version: 1.0.0
+api_permissions:
+- kelvin.permission.asset.read

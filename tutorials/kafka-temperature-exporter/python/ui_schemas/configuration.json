@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "properties": {
+    "bootstrap_servers": {
+      "type": "string",
+      "title": "Bootstrap servers",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "bootstrap_servers"
+  ]
+}

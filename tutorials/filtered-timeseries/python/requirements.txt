@@ -1,0 +1,3 @@
+kelvin-python-sdk[testing]
+pytest
+pytest-asyncio

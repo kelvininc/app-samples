@@ -1,0 +1,4 @@
+kelvin-python-sdk[testing]
+httpx
+pytest
+pytest-asyncio

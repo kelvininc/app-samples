@@ -98,3 +98,7 @@ pytest -m integration                            # smoke tests against a live Mo
     ```
 2. **Deploy** it: Set the broker host/port on the deployment;
 for a secured broker, wire the password as a Secret (`<% secrets.mqtt-password %>`).
+
+## Beginner tutorial
+
+For a smaller teaching example, see [the temperature tutorial](../../tutorials/mqtt-temperature-importer/). This integration retains the broader capabilities documented above.

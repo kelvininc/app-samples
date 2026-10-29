@@ -1,0 +1,21 @@
+spec_version: 5.0.0
+type: app
+name: motor-telemetry-publisher
+title: Motor Telemetry Publisher
+description: Motor Telemetry Publisher local workflow example.
+version: 1.0.0
+data_streams:
+  inputs:
+    - name: temperature_c
+      data_type: number
+    - name: motor_state
+      data_type: string
+  outputs:
+    - name: temperature_f
+      data_type: number
+    - name: temperature_alarm
+      data_type: boolean
+    - name: temperature_status
+      data_type: string
+    - name: temperature_summary
+      data_type: object

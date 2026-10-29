@@ -1,0 +1,7 @@
+{
+  "type": "object",
+  "properties": {
+    "topic": {"type": "string", "title": "MQTT topic", "minLength": 1}
+  },
+  "required": ["topic"]
+}

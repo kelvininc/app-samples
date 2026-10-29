@@ -157,3 +157,7 @@ docker exec <container> /opt/kafka/bin/kafka-topics.sh --bootstrap-server localh
 
 ### `entrypoint.sh` script
 The `entrypoint.sh` script reads `/opt/kelvin/share/config.yaml` with `yq` and maps it onto the `KAFKA_*` variables the official image understands (listeners, advertised listeners, security protocol, SASL/JAAS, PEM TLS files) and then hands off to the image's own startup script. It can be changed to fit your needs.
+
+## Kelvin Service smoke test
+
+The [checker Workload](tests/check-workload/) verifies a private Service round trip against an isolated broker. It is separate from the broker container and requires the documented bootstrap address.

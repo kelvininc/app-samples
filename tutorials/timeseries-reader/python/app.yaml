@@ -1,0 +1,12 @@
+spec_version: 5.0.0
+type: app
+name: motor-temperature-reader
+title: Motor Temperature Reader
+description: Motor Temperature Reader local workflow example.
+version: 1.0.0
+data_streams:
+  inputs:
+    - name: temperature_c
+      data_type: number
+    - name: motor_state
+      data_type: string

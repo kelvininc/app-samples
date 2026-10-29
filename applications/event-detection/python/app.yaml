@@ -1,0 +1,36 @@
+spec_version: 5.0.0
+type: app
+name: event-detection
+title: Event Detection
+description: Publishes converted motor temperatures and recommends a lower speed above
+  each Asset threshold.
+version: 1.0.0
+category: smartapp
+data_streams:
+  inputs:
+  - name: temperature_c
+    data_type: number
+  outputs:
+  - name: temperature_f
+    data_type: number
+control_changes:
+  outputs:
+  - name: motor_speed_setpoint
+    data_type: number
+recommendations:
+  outputs:
+  - type: decrease_speed
+parameters:
+- name: kelvin_closed_loop
+  data_type: boolean
+- name: speed_decrease_set_point
+  data_type: number
+- name: temperature_max_threshold
+  data_type: number
+ui_schemas:
+  parameters: ui_schemas/parameters.json
+defaults:
+  parameters:
+    kelvin_closed_loop: false
+    speed_decrease_set_point: 1000
+    temperature_max_threshold: 80

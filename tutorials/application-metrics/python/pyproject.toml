@@ -1,0 +1,11 @@
+[project]
+name = "motor-processing-metrics"
+version = "1.0.0"
+requires-python = ">=3.14"
+dependencies = ["kelvin-python-sdk", "prometheus-client"]
+
+[dependency-groups]
+dev = ["kelvin-python-sdk[testing]", "pytest", "pytest-asyncio"]
+
+[tool.uv]
+package = false

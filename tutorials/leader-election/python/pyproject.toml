@@ -1,0 +1,11 @@
+[project]
+name = "elected-heartbeat"
+version = "1.0.0"
+requires-python = ">=3.14"
+dependencies = ["kelvin-python-sdk"]
+
+[dependency-groups]
+dev = ["kelvin-python-sdk[testing]", "pytest", "pytest-asyncio", "httpx"]
+
+[tool.uv]
+package = false

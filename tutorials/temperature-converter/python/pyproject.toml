@@ -1,0 +1,14 @@
+[project]
+name = "temperature-converter"
+version = "1.0.0"
+requires-python = ">=3.14"
+dependencies = ["kelvin-python-sdk"]
+
+[dependency-groups]
+dev = ["kelvin-python-sdk[testing]", "pytest", "pytest-asyncio"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

@@ -1,0 +1,23 @@
+spec_version: 5.0.0
+type: app
+name: runtime-context
+title: Runtime Context
+description: Read shared configuration, per-Asset parameters, and optional Asset Properties.
+version: 1.0.0
+parameters:
+- name: temperature_limit
+  data_type: number
+defaults:
+  parameters:
+    temperature_limit: 80
+  configuration:
+    processing:
+      temperature_limit: 80
+ui_schemas:
+  parameters: ui_schemas/parameters.json
+  configuration: ui_schemas/configuration.json
+flags:
+  enable_runtime_update:
+    configuration: true
+    parameters: true
+    resource_properties: true

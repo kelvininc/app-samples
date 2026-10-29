@@ -1,0 +1,12 @@
+spec_version: 5.0.0
+type: app
+name: elected-heartbeat
+title: Elected Heartbeat
+description: Publishes a heartbeat only while this Workload holds leadership.
+version: 1.0.0
+data_streams:
+  outputs:
+    - name: publisher_heartbeat
+      data_type: number
+# No election field is required in the manifest.
+# Replicas must use the same election resource and compatible output mappings.

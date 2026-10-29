@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "properties": {
+    "topic": {
+      "type": "string",
+      "title": "Kafka topic",
+      "minLength": 1,
+      "maxLength": 249,
+      "pattern": "^[A-Za-z0-9_-][A-Za-z0-9._-]*$"
+    }
+  },
+  "required": [
+    "topic"
+  ]
+}

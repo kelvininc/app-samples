@@ -121,3 +121,26 @@ Please read our [Style Guide](CONTRIBUTING.md) before contributing a new sample 
 4. Commit your changes (git commit -m 'Add some feature').
 5. Push to the branch (git push origin feature/YourFeature).
 6. Open a pull request.
+## Focused Developer Tools tutorials
+
+Each scenario keeps its implementations together. Open the Python implementation for setup and tests. Paired topics use producer/consumer directories, each with its own manifest. Some tutorials are local SDK examples without deployment packaging; their READMEs state the limits.
+
+| Scenario | Topic |
+| --- | --- |
+| [api-access](tutorials/api-access/) | Kelvin API access |
+| [application-metrics](tutorials/application-metrics/) | Application metrics |
+| [control-changes](tutorials/control-changes/) | Control Changes |
+| [data-quality](tutorials/data-quality/) | Data Quality |
+| [diagnostic-actions](tutorials/diagnostic-actions/) | Diagnostic Custom Actions |
+| [filtered-timeseries](tutorials/filtered-timeseries/) | Filtered timeseries |
+| [insights](tutorials/insights/) | Insights |
+| [kafka-temperature-exporter](tutorials/kafka-temperature-exporter/) | Kafka temperature Exporter |
+| [leader-election](tutorials/leader-election/) | Leader election |
+| [mqtt-temperature-importer](tutorials/mqtt-temperature-importer/) | MQTT temperature Importer |
+| [parameter-reset](tutorials/parameter-reset/) | Reset App Parameter |
+| [runtime-context](tutorials/runtime-context/) | Read runtime context |
+| [temperature-converter](tutorials/temperature-converter/) | Temperature Converter |
+| [timeseries-reader](tutorials/timeseries-reader/) | Timeseries reader |
+| [typed-telemetry](tutorials/typed-telemetry/) | Typed telemetry |
+
+Additional examples: [Work Order Exporter](exporters/work-order/), [Health Probes](docker/health-probes/), and [Event Detection](applications/event-detection/).

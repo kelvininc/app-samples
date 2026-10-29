@@ -1,0 +1,21 @@
+spec_version: 5.0.0
+type: importer
+name: mqtt-temperature-importer
+title: MQTT Temperature Importer
+description: Imports simulated motor temperature readings from an MQTT broker.
+version: 1.0.0
+flags:
+  enable_runtime_update:
+    configuration: false
+importer_io:
+  - name: default
+    data_types: [number]
+    control: false
+ui_schemas:
+  configuration: ui_schemas/configuration.json
+  io_configuration:
+    default: ui_schemas/io_default.json
+defaults:
+  configuration:
+    mqtt_host: mqtt-broker
+    mqtt_port: 1883

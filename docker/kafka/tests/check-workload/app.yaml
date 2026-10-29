@@ -1,0 +1,12 @@
+spec_version: 5.0.0
+type: docker
+name: kafka-broker-check
+title: Kafka Broker Check
+description: Publishes and consumes one record through the private Kafka Service.
+version: 1.0.0
+defaults:
+  system:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi

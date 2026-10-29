@@ -469,3 +469,9 @@ Python SDK archetypes (SmartApp, Importer, Exporter) also:
 For SDK reference and detailed API documentation, see the [Kelvin Documentation](https://docs.kelvin.ai).
 
 For issues or questions about this repository, open an issue on GitHub.
+
+## Focused tutorial implementations
+
+New tutorial scenarios use tutorials/<scenario>/python/. Complete Apps and integrations stay in their existing category, with language implementations underneath when migrated. A scenario README owns shared purpose; each runnable implementation owns its manifest, dependencies, setup, tests, and packaging status.
+
+Use producer/consumer for paired Apps. Keep the processes independent and avoid imports from sibling examples or a profile-selection framework. A focused local SDK tutorial may omit a Dockerfile if its README explicitly states that packaging and deployment have not been supplied. Keep the existing integration packaging requirements above. Add Java or C# only with a runnable, tested implementation.
