@@ -26,7 +26,7 @@ Tests cover exact boundaries, two Assets, source timestamps, expiry, closed-loop
 In the first terminal, from this directory:
 
 ```bash
-kelvin app test csv --config app.yaml --csv data/test-data.csv --assets data/assets.csv --ignore-timestamps --replay
+kelvin app test csv --config app.yaml --csv data/test-data.csv --assets data/assets.csv --ignore-timestamps --publish-interval 1 --replay
 ```
 
 The CSV replays 45, 80, and 81 C for the Asset in `data/assets.csv`. In a second terminal, from this directory:

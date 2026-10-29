@@ -17,7 +17,7 @@ uv run --no-project pytest -q
 For SDK-managed local context, start the Kelvin SDK CLI Publisher in a separate terminal from this directory:
 
 ```bash
-kelvin app test simulator --config app.yaml --assets data/assets.csv
+kelvin app test csv --config app.yaml --csv data/temperatures.csv --assets data/assets.csv --ignore-timestamps --publish-interval 1 --replay
 ```
 
 Then start the App in the prepared environment:

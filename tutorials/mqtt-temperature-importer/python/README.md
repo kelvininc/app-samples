@@ -16,21 +16,15 @@ uv run --no-project pytest -q
 
 Start a local MQTT broker and configure mqtt_host/mqtt_port in the manifest defaults or a local config.yaml. Every mapped input needs its MQTT topic in the I/O configuration. simulate_sensor.py supplies numeric test readings once the broker exists. The simulator alone does not create a broker or equipment mapping.
 
-## Local run
+## Local demonstration
 
-For SDK-managed local context, start the Kelvin SDK CLI Publisher in a separate terminal from this directory:
-
-```bash
-kelvin app test simulator --config app.yaml --asset-count 1
-```
-
-Then start the App in the prepared environment:
+The tests supply runtime topic mappings through KelvinAppTest and mock the MQTT boundary. The generic App simulator does not support this Importer manifest. Run this bounded exercise after setup:
 
 ```bash
-uv run --no-project python main.py
+uv run --no-project pytest -q
 ```
 
-Stop both processes with Ctrl+C. This supplies local context, not the external services or full workflow.
+For a real broker integration test, provide MQTT_TEST_HOST and MQTT_TEST_PORT, then run `uv run --no-project pytest -m integration -q`. It creates a unique topic and clears its retained value after the test.
 
 ## Packaging and limits
 

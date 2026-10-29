@@ -12,21 +12,15 @@ uv pip install -r requirements-dev.txt
 uv run --no-project pytest -q
 ```
 
-## Local run
+## Local demonstration
 
-For SDK-managed local context, start the Kelvin SDK CLI Publisher in a separate terminal from this directory:
-
-```bash
-kelvin app test simulator --config app.yaml --asset-count 1
-```
-
-Then start the App in the prepared environment:
+The tests inject create_work_order and mock the HTTPS adapter. They check payload validation, idempotency headers, successful IDs, and unconfirmed outcomes. The generic App simulator does not support this Exporter manifest. Run this bounded exercise after setup:
 
 ```bash
-uv run --no-project python main.py
+uv run --no-project pytest -q
 ```
 
-Stop both processes with Ctrl+C. This supplies local context, not the external services or full workflow.
+To run main.py as a real Application, use the message-specific deployment setup in Developer Tools. The local harness demonstration does not establish platform delivery or external execution.
 
 ## Packaging and limits
 

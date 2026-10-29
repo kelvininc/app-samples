@@ -21,3 +21,7 @@ docker run --rm -p 8080:8080 kelvin-health-probes
 A Dockerfile is included. Build from this directory and verify the declared runtime configuration before deployment.
 
 See [Developer Tools](https://docs.kelvin.ai/latest/developer-tools/) for setup and message-specific delivery contracts.
+
+## Probe responses
+
+The live endpoint is /health/live. The ready endpoint /health/ready returns 503 until /tmp/reports-ready exists inside the container. After starting it, run docker exec CONTAINER_ID touch /tmp/reports-ready to make readiness return 200; removing that file restores 503. The live endpoint remains 200 throughout.

@@ -57,7 +57,7 @@ Start with the official [Kelvin Documentation](https://docs.kelvin.ai).
 
 # Running Samples Locally
 
-Each sample is self-contained: its own `requirements.txt`, `Dockerfile`, and `app.yaml`.
+Runnable examples are self-contained. Existing integrations include container packaging; focused local tutorials explicitly state when packaging is not supplied.
 We use [uv](https://docs.astral.sh/uv/) to install the `kelvin` CLI and to run each app in an
 isolated environment built from its existing `requirements.txt`. This doesn't change how apps
 build and run on Kelvin.
@@ -69,7 +69,7 @@ Two packages are involved, each with a different job:
 | `kelvin-sdk`        | The `kelvin` CLI to build, test, and deploy apps | Installed once, globally      |
 | `kelvin-python-sdk` | The runtime library each app imports             | Each app's `requirements.txt` |
 
-All samples target **Python 3.13**.
+Each implementation declares its own Python runtime and dependency setup. Follow its README; the focused tutorials include projects requiring Python 3.14.
 
 ## Prerequisites
 
@@ -90,7 +90,7 @@ From inside any app folder:
 ```bash
 cd exporters/aws-s3
 
-uv venv --python 3.13              # create an isolated environment
+uv venv                           # use the runtime required by this implementation
 uv pip install -r requirements.txt # install kelvin-python-sdk + the app's deps
 uv run python main.py              # run the app
 ```
@@ -108,7 +108,7 @@ To skip keeping a `.venv`, run the app ephemerally; uv builds a throwaway
 environment each time:
 
 ```bash
-uv run --python 3.13 --with-requirements requirements.txt python main.py
+uv run --with-requirements requirements.txt python main.py
 ```
 
 # Contributing

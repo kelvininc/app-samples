@@ -16,21 +16,15 @@ uv run --no-project pytest -q
 
 Start a Kafka broker and configure bootstrap_servers in the manifest defaults or a local config.yaml. Configure a topic for each mapped output. consume_records.py can inspect broker records. The local Publisher alone does not start Kafka or create topic mappings.
 
-## Local run
+## Local demonstration
 
-For SDK-managed local context, start the Kelvin SDK CLI Publisher in a separate terminal from this directory:
-
-```bash
-kelvin app test simulator --config app.yaml --asset-count 1
-```
-
-Then start the App in the prepared environment:
+The tests supply runtime topic mappings and verify encoded records and producer lifecycle through KelvinAppTest. The generic App simulator does not support this Exporter manifest. Run this bounded exercise after setup:
 
 ```bash
-uv run --no-project python main.py
+uv run --no-project pytest -q
 ```
 
-Stop both processes with Ctrl+C. This supplies local context, not the external services or full workflow.
+For a real broker integration test, provide KAFKA_TEST_BOOTSTRAP_SERVERS, then run `uv run --no-project pytest -m integration -q`. Use an isolated broker: the test creates a unique topic.
 
 ## Packaging and limits
 

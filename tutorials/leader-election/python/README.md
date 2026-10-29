@@ -11,21 +11,15 @@ uv sync
 uv run pytest -q
 ```
 
-## Local run
+## Local demonstration
 
-For SDK-managed local context, start the Kelvin SDK CLI Publisher in a separate terminal from this directory:
-
-```bash
-kelvin app test simulator --config app.yaml --asset-count 1
-```
-
-Then start the App in the prepared environment:
+The tests drive promotion, demotion, cancellation, and publishing through a mocked Leader API boundary. Without platform election configuration and a reachable Leader API, local election is disabled and publishes no heartbeat. Run this bounded exercise after setup:
 
 ```bash
-uv run python main.py
+uv run pytest -q
 ```
 
-Stop both processes with Ctrl+C. This supplies local context, not the external services or full workflow.
+For deployment, use the Leader API configuration supplied by Kelvin. A local Publisher supplies App context, not the election service or Workload identity.
 
 ## Packaging and limits
 

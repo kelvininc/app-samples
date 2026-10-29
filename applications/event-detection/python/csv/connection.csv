@@ -1,4 +1,4 @@
-timestamp,motor_temperature,motor_speed_set_point
+timestamp,temperature_c,motor_speed_setpoint
 2024-05-20 20:19:30,50.57,1615
 2024-05-20 20:19:35,73.48,
 2024-05-20 20:19:40,59.28,

@@ -66,3 +66,16 @@ async def test_equipment_column_mapping(
             if isinstance(message, RecommendationMsg)
         ]
         assert len(recommendations) == 1
+
+
+def test_preserved_recording_headers_match_current_interfaces() -> None:
+    """Legacy public recordings must follow the migrated input/control names."""
+    import csv
+
+    allowed = {"timestamp", "temperature_c", "motor_speed_setpoint"}
+    for name in ["test.csv", "connection.csv"]:
+        with (Path("csv") / name).open(newline="") as recorded:
+            fields = csv.DictReader(recorded).fieldnames
+        assert fields is not None
+        assert "temperature_c" in fields
+        assert set(fields) <= allowed
