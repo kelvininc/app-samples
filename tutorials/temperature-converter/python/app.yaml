@@ -1,0 +1,13 @@
+spec_version: 5.0.0
+type: app
+name: temperature-converter
+title: Temperature Converter
+description: Converts motor temperature readings from Celsius to Fahrenheit.
+version: 1.0.0
+data_streams:
+  inputs:
+    - name: temperature_c
+      data_type: number
+  outputs:
+    - name: temperature_f
+      data_type: number

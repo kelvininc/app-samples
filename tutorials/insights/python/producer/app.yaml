@@ -1,0 +1,13 @@
+spec_version: 5.0.0
+type: app
+name: motor-insight-publisher
+title: Motor Insight Publisher
+description: Demonstrate the documented SDK workflow.
+version: 1.0.0
+data_streams:
+  inputs:
+  - name: temperature_c
+    data_type: number
+data_tags:
+  outputs:
+  - temperature_high

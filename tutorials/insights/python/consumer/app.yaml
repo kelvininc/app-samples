@@ -1,0 +1,9 @@
+spec_version: 5.0.0
+type: app
+name: motor-insight-reader
+title: Motor Insight Reader
+description: Demonstrate the documented SDK workflow.
+version: 1.0.0
+data_tags:
+  inputs:
+  - temperature_high

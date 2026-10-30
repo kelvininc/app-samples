@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "properties": {
+    "mqtt_host": {"type": "string", "title": "Broker host", "minLength": 1},
+    "mqtt_port": {"type": "integer", "title": "Broker port", "minimum": 1, "maximum": 65535}
+  },
+  "required": ["mqtt_host", "mqtt_port"]
+}

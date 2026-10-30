@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "properties": {
+    "processing": {
+      "type": "object",
+      "properties": {
+        "temperature_limit": {
+          "type": "number",
+          "title": "Temperature limit (C)"
+        }
+      },
+      "required": [
+        "temperature_limit"
+      ]
+    }
+  },
+  "required": [
+    "processing"
+  ]
+}

@@ -1,0 +1,21 @@
+spec_version: 5.0.0
+type: exporter
+name: kafka-temperature-exporter
+title: Kafka Temperature Exporter
+description: Publishes mapped motor temperature readings as JSON records in Kafka.
+version: 1.0.0
+flags:
+  enable_runtime_update:
+    io: false
+    configuration: false
+exporter_io:
+  - name: default
+    data_types:
+      - number
+ui_schemas:
+  configuration: ui_schemas/configuration.json
+  io_configuration:
+    default: ui_schemas/io_default.json
+defaults:
+  configuration:
+    bootstrap_servers: kafka-broker.app:9092

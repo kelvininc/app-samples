@@ -1,0 +1,20 @@
+spec_version: 5.0.0
+type: app
+name: motor-quality-reader
+title: Motor Quality Reader
+description: Demonstrate the documented SDK workflow.
+version: 1.0.0
+data_streams:
+  inputs:
+  - name: temperature_c
+    data_type: number
+data_quality:
+  inputs:
+  - name: temperature_range
+    data_type: number
+    type: asset-datastream
+    data_streams:
+    - temperature_c
+  - name: motor_quality
+    data_type: number
+    type: asset

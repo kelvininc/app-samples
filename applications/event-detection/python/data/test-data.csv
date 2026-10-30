@@ -1,0 +1,4 @@
+timestamp,asset_name,temperature_c
+2026-10-14T12:00:00Z,motor-01,45
+2026-10-14T12:00:01Z,motor-01,80
+2026-10-14T12:00:02Z,motor-01,81

@@ -1,0 +1,16 @@
+spec_version: 5.0.0
+type: app
+name: motor-parameter-publisher
+title: Motor Parameter Publisher
+description: Demonstrate the documented SDK workflow.
+version: 1.0.0
+data_streams:
+  inputs:
+  - name: reset_temperature_limit
+    data_type: boolean
+parameters:
+- name: temperature_limit
+  data_type: number
+defaults:
+  parameters:
+    temperature_limit: 80

@@ -1,0 +1,14 @@
+spec_version: 5.0.0
+type: app
+name: motor-speed-publisher
+title: Motor Speed Publisher
+description: Motor Speed Publisher local workflow example.
+version: 1.0.0
+data_streams:
+  inputs:
+    - name: temperature_c
+      data_type: number
+control_changes:
+  outputs:
+    - name: motor_speed_setpoint
+      data_type: number

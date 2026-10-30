@@ -1,0 +1,27 @@
+spec_version: 5.0.0
+type: docker
+name: report-probe-demo
+title: Report Probe Demo
+description: Demonstrates separate live and ready HTTP responses.
+version: 1.0.0
+defaults:
+  system:
+    health_check:
+      liveness_probe:
+        type: http_get
+        http_get:
+          path: /health/live           # responds while reports initialize
+          port: 8080                  # the container's listening port
+        initial_delay_seconds: 5      # allow the HTTP server to start
+        period_seconds: 10            # check every 10 seconds
+        timeout_seconds: 1            # fail a check after 1 second
+        failure_threshold: 3          # restart after 3 consecutive failures
+      readiness_probe:
+        type: http_get
+        http_get:
+          path: /health/ready          # succeeds when reports are ready
+          port: 8080
+        period_seconds: 5             # retry while initialization runs
+        timeout_seconds: 1
+        failure_threshold: 1          # mark unready after 1 failed check
+        success_threshold: 1          # mark ready after 1 successful check

@@ -1,0 +1,13 @@
+spec_version: 5.0.0
+type: app
+name: filtered-timeseries
+title: Filtered Timeseries
+description: Select high-temperature messages with a custom predicate.
+version: 1.0.0
+data_streams:
+  inputs:
+    - name: temperature_c
+      data_type: number
+  outputs:
+    - name: temperature_alert
+      data_type: boolean

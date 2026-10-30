@@ -1,0 +1,9 @@
+spec_version: 5.0.0
+type: app
+name: custom-action-receiver
+title: Custom Action Receiver
+description: Local SDK example for motor-temperature workflows.
+version: 1.0.0
+custom_actions:
+  inputs:
+    - type: run_diagnostics

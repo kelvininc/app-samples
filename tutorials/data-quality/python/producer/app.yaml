@@ -1,0 +1,17 @@
+spec_version: 5.0.0
+type: app
+name: motor-quality-publisher
+title: Motor Quality Publisher
+description: Demonstrate the documented SDK workflow.
+version: 1.0.0
+data_streams:
+  inputs:
+  - name: temperature_c
+    data_type: number
+data_quality:
+  outputs:
+  - name: temperature_range
+    data_type: number
+    type: asset-datastream
+    data_streams:
+    - temperature_c

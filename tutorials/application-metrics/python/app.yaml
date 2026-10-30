@@ -1,0 +1,15 @@
+spec_version: 5.0.0
+type: app
+name: motor-processing-metrics
+title: Motor Processing Metrics
+description: Exposes a reading count and the latest temperature for one motor.
+version: 1.0.0
+data_streams:
+  inputs:
+    - name: motor_temperature
+      data_type: number
+defaults:
+  system:
+    metrics:
+      port: 9100        # Match start_http_server in main.py.
+      path: /metrics    # HTTP endpoint that serves Prometheus text.

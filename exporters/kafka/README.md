@@ -144,3 +144,7 @@ deselected by default, and requires Docker.
     > Wire credentials only via `<% secrets... %>`; leave them out of `app.yaml` defaults. A
     > baked-in placeholder is always-truthy and would defeat the "credentials must be set"
     > validation.
+
+## Beginner tutorial
+
+For a smaller teaching example, see [the temperature tutorial](../../tutorials/kafka-temperature-exporter/). This integration retains the broader capabilities documented above.

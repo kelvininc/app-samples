@@ -1,0 +1,14 @@
+spec_version: 5.0.0
+type: app
+name: motor-speed-receiver
+title: Motor Speed Receiver
+description: Motor Speed Receiver local workflow example.
+version: 1.0.0
+data_streams:
+  inputs:
+    - name: temperature_c
+      data_type: number
+control_changes:
+  inputs:
+    - name: motor_speed_setpoint
+      data_type: number
